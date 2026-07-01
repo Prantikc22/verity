@@ -260,8 +260,18 @@ export default async function Home() {
             <Link href="/login" className="hover:text-neutral-900 dark:hover:text-white">Sign in</Link>
           </div>
         </div>
-        <div className="border-t border-neutral-100 py-5 text-center text-xs text-neutral-400 dark:border-neutral-900">
-          © {new Date().getFullYear()} Verity — part of the QAShift testing platform. AI writes, engineers verify.
+        <div className="border-t border-neutral-100 dark:border-neutral-900">
+          <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-3 px-6 py-5 text-xs text-neutral-400 sm:flex-row">
+            <span>© {new Date().getFullYear()} Verity — part of the QAShift testing platform. AI writes, engineers verify.</span>
+            <span className="flex items-center gap-3">
+              <span className="uppercase tracking-widest text-[0.62rem] text-neutral-400">Platform</span>
+              <a href="https://www.qashifthq.com" target="_blank" rel="noreferrer" className="hover:text-neutral-900 dark:hover:text-white">QAShift</a>
+              <span className="text-neutral-300 dark:text-neutral-700">·</span>
+              <span className="font-medium text-neutral-700 dark:text-neutral-200">Verity</span>
+              <span className="text-neutral-300 dark:text-neutral-700">·</span>
+              <a href="https://clearpath-sandy.vercel.app" target="_blank" rel="noreferrer" className="hover:text-neutral-900 dark:hover:text-white">Clearpath</a>
+            </span>
+          </div>
         </div>
       </footer>
     </div>
