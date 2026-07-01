@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sendEmail, welcomeEmail } from "@/lib/email";
 
 export const runtime = "nodejs";
 
@@ -41,6 +42,9 @@ export async function POST(req: NextRequest) {
       : error.message;
     return NextResponse.json({ error: msg }, { status: 400 });
   }
+
+  // Welcome email — best-effort, never blocks or fails signup.
+  await sendEmail({ to: email, ...welcomeEmail(fullName) });
 
   return NextResponse.json({ ok: true });
 }
