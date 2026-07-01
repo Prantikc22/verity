@@ -46,7 +46,7 @@ export interface PlanLimits {
 export const PLANS: Record<PlanTier, PlanLimits> = {
   free: {
     tier: "free",
-    name: "Cloud Trial",
+    name: "Cloud Sandbox",
     tagline: "Get the feel — free, no card.",
     priceUsd: 0,
     priceInr: 0,

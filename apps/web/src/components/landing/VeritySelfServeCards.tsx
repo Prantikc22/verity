@@ -17,7 +17,7 @@ interface Tier {
 
 const TIERS: Tier[] = [
   {
-    name: "Cloud Trial",
+    name: "Cloud Sandbox",
     blurb: "Get the feel instantly in our cloud sandbox — no card.",
     usd: 0, inr: 0,
     cap: "AI UI tests — 15/month",
