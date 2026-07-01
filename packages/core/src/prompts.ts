@@ -1,0 +1,517 @@
+/**
+ * Pure prompt builders for the LLM provider. No SDK, no env — just strings, so
+ * the same prompts are reusable across providers (OpenAI, DeepSeek, Qwen, …).
+ */
+
+export interface GenerateTestParams {
+  /** A URL to test, or a natural-language description of a user flow. */
+  input: string;
+  /** Whether `input` is a URL (vs. a free-text flow description). */
+  isUrl: boolean;
+  /** Optional base URL the flow runs against (for relative navigation). */
+  baseUrl?: string;
+  /**
+   * Real page context extracted by fetching the URL (headings, buttons, inputs,
+   * labels, links). When present, the model builds locators from actual element
+   * names instead of guessing.
+   */
+  pageContext?: string;
+  /** Optional PRD / acceptance criteria for richer, intent-aware coverage. */
+  prd?: string;
+  /** Whether the flow needs login. If true, the spec reads creds from env vars. */
+  needsAuth?: boolean;
+  /** Credentials the user supplied for this app — used literally in the spec. */
+  credentials?: { username?: string; password?: string };
+}
+
+export const GENERATION_SYSTEM = `You are a senior QA engineer who writes Playwright tests in TypeScript.
+
+Respond as STRICT JSON: {"plan": string[], "code": string}.
+- "plan" is the test in plain English: 4–8 short steps a non-engineer can read,
+  each describing an action and what it verifies (e.g. "Click 'Add to cart' and
+  confirm the cart count becomes 1").
+- "code" is a single runnable .spec.ts file (no markdown fences).
+
+Rules for the code:
+- Use "@playwright/test" (import { test, expect }).
+- Prefer role-based and user-facing locators (getByRole, getByLabel, getByText)
+  over brittle CSS/XPath, so tests survive markup changes.
+- LOCATORS must be correct and grounded in PAGE CONTEXT:
+  * Every locator must correspond to an element actually listed in PAGE CONTEXT
+    (a Button, Input, Label, Link, or Heading). Never invent one.
+  * Use the EXACT visible name/label text shown in PAGE CONTEXT, matching case.
+  * Buttons → getByRole('button', { name: '<exact text>' }); inputs → getByLabel
+    or getByPlaceholder using the exact label/placeholder from PAGE CONTEXT; links
+    → getByRole('link', { name }); headings → getByRole('heading', { name }).
+  * Avoid CSS/XPath and test-id selectors unless PAGE CONTEXT shows nothing else.
+- Assert CONCRETELY. Every test must end with real expect() checks based on the
+  page context (e.g. a success heading/text/URL you can see). Do NOT write vague
+  or speculative assertions, and do NOT leave comments like "assuming…",
+  "add more assertions", or TODOs. If you are unsure of the exact success state,
+  assert the most specific verifiable signal available in the context.
+- ROBUSTNESS — these prevent the most common false failures, follow them exactly:
+  * NEVER use bare text locators like page.locator('text=...'). Use getByText('...')
+    or a role locator instead.
+  * A piece of text often appears more than once on a page (e.g. an error shown in
+    both a banner and inline). When you assert on text, ALWAYS disambiguate with
+    .first() — e.g. await expect(page.getByText('Your username is invalid!').first()).toBeVisible().
+    The same applies to any getByRole(...) / getByText(...) that could match more
+    than one element.
+  * URL assertions must be protocol- and trailing-slash-agnostic. NEVER hardcode a
+    full URL string. Use a regex on a stable substring of the path, e.g.
+    await expect(page).toHaveURL(/logged-in-successfully/i) — NOT
+    toHaveURL('http://site.com/page').
+  * A clickable thing may be a link OR a button — match what PAGE CONTEXT actually
+    shows. If the success signal could be either, assert with .or(), e.g.
+    page.getByRole('button', { name: 'Log out' }).or(page.getByRole('link', { name: 'Log out' })).
+    For a "logged in" state, prefer the most reliable available signal in this
+    order: a URL change, a success heading, then visible text.
+  * Rely on Playwright's auto-waiting web-first assertions; do NOT add manual
+    waitForTimeout. If you need longer, pass { timeout } to the assertion.
+- Credentials: if CREDENTIALS are provided, use those exact values. Else, if the
+  PAGE CONTEXT's visible text shows test credentials (common on demo/practice
+  sites, e.g. "Username: student  Password: Password123"), use those literal
+  values. Only fall back to process.env.TEST_USERNAME / TEST_PASSWORD when no
+  credentials are available anywhere.
+- Keep one focused flow per file. Use test.step() to label phases (mirror the plan).
+- Never invent selectors you cannot justify from the inputs.`;
+
+export function buildGenerationPrompt(p: GenerateTestParams): string {
+  const blocks: string[] = [];
+
+  if (p.pageContext) {
+    blocks.push(`PAGE CONTEXT (extracted from the live page — build locators from this):\n"""\n${p.pageContext}\n"""`);
+  }
+  if (p.prd) {
+    blocks.push(`PRODUCT REQUIREMENTS / ACCEPTANCE CRITERIA (cover these intents):\n"""\n${p.prd}\n"""`);
+  }
+  if (p.credentials?.username || p.credentials?.password) {
+    blocks.push(
+      `CREDENTIALS (use these exact literal values in the spec):\n` +
+        `username: ${p.credentials.username ?? "(none)"}\npassword: ${p.credentials.password ?? "(none)"}`,
+    );
+  } else if (p.needsAuth) {
+    blocks.push(`This flow requires login. Use credentials visible in the PAGE CONTEXT if shown; otherwise process.env.TEST_USERNAME / TEST_PASSWORD.`);
+  }
+
+  if (p.isUrl && !p.prd) {
+    blocks.push(
+      `Generate a Playwright test that loads ${p.input} and verifies the page renders its primary content ` +
+        `and that the primary interactive elements (from PAGE CONTEXT, if given) are reachable. ` +
+        `Navigate, assert the main heading/landmark is visible, assert no obvious error state. ` +
+        `Base URL: ${p.baseUrl ?? p.input}.`,
+    );
+  } else {
+    blocks.push(
+      `Generate a Playwright test for this user flow:\n"""${p.input}"""\n` +
+        (p.baseUrl ? `Base URL: ${p.baseUrl}.\n` : "") +
+        `Translate each step into Playwright actions with assertions between steps.`,
+    );
+  }
+
+  return blocks.join("\n\n");
+}
+
+export interface ProposeParams {
+  /** The page/app URL to analyze. */
+  url?: string;
+  /** Real page context (headings/buttons/inputs) extracted by fetching the URL. */
+  pageContext?: string;
+  /** Optional PRD / acceptance criteria for more accurate, intent-aware proposals. */
+  prd?: string;
+  /** How many tests to propose (tier-capped by the caller). */
+  max: number;
+}
+
+export const PROPOSAL_SYSTEM = `You are a QA lead planning end-to-end coverage for a web app.
+Given a page's real elements (PAGE CONTEXT) and optional product requirements (PRD),
+propose a prioritized set of Playwright tests worth writing for it.
+
+Respond as STRICT JSON: {"candidates": [{"title": string, "intent": string, "priority": "high"|"medium"|"low", "plan": string[]}]}.
+- "title": a short test name (e.g. "Checkout with a saved card").
+- "intent": one sentence on what it protects.
+- "plan": 3–6 plain-English steps a non-engineer can read.
+- QUALITY OVER QUANTITY. Propose only genuinely distinct, high-value cases. Do NOT
+  pad to reach the maximum — if 7 strong tests fully cover the app, return 7. The max
+  is a ceiling, not a target. For each significant feature/form, cover these
+  categories where they genuinely apply:
+  * Happy path — the main successful flow.
+  * Negative — wrong/invalid input is rejected with the right error.
+  * Boundary / validation — empty fields, whitespace-only, too long/short, wrong
+    format, case sensitivity.
+  * Auth / access — login required, logout works, protected content gated.
+  * UI state — disabled/enabled buttons, masking, navigation links resolve.
+- Prioritize: happy paths and auth = "high"; negative/validation = "medium";
+  cosmetic/edge = "low".
+- Only propose tests justified by the PAGE CONTEXT and/or PRD — do not invent flows
+  that aren't supported, and do not duplicate near-identical cases.
+- Do NOT write code here; just the plan. Return at most the requested number.`;
+
+export function buildProposalPrompt(p: ProposeParams): string {
+  const blocks: string[] = [`Propose up to ${p.max} tests.`];
+  if (p.pageContext) blocks.push(`PAGE CONTEXT (real elements on the page):\n"""\n${p.pageContext}\n"""`);
+  else if (p.url) blocks.push(`Target URL: ${p.url} (page context could not be fetched — propose robust, generic coverage).`);
+  if (p.prd) blocks.push(`PRD / ACCEPTANCE CRITERIA:\n"""\n${p.prd}\n"""`);
+  return blocks.join("\n\n");
+}
+
+/* ------------------------------------------------------------------ *
+ * API testing (Playwright request-based, from OpenAPI/Swagger + NL)   *
+ * ------------------------------------------------------------------ */
+
+export interface ApiProposeParams {
+  /** The OpenAPI/Swagger document (JSON or YAML text). */
+  spec?: string;
+  /** Free-text test requirements written by the user, in English. */
+  instructions?: string;
+  /** Base URL of the API (from servers[] or user-provided). */
+  baseUrl?: string;
+  /** How many cases to propose (tier-capped by the caller). */
+  max: number;
+}
+
+export const API_PROPOSAL_SYSTEM = `You are an API test architect planning thorough coverage for an HTTP API.
+Given an OpenAPI/Swagger spec and/or English requirements, propose a prioritized
+set of API test cases worth writing.
+
+Respond as STRICT JSON: {"candidates": [{"title": string, "intent": string, "method": string, "path": string, "category": "happy"|"negative"|"boundary"|"validation"|"auth", "priority": "high"|"medium"|"low", "plan": string[]}]}.
+- "method"/"path": the endpoint under test (e.g. "POST" "/users"). Use "" if N/A.
+- "category": which kind of check it is.
+- "plan": 3–6 plain-English steps (request → expected status/body).
+- QUALITY OVER QUANTITY — propose only distinct, high-value cases; never pad to the
+  maximum. For each significant endpoint cover, where genuinely applicable:
+  * happy — valid request returns the documented 2xx + body shape.
+  * negative — invalid/malformed body or wrong method returns 4xx.
+  * boundary — empty, min/max, too-long, wrong-type fields are rejected.
+  * validation — required fields missing, bad formats (email/date/enum) → 4xx.
+  * auth — missing/invalid token → 401/403; valid token → allowed.
+- Prioritize happy + auth = "high"; negative/validation = "medium"; boundary = "low".
+- Only propose cases justified by the spec/instructions; don't duplicate.
+- Return at most the requested number. No code here, just the plan.`;
+
+export function buildApiProposalPrompt(p: ApiProposeParams): string {
+  const blocks: string[] = [`Propose up to ${p.max} API test cases.`];
+  if (p.baseUrl) blocks.push(`Base URL: ${p.baseUrl}`);
+  if (p.spec) blocks.push(`OPENAPI / SWAGGER SPEC:\n"""\n${p.spec.slice(0, 24000)}\n"""`);
+  if (p.instructions) blocks.push(`ENGLISH REQUIREMENTS:\n"""\n${p.instructions}\n"""`);
+  if (!p.spec && !p.instructions) blocks.push("No spec given — propose sensible REST coverage from the instructions.");
+  return blocks.join("\n\n");
+}
+
+export interface ApiGenerateParams {
+  /** What this test should do (title + intent + plan, or English). */
+  description: string;
+  /** Base URL of the API. */
+  baseUrl?: string;
+  /** The OpenAPI/Swagger spec text for grounding (optional). */
+  spec?: string;
+  /** Auth: how the API authenticates (e.g. "Bearer token in TOKEN env"). */
+  auth?: string;
+}
+
+export const API_GENERATION_SYSTEM = `You write Playwright API tests in TypeScript using the built-in request fixture
+(no browser). They must run with @playwright/test.
+
+Respond as STRICT JSON: {"plan": string[], "code": string}.
+- "plan": 4–8 plain-English steps (request → what's asserted).
+- "code": a single runnable .spec.ts (no markdown fences).
+
+Rules for the code:
+- import { test, expect } from '@playwright/test'.
+- Use the request fixture: test('...', async ({ request }) => { ... }).
+- Use request.get/post/put/patch/delete with the FULL url (baseURL + path) or a
+  path if baseURL is configured. Send JSON via { data: {...} }, headers via { headers }.
+- Assert CONCRETELY: expect(res.status()).toBe(<code>); for bodies, await res.json()
+  and assert specific fields/types. Match the spec's documented responses.
+- For auth tests, send/omit the Authorization header as the case requires. Read
+  secrets from process.env (e.g. process.env.API_TOKEN) — NEVER hardcode real tokens.
+- For negative/boundary/validation, assert the correct 4xx and (if documented) the
+  error shape. Do not assume a 2xx for invalid input.
+- CRITICAL — NO TOP-LEVEL SIDE EFFECTS. The ONLY thing allowed at module top level
+  is the import line. Put EVERY const, variable, and statement INSIDE the test body.
+  Never call fs.readFileSync, fetch, or anything that can throw at module load — a
+  throw there makes the whole file fail to load and ALL tests vanish.
+- Do NOT read local files that may not exist. For file uploads, build the payload
+  INLINE inside the test using Playwright's multipart option with a Buffer, e.g.
+  { multipart: { file: { name: 'f.png', mimeType: 'image/png', buffer: Buffer.from('x') } } }.
+  Never use browser-only FormData/Blob.
+- One focused case per file. Use test.step() to label phases. No TODOs, no
+  "assuming" comments. Don't invent endpoints not in the spec/instructions.`;
+
+export function buildApiGenerationPrompt(p: ApiGenerateParams): string {
+  const blocks: string[] = [];
+  if (p.baseUrl) blocks.push(`Base URL: ${p.baseUrl}`);
+  if (p.auth) blocks.push(`AUTH: ${p.auth}`);
+  blocks.push(`TEST TO GENERATE:\n"""\n${p.description}\n"""`);
+  if (p.spec) blocks.push(`OPENAPI / SWAGGER SPEC (for exact paths/schemas):\n"""\n${p.spec.slice(0, 20000)}\n"""`);
+  return blocks.join("\n\n");
+}
+
+/* ------------------------------------------------------------------ *
+ * Mobile testing (Maestro YAML flows)                                  *
+ * Mirrors the Playwright generator: same LLM-call architecture, but    *
+ * emits Maestro's YAML flow syntax instead of a .spec.ts.              *
+ * ------------------------------------------------------------------ */
+
+export interface MaestroProposeParams {
+  /** App description / PRD / what the screen does. */
+  appContext: string;
+  /** Optional accessibility-tree dump or screen text to ground selectors. */
+  screenContext?: string;
+  /** Target platform hint, for platform-specific guidance. */
+  platform?: "android" | "ios" | "both";
+  /** How many flows to propose (tier-capped by the caller). */
+  max: number;
+}
+
+export const MAESTRO_PROPOSAL_SYSTEM = `You are a mobile QA lead planning end-to-end coverage for a native/mobile app
+tested with Maestro. Given a description of the app (and optionally a screen's
+accessibility tree), propose a prioritized set of Maestro flows worth writing.
+
+Respond as STRICT JSON: {"candidates": [{"title": string, "intent": string, "priority": "high"|"medium"|"low", "plan": string[]}]}.
+- "title": a short flow name (e.g. "Sign in with valid credentials").
+- "intent": one sentence on what it protects.
+- "plan": 3–6 plain-English steps a non-engineer can read.
+- QUALITY OVER QUANTITY — propose only distinct, high-value flows; never pad to the
+  maximum. Cover, where genuinely applicable: happy path, negative/invalid input,
+  validation/boundary, auth/logout, and navigation/UI state.
+- Only propose flows justified by the app context; do not invent screens.
+- No YAML here, just the plan. Return at most the requested number.`;
+
+export function buildMaestroProposalPrompt(p: MaestroProposeParams): string {
+  const blocks: string[] = [`Propose up to ${p.max} Maestro flows for platform: ${p.platform ?? "both"}.`];
+  blocks.push(`APP CONTEXT:\n"""\n${p.appContext}\n"""`);
+  if (p.screenContext) blocks.push(`SCREEN / ACCESSIBILITY CONTEXT (ground selectors in this):\n"""\n${p.screenContext}\n"""`);
+  return blocks.join("\n\n");
+}
+
+export interface MaestroGenerateParams {
+  /** What this flow should do (title + intent + plan, or English). */
+  description: string;
+  /** The app id / bundle id under test (e.g. "com.example.app"). */
+  appId?: string;
+  /** Optional accessibility-tree dump / visible text to ground selectors. */
+  screenContext?: string;
+  /** Whether the flow needs login; if so, read creds from Maestro env vars. */
+  needsAuth?: boolean;
+}
+
+export const MAESTRO_GENERATION_SYSTEM = `You write Maestro mobile UI test flows as YAML. Maestro flows are YAML files
+that drive an Android emulator or iOS simulator via accessibility selectors.
+
+Respond as STRICT JSON: {"plan": string[], "code": string}.
+- "plan": 4–8 plain-English steps (action + what it verifies).
+- "code": a single runnable Maestro flow as YAML text (no markdown fences).
+
+Rules for the YAML:
+- The file MUST start with an "appId:" header line, then "---", then the commands.
+  Example:
+    appId: com.example.app
+    ---
+    - launchApp
+    - tapOn: "Sign in"
+    - inputText: "user@example.com"
+    - assertVisible: "Welcome"
+- Use Maestro commands: launchApp, tapOn, inputText, assertVisible, assertNotVisible,
+  scroll, swipe, back, hideKeyboard, runFlow, waitForAnimationToEnd, pressKey.
+- Prefer accessibility-text / id selectors. Use the EXACT visible text or
+  accessibility id shown in SCREEN CONTEXT — never invent one. When a selector
+  could be ambiguous, qualify with { text: "...", index: 0 } or an id.
+- Assert CONCRETELY: every flow must end with at least one assertVisible/
+  assertNotVisible on a real, verifiable element from SCREEN CONTEXT.
+- Credentials/secrets: NEVER hardcode real secrets. Reference Maestro env vars
+  with \${MAESTRO_USERNAME} / \${MAESTRO_PASSWORD} when the flow needs login.
+- One focused flow per file. No comments like "assuming…" or TODOs. Do not invent
+  screens or elements not implied by the inputs.`;
+
+export function buildMaestroGenerationPrompt(p: MaestroGenerateParams): string {
+  const blocks: string[] = [];
+  if (p.appId) blocks.push(`App id: ${p.appId}`);
+  blocks.push(`FLOW TO GENERATE:\n"""\n${p.description}\n"""`);
+  if (p.screenContext) blocks.push(`SCREEN / ACCESSIBILITY CONTEXT (build selectors from this):\n"""\n${p.screenContext}\n"""`);
+  if (p.needsAuth) blocks.push(`This flow requires login. Use \${MAESTRO_USERNAME} / \${MAESTRO_PASSWORD}.`);
+  return blocks.join("\n\n");
+}
+
+export interface MaestroHealParams {
+  /** The full failing Maestro YAML flow. */
+  flowYaml: string;
+  /** The Maestro error message from the failed run. */
+  error: string;
+  /**
+   * Maestro's accessibility-tree dump of the current screen — the mobile
+   * equivalent of the DOM snapshot used for Playwright healing.
+   */
+  accessibilityTree?: string;
+}
+
+export const MAESTRO_HEAL_SYSTEM = `You repair a broken Maestro mobile flow. A selector stopped matching after a UI
+change. You are given the full YAML flow, the Maestro error, and the current
+screen's ACCESSIBILITY TREE (the mobile equivalent of a DOM snapshot). Rewrite
+the flow so it passes against the REAL screen, fixing the actual cause — do not
+weaken intent or delete assertions.
+
+Respond as STRICT JSON: {"code": string, "explanation": string, "confidence": number}.
+- "code": the full corrected Maestro YAML flow (keep the appId header + "---").
+- "explanation": ONE plain-English sentence on what was wrong and what changed.
+- "confidence": 0..1 — how sure you are the fix makes it pass.
+Rules:
+- Replace the broken selector with the EXACT text/id present in the ACCESSIBILITY
+  TREE. Never fabricate an element not in the tree (if no credible match, return
+  confidence < 0.3 and keep the closest real element).
+- Prefer accessibility text/id over coordinates.`;
+
+export function buildMaestroHealPrompt(p: MaestroHealParams): string {
+  const blocks: string[] = [];
+  blocks.push(`FAILED MAESTRO FLOW:\n"""\n${p.flowYaml}\n"""`);
+  blocks.push(`MAESTRO ERROR:\n"""\n${p.error}\n"""`);
+  if (p.accessibilityTree) blocks.push(`ACCESSIBILITY TREE (current screen — fix selectors from this):\n"""\n${p.accessibilityTree}\n"""`);
+  blocks.push("Return the corrected flow as JSON.");
+  return blocks.join("\n\n");
+}
+
+/* ------------------------------------------------------------------ *
+ * Performance testing (Artillery YAML scenarios)                       *
+ * Generated from the SAME OpenAPI spec already used for API tests.     *
+ * ------------------------------------------------------------------ */
+
+export interface ArtilleryGenerateParams {
+  /** The OpenAPI/Swagger document (JSON or YAML text) — reused from API testing. */
+  spec?: string;
+  /** Base URL of the API (from servers[] or user-provided). */
+  baseUrl?: string;
+  /**
+   * "fast" = a lightweight smoke check (few endpoints, short duration, small VU
+   * count) for every PR — labeled "Perf smoke check", NEVER a full load test.
+   * "full" = a complete load test with the customer's configured ramp.
+   */
+  tier: "fast" | "full";
+  /** Optional load shape overrides for the full tier (duration s / arrivalRate VUs). */
+  load?: { durationSec?: number; arrivalRate?: number; rampToRate?: number };
+  /** Free-text guidance on which flows matter most. */
+  instructions?: string;
+}
+
+export const ARTILLERY_GENERATION_SYSTEM = `You write Artillery load-test configs as YAML, derived from an OpenAPI spec.
+Artillery drives HTTP load and reports latency percentiles + error rates.
+
+Respond as STRICT JSON: {"plan": string[], "code": string}.
+- "plan": 4–8 plain-English steps describing the scenario(s) and what load is applied.
+- "code": a single runnable Artillery config as YAML text (no markdown fences).
+
+Rules for the YAML:
+- Top-level "config" with "target" (the base URL) and a "phases" array, plus a
+  "scenarios" array. Use environment-friendly target: keep the base URL from input.
+- FAST tier ("Perf smoke check"): a SHORT, LIGHT phase only — e.g. one phase with
+  duration: 30 and arrivalRate: 2 — exercising a FEW representative endpoints. This
+  must clearly be a smoke check, never a heavy load test.
+- FULL tier: use the customer's configured phases (duration / arrivalRate / rampTo).
+  You may include a warm-up phase then a sustained/ramp phase.
+- Build scenarios from the OpenAPI paths: realistic flows (e.g. create → read).
+  Use "flow" with get/post/put/delete steps; send JSON via "json:". Chain values
+  with "capture" + "{{ var }}" where a later step needs an id from an earlier one.
+- Read secrets from environment: use "{{ $processEnvironment.API_TOKEN }}" for auth
+  headers — NEVER hardcode real tokens.
+- Add an "expect" or rely on status; do not assert exact latencies in the config.
+- Do not invent endpoints not present in the spec. Keep it valid Artillery YAML.`;
+
+export function buildArtilleryGenerationPrompt(p: ArtilleryGenerateParams): string {
+  const blocks: string[] = [
+    p.tier === "fast"
+      ? `Generate a FAST "Perf smoke check" Artillery config: one short, light phase (≈30s, arrivalRate ≈2), a few representative endpoints.`
+      : `Generate a FULL load-test Artillery config.`,
+  ];
+  if (p.baseUrl) blocks.push(`Base URL (target): ${p.baseUrl}`);
+  if (p.tier === "full" && p.load) {
+    blocks.push(
+      `LOAD SHAPE: duration ${p.load.durationSec ?? 120}s, arrivalRate ${p.load.arrivalRate ?? 10}` +
+        (p.load.rampToRate ? `, ramp to ${p.load.rampToRate}` : ""),
+    );
+  }
+  if (p.instructions) blocks.push(`GUIDANCE:\n"""\n${p.instructions}\n"""`);
+  if (p.spec) blocks.push(`OPENAPI / SWAGGER SPEC (build scenarios from these paths):\n"""\n${p.spec.slice(0, 20000)}\n"""`);
+  return blocks.join("\n\n");
+}
+
+export interface HealParams {
+  oldSelector: string;
+  /** DOM snapshot around where the old selector used to point. */
+  domContext: string;
+  /** What the step was trying to do (e.g. "click the Checkout button"). */
+  intent?: string;
+}
+
+export const HEALING_SYSTEM = `You repair broken Playwright locators. A selector stopped matching after a UI
+change. Given the old selector and a DOM snapshot of the surrounding region,
+propose the single best replacement locator.
+Rules:
+- Respond as STRICT JSON: {"selector": string, "confidence": number, "rationale": string}.
+- "selector" must be a Playwright locator expression (e.g. getByRole('button', { name: 'Checkout' })).
+- Prefer role/label/text locators over CSS/XPath.
+- "confidence" is 0..1. If the DOM doesn't contain a credible match, return confidence < 0.3.
+- Never fabricate an element that isn't in the snapshot.`;
+
+export function buildHealingPrompt(p: HealParams): string {
+  return `Old (broken) selector: ${p.oldSelector}
+${p.intent ? `Step intent: ${p.intent}` : ""}
+
+DOM snapshot around the original location:
+"""
+${p.domContext}
+"""
+
+Return the corrected locator as JSON.`;
+}
+
+export interface TestHealParams {
+  /** The full failing .spec.ts source. */
+  specContent: string;
+  /** The Playwright error message from the failed run. */
+  error: string;
+  /** Fresh page context (real elements) re-fetched from the test's target URL. */
+  pageContext?: string;
+  /** Base/target URL the test runs against. */
+  baseUrl?: string;
+}
+
+export const TEST_HEAL_SYSTEM = `You are a senior QA engineer fixing a Playwright test that FAILED at runtime.
+You are given the full spec, the exact Playwright error, and (usually) the live
+PAGE CONTEXT of the target page. Rewrite the spec so it passes against the REAL
+page, fixing the actual cause of the failure — do not weaken the test's intent
+or delete its assertions.
+
+Respond as STRICT JSON: {"code": string, "explanation": string, "confidence": number}.
+- "code": the full corrected .spec.ts (no markdown fences). Keep the same intent.
+- "explanation": ONE plain-English sentence a non-engineer understands, saying
+  what was wrong and what you changed (e.g. "The error text appears twice on the
+  page, so the check now matches the first occurrence.").
+- "confidence": 0..1 — how sure you are the fix makes it pass.
+
+Apply these fixes based on the error:
+- "strict mode violation … resolved to N elements" → add .first() to that locator
+  (or scope it to a unique container/id shown in PAGE CONTEXT).
+- "toHaveURL" mismatch → replace the hardcoded URL with a protocol-agnostic regex
+  on a stable path substring, e.g. toHaveURL(/logged-in-successfully/i).
+- element "not found" / wrong role → use the element type PAGE CONTEXT actually
+  shows (link vs button), or assert a more reliable signal (URL/heading/text). Use
+  .or() if it could be either.
+- genuine timeout on a real element → raise that assertion's { timeout }.
+- "failed to load" / collection error / top-level threw / missing file → move ALL
+  top-level code inside the test body and remove file-system reads; for uploads use
+  Playwright's multipart option with an inline Buffer (never fs.readFileSync or
+  FormData/Blob). The only top-level line allowed is the import.
+- API tests: if a request returns an unexpected status, fix the request (method,
+  path, headers, body, auth) or correct the expected status to match the documented
+  contract — don't weaken the check arbitrarily.
+- Never invent elements not present in PAGE CONTEXT. If the page truly lacks the
+  expected outcome, assert the closest real success signal instead.`;
+
+export function buildTestHealPrompt(p: TestHealParams): string {
+  const blocks: string[] = [];
+  blocks.push(`FAILED SPEC:\n"""\n${p.specContent}\n"""`);
+  blocks.push(`PLAYWRIGHT ERROR:\n"""\n${p.error}\n"""`);
+  if (p.pageContext) blocks.push(`PAGE CONTEXT (real elements on the live page — fix locators from this):\n"""\n${p.pageContext}\n"""`);
+  if (p.baseUrl) blocks.push(`Target URL: ${p.baseUrl}`);
+  blocks.push("Return the corrected spec as JSON.");
+  return blocks.join("\n\n");
+}

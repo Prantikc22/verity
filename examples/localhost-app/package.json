@@ -1,0 +1,14 @@
+{
+  "name": "verity-localhost-app",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A tiny local app + Playwright project to test the Verity MCP on localhost.",
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.1"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "verity",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Verity — AI-augmented Playwright test generation & execution platform (a QAShift product)",
+  "license": "MIT",
+  "workspaces": [
+    "apps/*",
+    "services/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace apps/web",
+    "build": "npm run build --workspace packages/core && npm run build --workspace apps/web",
+    "lint": "npm run lint --workspace apps/web"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

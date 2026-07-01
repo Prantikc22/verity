@@ -1,0 +1,15 @@
+{
+  "name": "runner",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Verity cloud runner (Fly.io) — real Playwright browser, streams frames to the dashboard. Scales to zero.",
+  "type": "module",
+  "main": "src/index.mjs",
+  "scripts": {
+    "start": "node src/index.mjs"
+  },
+  "dependencies": {
+    "@playwright/test": "1.49.1",
+    "playwright": "1.49.1"
+  }
+}

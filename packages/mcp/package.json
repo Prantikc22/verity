@@ -1,0 +1,17 @@
+{
+  "name": "@qashifthq/verity-mcp",
+  "version": "0.1.2",
+  "description": "Verity MCP server — generate, propose, and run Playwright tests on your localhost from Cursor / Claude Code / VS Code.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "verity-mcp": "./src/index.mjs"
+  },
+  "files": ["src", "README.md"],
+  "publishConfig": { "access": "public" },
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "zod": "^3.23.8"
+  }
+}

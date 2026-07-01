@@ -1,0 +1,108 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+
+interface Tier {
+  name: string;
+  blurb: string;
+  usd: number;
+  inr: number;
+  cap: string;
+  features: string[];
+  note?: string;
+  cta: { label: string; href: string };
+  highlight?: boolean;
+}
+
+const TIERS: Tier[] = [
+  {
+    name: "Cloud Trial",
+    blurb: "Get the feel instantly in our cloud sandbox — no card.",
+    usd: 0, inr: 0,
+    cap: "AI UI tests — 15/month",
+    features: [
+      "AI test generation, UI — 15/month",
+      "Try it instantly in our cloud sandbox",
+      "Unlimited CI runs once you wire your pipeline",
+    ],
+    note: "Self-healing and flake triage start at Self-Serve Pro.",
+    cta: { label: "Start free", href: "/login?next=/dashboard" },
+  },
+  {
+    name: "Self-Serve Pro",
+    blurb: "The full engine, self-driven. No engineer, no call.",
+    usd: 49, inr: 2999,
+    cap: "AI UI + API tests — 200/month",
+    features: [
+      "AI test generation, UI + API — 200/month",
+      "Self-healing locators + flake detection included",
+      "Unlimited CI runs",
+      "3 projects",
+    ],
+    cta: { label: "Start Self-Serve Pro", href: "/login?next=/dashboard" },
+    highlight: true,
+  },
+];
+
+export function VeritySelfServeCards({ inIndia }: { inIndia: boolean }) {
+  const [currency, setCurrency] = useState<"USD" | "INR">(inIndia ? "INR" : "USD");
+  const fmt = (t: Tier) =>
+    currency === "INR" ? (t.inr === 0 ? "₹0" : `₹${t.inr.toLocaleString("en-IN")}`) : t.usd === 0 ? "$0" : `$${t.usd}`;
+
+  return (
+    <div>
+      {/* Currency toggle — above the cards, matching the platform pattern */}
+      <div className="mb-6 flex items-center justify-center gap-2">
+        <div className="inline-flex border border-neutral-300 p-0.5 dark:border-neutral-700">
+          {(["USD", "INR"] as const).map((c) => (
+            <button key={c} onClick={() => setCurrency(c)}
+              className={`px-3 py-1 text-xs font-medium transition ${currency === c ? "bg-indigo-600 text-white" : "text-neutral-500 hover:text-neutral-900 dark:hover:text-white"}`}>
+              {c === "USD" ? "$ USD" : "₹ INR"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        {TIERS.map((t) => (
+          <div key={t.name} className={`flex flex-col border p-6 ${t.highlight ? "border-indigo-500 dark:border-indigo-500" : "border-neutral-200 dark:border-neutral-800"}`}>
+            <div className="text-xs font-semibold uppercase tracking-wide text-neutral-400">Self-serve · no FDE</div>
+            <h3 className="mt-1 text-xl font-semibold">{t.name}</h3>
+            <p className="mt-1 min-h-[40px] text-sm text-neutral-500">{t.blurb}</p>
+            <div className="mt-3 flex items-baseline gap-1">
+              <span className="text-3xl font-bold">{fmt(t)}</span>
+              <span className="text-sm text-neutral-400">{t.usd === 0 ? "" : "/mo"}</span>
+            </div>
+            <div className="mt-1 text-xs font-medium uppercase tracking-wide text-emerald-600 dark:text-emerald-400">{t.cap}</div>
+            <ul className="mt-4 flex-1 space-y-2 text-sm text-neutral-600 dark:text-neutral-300">
+              {t.features.map((f) => <li key={f} className="flex gap-2"><span className="text-emerald-500">✓</span>{f}</li>)}
+              {t.note && <li className="flex gap-2 text-neutral-400"><span>·</span>{t.note}</li>}
+            </ul>
+            <Link href={t.cta.href} className={`mt-5 block px-4 py-2.5 text-center text-sm font-medium ${t.highlight ? "bg-indigo-600 text-white hover:bg-indigo-500" : "border border-neutral-300 hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-900"}`}>
+              {t.cta.label}
+            </Link>
+          </div>
+        ))}
+
+        {/* FDE-backed tiers live on the canonical platform pricing page */}
+        <div className="flex flex-col justify-between border border-amber-300 bg-amber-50/50 p-6 dark:border-amber-900/60 dark:bg-amber-950/20">
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">FDE-backed · Starter and up</div>
+            <h3 className="mt-1 text-xl font-semibold">Want an engineer on it?</h3>
+            <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">
+              Starter, Growth, Scale, and Enterprise include a forward-deployed engineer, mobile, performance, security, and predictions. All four tiers live on the QAShift platform pricing page.
+            </p>
+          </div>
+          <a href="https://qashifthq.com/pricing" target="_blank" rel="noopener noreferrer" className="mt-5 block bg-amber-500 px-4 py-2.5 text-center text-sm font-semibold text-neutral-950 transition hover:bg-amber-400">
+            See all six tiers →
+          </a>
+        </div>
+      </div>
+
+      <p className="mt-6 text-center text-xs text-neutral-500">
+        Same pricing across the QAShift platform. <a href="https://qashifthq.com/pricing" target="_blank" rel="noopener noreferrer" className="text-indigo-600 underline">View the full canonical pricing →</a>
+      </p>
+    </div>
+  );
+}
