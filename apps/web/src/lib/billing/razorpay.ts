@@ -12,6 +12,7 @@ import type {
 /** Map our plan tiers to Razorpay plan IDs (created in the Razorpay dashboard). */
 function planId(tier: PlanTier): string | undefined {
   const map: Partial<Record<PlanTier, string | undefined>> = {
+    pro: process.env.RAZORPAY_PLAN_PRO,
     starter: process.env.RAZORPAY_PLAN_STARTER,
     growth: process.env.RAZORPAY_PLAN_GROWTH,
     scale: process.env.RAZORPAY_PLAN_SCALE,

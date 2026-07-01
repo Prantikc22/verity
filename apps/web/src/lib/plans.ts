@@ -72,6 +72,36 @@ export const PLANS: Record<PlanTier, PlanLimits> = {
       "1 project · self-serve",
     ],
   },
+  pro: {
+    tier: "pro",
+    name: "Self-Serve Pro",
+    tagline: "The full engine, self-driven. No engineer, no call.",
+    priceUsd: 49,
+    priceInr: 2999,
+    billingNote: "per month · billed monthly",
+    maxTests: 50,
+    maxProjects: 3,
+    testGensPerMonth: 200,
+    cloudRunsPerMonth: 15,
+    cloudTrialsPerMonth: 3,
+    ciRuns: "unlimited",
+    maxRunHistory: 30,
+    selfHealing: true,
+    // PR checks post, but merge-blocking is a managed (Starter+) feature.
+    prGating: true,
+    mergeBlocking: false,
+    // Predictions are a managed/data-gated value; self-serve gets flake detection.
+    predictionsGA: false,
+    predictionsBeta: false,
+    fde: false,
+    pomConversion: false,
+    highlights: [
+      "AI test generation, UI + API (200 / mo)",
+      "Self-healing locators + flake detection",
+      "Unlimited CI runs · 3 projects",
+      "Self-serve — no engineer, no call",
+    ],
+  },
   starter: {
     tier: "starter",
     name: "Starter",
@@ -189,7 +219,7 @@ export const PLANS: Record<PlanTier, PlanLimits> = {
   },
 };
 
-export const PAID_TIERS: PlanTier[] = ["starter", "growth", "scale"];
+export const PAID_TIERS: PlanTier[] = ["pro", "starter", "growth", "scale"];
 
 export function planFor(tier: PlanTier | null | undefined): PlanLimits {
   return PLANS[tier ?? "free"];

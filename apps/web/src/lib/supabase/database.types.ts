@@ -760,7 +760,7 @@ export type Database = {
     Enums: {
       healing_status: "suggested" | "applied" | "rejected"
       member_role: "owner" | "admin" | "member"
-      plan_tier: "free" | "starter" | "growth" | "scale" | "enterprise"
+      plan_tier: "free" | "pro" | "starter" | "growth" | "scale" | "enterprise"
       project_visibility: "private" | "public"
       result_status: "passed" | "failed" | "flaky" | "skipped" | "healed"
       run_status: "queued" | "running" | "completed" | "failed" | "cancelled"

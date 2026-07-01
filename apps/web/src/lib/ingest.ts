@@ -111,7 +111,7 @@ export async function recordRun(
     .maybeSingle();
   let deployId = existingDeploy?.id;
   if (!deployId) {
-    const { data: dep } = await admin
+    const { data: dep, error: depErr } = await admin
       .from("deploys")
       .insert({
         project_id: project.id,
@@ -122,11 +122,12 @@ export async function recordRun(
       })
       .select("id")
       .single();
-    deployId = dep!.id;
+    if (depErr || !dep) throw new Error(`Failed to record deploy: ${depErr?.message ?? "unknown error"}`);
+    deployId = dep.id;
   }
 
   // 2. Create the run row.
-  const { data: run } = await admin
+  const { data: run, error: runErr } = await admin
     .from("test_runs")
     .insert({
       project_id: project.id,
@@ -144,7 +145,8 @@ export async function recordRun(
     })
     .select("*")
     .single();
-  const runId = run!.id;
+  if (runErr || !run) throw new Error(`Failed to record run: ${runErr?.message ?? "unknown error"}`);
+  const runId = run.id;
 
   // Map spec_path → test row (for test_id linkage + flake stats).
   const { data: tests } = await admin

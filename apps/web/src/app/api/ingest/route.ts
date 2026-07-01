@@ -55,6 +55,26 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Enum-shaped fields must be valid, or the DB insert fails with a cryptic error.
+  const VALID_TIERS = ["fast", "full"];
+  const VALID_TRIGGERS = ["pr", "merge", "schedule", "predeploy", "manual"];
+  if (!VALID_TIERS.includes(payload.tier)) {
+    return NextResponse.json({ error: `tier must be one of ${VALID_TIERS.join(", ")}.` }, { status: 400 });
+  }
+  if (!payload.trigger || !VALID_TRIGGERS.includes(payload.trigger)) {
+    return NextResponse.json({ error: `trigger must be one of ${VALID_TRIGGERS.join(", ")}.` }, { status: 400 });
+  }
+  // Each result reports per-attempt booleans (pass/fail per rerun); it's required.
+  const badResult = payload.results.find(
+    (r) => !r || typeof r.spec_path !== "string" || !Array.isArray(r.attempts) || r.attempts.length === 0,
+  );
+  if (badResult) {
+    return NextResponse.json(
+      { error: "Each result must include a spec_path (string) and a non-empty attempts[] (boolean per rerun)." },
+      { status: 400 },
+    );
+  }
+
   // The full tier may never be diff-shortcut. A 'full' run must carry results
   // for the whole suite, so we reject a full run that also sends changed_files
   // as a selection hint — selection is a fast-tier concept only.
