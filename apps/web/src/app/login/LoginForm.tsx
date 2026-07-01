@@ -41,9 +41,10 @@ export function LoginForm({ next }: { next?: string }) {
       if (signErr) throw new Error(signErr.message);
       router.push(dest);
       router.refresh();
+      // Keep busy=true through navigation so the form shows "Redirecting…"
+      // instead of snapping back to idle while the dashboard renders.
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
-    } finally {
       setBusy(false);
     }
   }
@@ -77,7 +78,7 @@ export function LoginForm({ next }: { next?: string }) {
         )}
         <button type="submit" disabled={busy}
           className="w-full bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-500 disabled:opacity-50">
-          {busy ? "Please wait…" : mode === "signup" ? "Create account" : "Sign in"}
+          {busy ? "Signing you in…" : mode === "signup" ? "Create account" : "Sign in"}
         </button>
       </form>
 

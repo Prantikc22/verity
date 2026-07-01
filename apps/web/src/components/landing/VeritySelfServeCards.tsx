@@ -12,6 +12,8 @@ interface Tier {
   features: string[];
   note?: string;
   cta: { label: string; href: string };
+  /** A paid tier initiates Razorpay checkout instead of just linking. */
+  paidTier?: "pro";
   highlight?: boolean;
 }
 
@@ -40,15 +42,43 @@ const TIERS: Tier[] = [
       "Unlimited CI runs",
       "3 projects",
     ],
-    cta: { label: "Start Self-Serve Pro", href: "/login?next=/dashboard" },
+    cta: { label: "Start Self-Serve Pro", href: "/login?next=/pricing" },
+    paidTier: "pro",
     highlight: true,
   },
 ];
 
 export function VeritySelfServeCards({ inIndia }: { inIndia: boolean }) {
   const [currency, setCurrency] = useState<"USD" | "INR">(inIndia ? "INR" : "USD");
+  const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState("");
   const fmt = (t: Tier) =>
     currency === "INR" ? (t.inr === 0 ? "₹0" : `₹${t.inr.toLocaleString("en-IN")}`) : t.usd === 0 ? "$0" : `$${t.usd}`;
+
+  // Paid tier → Razorpay checkout. If not signed in, bounce to login and come
+  // back to /pricing so the user can complete the purchase.
+  async function startCheckout(tier: "pro") {
+    setBusy(tier);
+    setError("");
+    try {
+      const res = await fetch("/api/billing/checkout", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ tier }),
+      });
+      if (res.status === 401) {
+        window.location.href = "/login?next=" + encodeURIComponent("/pricing");
+        return;
+      }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Could not start checkout.");
+      if (data.checkoutUrl) window.location.assign(data.checkoutUrl);
+      else throw new Error("Checkout link unavailable — please contact us.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+      setBusy(null);
+    }
+  }
 
   return (
     <div>
@@ -79,9 +109,19 @@ export function VeritySelfServeCards({ inIndia }: { inIndia: boolean }) {
               {t.features.map((f) => <li key={f} className="flex gap-2"><span className="text-emerald-500">✓</span>{f}</li>)}
               {t.note && <li className="flex gap-2 text-neutral-400"><span>·</span>{t.note}</li>}
             </ul>
-            <Link href={t.cta.href} className={`mt-5 block px-4 py-2.5 text-center text-sm font-medium ${t.highlight ? "bg-indigo-600 text-white hover:bg-indigo-500" : "border border-neutral-300 hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-900"}`}>
-              {t.cta.label}
-            </Link>
+            {t.paidTier ? (
+              <button
+                onClick={() => startCheckout(t.paidTier!)}
+                disabled={busy === t.paidTier}
+                className={`mt-5 block w-full px-4 py-2.5 text-center text-sm font-medium disabled:opacity-60 ${t.highlight ? "bg-indigo-600 text-white hover:bg-indigo-500" : "border border-neutral-300 hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-900"}`}
+              >
+                {busy === t.paidTier ? "Starting checkout…" : t.cta.label}
+              </button>
+            ) : (
+              <Link href={t.cta.href} className={`mt-5 block px-4 py-2.5 text-center text-sm font-medium ${t.highlight ? "bg-indigo-600 text-white hover:bg-indigo-500" : "border border-neutral-300 hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-900"}`}>
+                {t.cta.label}
+              </Link>
+            )}
           </div>
         ))}
 
@@ -99,6 +139,8 @@ export function VeritySelfServeCards({ inIndia }: { inIndia: boolean }) {
           </a>
         </div>
       </div>
+
+      {error && <p className="mt-4 text-center text-sm text-red-600">{error}</p>}
 
       <p className="mt-6 text-center text-xs text-neutral-500">
         Same pricing across the QAShift platform. <a href="https://qashifthq.com/pricing" target="_blank" rel="noopener noreferrer" className="text-indigo-600 underline">View the full canonical pricing →</a>

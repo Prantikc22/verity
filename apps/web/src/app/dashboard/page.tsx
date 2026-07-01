@@ -12,14 +12,19 @@ export default async function DashboardPage() {
   const orgCtx = await getPrimaryOrg();
   const supabase = await createClient();
   const plan = planFor(orgCtx?.org.plan);
+  const orgId = orgCtx?.org.id;
 
-  const { data: projects } = await supabase
-    .from("projects")
-    .select("id, name, repo, default_branch, visibility")
-    .order("created_at", { ascending: false });
+  // Scope to the signed-in user's org — otherwise public projects (e.g. the
+  // Verity Demo) leak into every account's dashboard and inflate the count.
+  const { data: projects } = orgId
+    ? await supabase
+        .from("projects")
+        .select("id, name, repo, default_branch, visibility")
+        .eq("org_id", orgId)
+        .order("created_at", { ascending: false })
+    : { data: [] };
 
   const projectCount = projects?.length ?? 0;
-  const orgId = orgCtx?.org.id;
 
   const [{ count: runCount }, { count: testCount }, { data: recent }] = orgId
     ? await Promise.all([
