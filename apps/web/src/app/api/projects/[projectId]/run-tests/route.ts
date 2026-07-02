@@ -54,11 +54,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
 
   const admin = createAdminClient();
 
-  // Cap cloud runs per plan.
+  // Cap cloud runs per plan. Count ONLY runs on our infra (branch "cloud") — local
+  // MCP runs (also trigger="manual", on the user's own machine) must NOT consume the
+  // cloud-run budget.
   const plan = planFor((await admin.from("orgs").select("plan").eq("id", project.org_id).maybeSingle()).data?.plan);
   const monthStart = new Date(); monthStart.setUTCDate(1); monthStart.setUTCHours(0, 0, 0, 0);
   const { count: used } = await admin.from("test_runs").select("id", { count: "exact", head: true })
-    .eq("project_id", projectId).eq("trigger", "manual").gte("created_at", monthStart.toISOString());
+    .eq("project_id", projectId).eq("trigger", "manual").eq("branch", "cloud").gte("created_at", monthStart.toISOString());
   if ((used ?? 0) >= plan.cloudRunsPerMonth) {
     return NextResponse.json({ error: `Cloud runs are capped at ${plan.cloudRunsPerMonth}/mo on ${plan.name}. Run unlimited in your CI.` }, { status: 402 });
   }
@@ -234,7 +236,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
           duration_ms: r.durationMs, error_message: r.error,
         }));
         const recorded = await recordRun(project, {
-          tier: "full", trigger: "manual", commit_sha: `cloud-${Date.now().toString(36)}`, branch: "cloud", results: ingestResults,
+          tier: "full", trigger: "manual", commit_sha: `cloud-${Date.now().toString(36)}`, branch: "cloud",
+          discipline: parsed.data.kind === "api" ? "api" : "ui", results: ingestResults,
         });
         // Link this run's healing events so the run report can show what was healed.
         if (healEventIds.length) await admin.from("healing_events").update({ run_id: recorded.runId }).in("id", healEventIds);

@@ -13,6 +13,7 @@ import { createClient } from "@/lib/supabase/client";
 const NAV = [
   { href: "/dashboard", label: "Overview", icon: "M3 12l2-2 7-7 7 7 2 2M5 10v10h14V10" },
   { href: "/dashboard/trends", label: "Trends", icon: "M3 17l6-6 4 4 8-8" },
+  { href: "/dashboard/usage", label: "Usage", icon: "M3 3v18h18M7 14l3-3 3 3 5-6" },
   { href: "/dashboard/github", label: "GitHub App", icon: "M9 19c-5 1.5-5-2.5-7-3m14 6v-3.9a3.4 3.4 0 00-.9-2.6c3-.3 6.2-1.5 6.2-6.7A5.2 5.2 0 0019 4.8 4.9 4.9 0 0018.9 1S17.7.6 15 2.5a13.4 13.4 0 00-7 0C5.3.6 4.1 1 4.1 1A4.9 4.9 0 004 4.8a5.2 5.2 0 00-1.4 3.6c0 5.2 3.2 6.4 6.2 6.7A3.4 3.4 0 008 17.7V22" },
   { href: "/dashboard/team", label: "Team", icon: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100 8 4 4 0 000-8zM23 21v-2a4 4 0 00-3-3.9M16 3.1a4 4 0 010 7.8" },
 ];
