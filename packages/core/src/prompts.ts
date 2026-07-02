@@ -88,6 +88,27 @@ Rules for the code:
     toggling on <html> or <body> (theme), aria-expanded flipping on the control, or a
     specific element PAGE CONTEXT confirms. Accordion/collapsible content is often kept
     in the DOM and hidden via CSS — prefer aria-expanded over a bare toBeVisible on text.
+- GROUNDING — you ONLY have PAGE CONTEXT for the ENTRY page. This is the #1 cause of
+  brittle tests, so obey it exactly:
+  * Use accessible names / labels / texts EXACTLY as they appear in PAGE CONTEXT. NEVER
+    add, remove, or decorate characters — e.g. if a button shows "How does it work?" do
+    NOT write name: 'How does it work? +'. A "+", "▸", chevrons, or counts are visual
+    icons, NOT part of the accessible name. Prefer { name: '...' } that is a UNIQUE
+    substring, or use exact:false, rather than appending icon characters.
+  * If a step NAVIGATES to another page (clicking 'Sign in', 'Log in', 'Get started',
+    submitting a form, following a link to a different path), you DO NOT have that page's
+    DOM. NEVER assert on specific elements of a page you were not shown — do NOT write
+    getByLabel('Email')/getByLabel('Password')/etc. for a login or post-submit page you
+    never fetched. Assert ONLY the observable transition: a URL change (regex on a stable
+    path substring) OR that a single top-level landmark/heading is visible. Keep the test
+    to "the navigation happened", nothing deeper.
+  * LANDING-PAGE NAV ('Features', 'Pricing', 'How it works', 'FAQ', 'Docs') is usually
+    IN-PAGE ANCHOR scrolling, NOT a separate route. Do NOT assert toHaveURL for these
+    unless PAGE CONTEXT shows an <a href="/distinct-path">. Instead assert the target
+    section/heading becomes visible (getByRole('heading', { name })).
+  * When unsure whether an element/outcome exists, assert the WEAKER, grounded signal
+    (an element you can see in PAGE CONTEXT, or a URL change) — never a speculative one.
+    A conservative test that passes beats an ambitious test that always fails.
 - Credentials: if CREDENTIALS are provided, use those exact values. Else, if the
   PAGE CONTEXT's visible text shows test credentials (common on demo/practice
   sites, e.g. "Username: student  Password: Password123"), use those literal
@@ -165,6 +186,13 @@ Respond as STRICT JSON: {"candidates": [{"title": string, "intent": string, "pri
   cosmetic/edge = "low".
 - Only propose tests justified by the PAGE CONTEXT and/or PRD — do not invent flows
   that aren't supported, and do not duplicate near-identical cases.
+- GROUNDING: PAGE CONTEXT is for ONE page. Every test's success MUST be verifiable from
+  this page or via an OBSERVABLE transition (a URL change, or a landmark/heading becoming
+  visible). Do NOT propose tests that hinge on the internals of a page you were not shown
+  — e.g. do not propose validating the fields inside a login form, a checkout page, or a
+  dashboard you cannot see. At most, propose "reaches the sign-in page" (verified by the
+  URL/landing state), and mark deeper flows as needing that page's context. Prefer a few
+  solid, grounded tests over many that depend on unseen pages.
 - Do NOT write code here; just the plan. Return at most the requested number.`;
 
 export function buildProposalPrompt(p: ProposeParams): string {
@@ -553,6 +581,15 @@ Apply these fixes based on the error:
   aria-expanded on the control, or a class/attribute on <html>/<body> for theme,
   using the exact accessible name from PAGE CONTEXT — not a bare toBeVisible on
   content that may be CSS-hidden.
+- locator name with a decoration that isn't in the real name (e.g. trailing ' +',
+  chevrons, counts) → use the EXACT accessible name from PAGE CONTEXT, or a unique
+  substring with { exact: false }; strip the invented icon characters.
+- an assertion on a page whose DOM is NOT in PAGE CONTEXT (the spec navigated away —
+  login, checkout, another route, and now asserts getByLabel/fields you cannot see) →
+  weaken it to the observable transition only: toHaveURL on a stable path substring, or
+  one visible landmark/heading. Never keep assertions on unseen-page internals.
+- a toHaveURL for a landing-page nav item that is actually an in-page anchor (URL never
+  changed) → replace with asserting the target section/heading is visible instead.
 - genuine timeout on a real element → raise that assertion's { timeout }.
 - "failed to load" / collection error / top-level threw / missing file → move ALL
   top-level code inside the test body and remove file-system reads; for uploads use
