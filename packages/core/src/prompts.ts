@@ -68,6 +68,26 @@ Rules for the code:
     order: a URL change, a success heading, then visible text.
   * Rely on Playwright's auto-waiting web-first assertions; do NOT add manual
     waitForTimeout. If you need longer, pass { timeout } to the assertion.
+  * NEGATIVE / VALIDATION flows (invalid input, empty/malformed fields): the error
+    UI is almost NEVER in PAGE CONTEXT because it only renders AFTER the bad action.
+    NEVER invent a specific error string you cannot see in PAGE CONTEXT (e.g. do NOT
+    write getByText('Invalid URL')). Instead assert a signal you can ground:
+      - the flow did NOT succeed — the success heading/URL/result is ABSENT, e.g.
+        await expect(page.getByRole('heading', { name: /results/i })).toHaveCount(0),
+        or the URL/path did not change to the success path;
+      - the field's NATIVE invalid state for typed inputs — e.g.
+        await expect(input).toHaveJSProperty('validity.valid', false) for an
+        <input type="url|email|number|tel|...">, or expect(input).toHaveAttribute('aria-invalid','true');
+      - an exact error message ONLY if that text or an error container actually
+        appears in PAGE CONTEXT. If you cannot ground any error, assert the ABSENCE
+        of the success signal — never a guessed message.
+  * STATE TOGGLES (dark mode, tabs, accordions/FAQ, menus): assert on the control's
+    STATE or a real attribute/class, NOT on guessed content becoming visible/hidden.
+    Use the exact accessible name from PAGE CONTEXT (e.g. getByRole('button',
+    { name: 'Switch to dark mode' })) and verify a robust observable: a class/attribute
+    toggling on <html> or <body> (theme), aria-expanded flipping on the control, or a
+    specific element PAGE CONTEXT confirms. Accordion/collapsible content is often kept
+    in the DOM and hidden via CSS — prefer aria-expanded over a bare toBeVisible on text.
 - Credentials: if CREDENTIALS are provided, use those exact values. Else, if the
   PAGE CONTEXT's visible text shows test credentials (common on demo/practice
   sites, e.g. "Username: student  Password: Password123"), use those literal
@@ -523,6 +543,16 @@ Apply these fixes based on the error:
 - element "not found" / wrong role → use the element type PAGE CONTEXT actually
   shows (link vs button), or assert a more reliable signal (URL/heading/text). Use
   .or() if it could be either.
+- a timed-out / "not found" assertion on a GUESSED error or validation message
+  (e.g. getByText('Invalid URL')) that is NOT in PAGE CONTEXT → the message was
+  hallucinated; do NOT hunt for similar text. Replace it with a grounded negative
+  assertion: the success signal is ABSENT (heading/result/URL did not appear), or the
+  input's native invalid state — expect(input).toHaveJSProperty('validity.valid', false)
+  / aria-invalid="true". Only keep an exact message if PAGE CONTEXT shows it.
+- a timed-out toggle/accordion/theme assertion → assert the control's STATE instead:
+  aria-expanded on the control, or a class/attribute on <html>/<body> for theme,
+  using the exact accessible name from PAGE CONTEXT — not a bare toBeVisible on
+  content that may be CSS-hidden.
 - genuine timeout on a real element → raise that assertion's { timeout }.
 - "failed to load" / collection error / top-level threw / missing file → move ALL
   top-level code inside the test body and remove file-system reads; for uploads use
