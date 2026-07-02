@@ -12,7 +12,9 @@ export default async function McpPage({ params }: { params: Promise<{ projectId:
   const [{ data: project }, { data: tests }, { data: localRuns }] = await Promise.all([
     supabase.from("projects").select("ingest_token").eq("id", projectId).maybeSingle(),
     supabase.from("tests").select("id, name, spec_path, status, created_at").eq("project_id", projectId).eq("origin", "mcp").order("created_at", { ascending: false }),
-    supabase.from("test_runs").select("id, passed, failed, flaky, branch, created_at").eq("project_id", projectId).eq("trigger", "manual").order("created_at", { ascending: false }).limit(10),
+    // Local/MCP runs use trigger="manual" — but so do cloud runs (branch "cloud"/"cloud-trial").
+    // Exclude those so this list shows ONLY runs from the local MCP (verity_run in your IDE).
+    supabase.from("test_runs").select("id, passed, failed, flaky, branch, created_at").eq("project_id", projectId).eq("trigger", "manual").neq("branch", "cloud").neq("branch", "cloud-trial").order("created_at", { ascending: false }).limit(10),
   ]);
   if (!project) notFound();
 

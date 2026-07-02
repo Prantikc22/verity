@@ -93,14 +93,21 @@ export function extractPageContext(rawHtml: string, url: string): PageContext | 
         (m) => attr(m[0], "aria-label") || decode(m[1].replace(/<[^>]+>/g, " ")),
       ),
     ],
-    15,
+    24,
   );
 
-  // Links (nav targets).
+  // Links (nav targets) WITH their href — so the model knows whether a nav item is
+  // an in-page anchor (#section) or a real route (/path). Without this the model
+  // guesses, which is the #1 cause of brittle toHaveURL assertions.
   const links = uniq(
-    [...cleaned.matchAll(/<a[^>]*>([\s\S]*?)<\/a>/gi)].map((m) => decode(m[1].replace(/<[^>]+>/g, " "))),
-    15,
-  ).filter((t) => t.length > 0 && t.length < 40);
+    [...cleaned.matchAll(/<a[^>]*>([\s\S]*?)<\/a>/gi)].map((m) => {
+      const text = decode(m[1].replace(/<[^>]+>/g, " "));
+      if (!text || text.length >= 40) return "";
+      const href = attr(m[0], "href");
+      return href ? `${text} -> ${href}` : text;
+    }),
+    25,
+  ).filter(Boolean);
 
   // Inputs with their best accessible name.
   const inputs = uniq(
@@ -110,7 +117,7 @@ export function extractPageContext(rawHtml: string, url: string): PageContext | 
       const name = attr(tag, "aria-label") || attr(tag, "placeholder") || attr(tag, "name") || attr(tag, "id");
       return name ? `${name} (${type})` : "";
     }),
-    15,
+    20,
   );
 
   // Labels (often the accessible name for inputs).
@@ -136,7 +143,7 @@ export function extractPageContext(rawHtml: string, url: string): PageContext | 
   if (buttons.length) parts.push(`Buttons: ${buttons.join(" | ")}`);
   if (inputs.length) parts.push(`Inputs: ${inputs.join(" | ")}`);
   if (labels.length) parts.push(`Labels: ${labels.join(" | ")}`);
-  if (links.length) parts.push(`Links: ${links.join(" | ")}`);
+  if (links.length) parts.push(`Links (name -> href; an href starting with "#" is an IN-PAGE anchor, NOT a route — do not assert a URL change for it): ${links.join(" | ")}`);
   if (visibleText.length > 40) parts.push(`Visible text (may include test credentials/instructions): ${visibleText}`);
   if (likelyClientRendered) {
     parts.push(
