@@ -58,7 +58,13 @@ export async function POST(req: NextRequest) {
       { onConflict: "org_id" },
     );
 
-    return NextResponse.json({ checkoutUrl: result.checkoutUrl });
+    // Return subscription id + public key so the client can open the in-page
+    // Razorpay Checkout modal; checkoutUrl stays as a hosted-page fallback.
+    return NextResponse.json({
+      checkoutUrl: result.checkoutUrl,
+      subscriptionId: result.providerSubscriptionId,
+      keyId: process.env.RAZORPAY_KEY_ID ?? null,
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Could not start checkout.";
     return NextResponse.json({ error: message }, { status: 500 });

@@ -3,6 +3,24 @@
 import { useState } from "react";
 import Link from "next/link";
 
+type RazorpayCtor = new (opts: Record<string, unknown>) => { open: () => void };
+declare global {
+  interface Window { Razorpay?: RazorpayCtor }
+}
+
+/** Load Razorpay Checkout.js once, for the in-page modal. */
+function loadRazorpay(): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (typeof window === "undefined") return resolve(false);
+    if (window.Razorpay) return resolve(true);
+    const s = document.createElement("script");
+    s.src = "https://checkout.razorpay.com/v1/checkout.js";
+    s.onload = () => resolve(true);
+    s.onerror = () => resolve(false);
+    document.body.appendChild(s);
+  });
+}
+
 interface Tier {
   name: string;
   blurb: string;
@@ -72,8 +90,24 @@ export function VeritySelfServeCards({ inIndia }: { inIndia: boolean }) {
       }
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Could not start checkout.");
+
+      // Preferred: open the Razorpay Checkout modal in-page.
+      if (data.subscriptionId && data.keyId && (await loadRazorpay()) && window.Razorpay) {
+        const rzp = new window.Razorpay({
+          key: data.keyId,
+          subscription_id: data.subscriptionId,
+          name: "Verity",
+          description: "Self-Serve Pro — monthly",
+          theme: { color: "#4f46e5" },
+          handler: () => window.location.assign("/dashboard?upgraded=1"),
+          modal: { ondismiss: () => setBusy(null) },
+        });
+        rzp.open();
+        return;
+      }
+      // Fallback: hosted Razorpay page.
       if (data.checkoutUrl) window.location.assign(data.checkoutUrl);
-      else throw new Error("Checkout link unavailable — please contact us.");
+      else throw new Error("Checkout unavailable — please contact us.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
       setBusy(null);
