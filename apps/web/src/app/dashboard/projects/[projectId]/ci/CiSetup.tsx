@@ -52,7 +52,8 @@ export function CiSetup({ defaultApiUrl, defaultBranch }: { defaultApiUrl: strin
   }
   function setPerf<K extends keyof CiConfig["perf"]>(k: K, v: CiConfig["perf"][K]) { setC((p) => ({ ...p, perf: { ...p.perf, [k]: v } })); }
   function setSec<K extends keyof CiConfig["security"]>(k: K, v: CiConfig["security"][K]) { setC((p) => ({ ...p, security: { ...p.security, [k]: v } })); }
-  function setMob<K extends keyof CiConfig["mobile"]>(k: K, v: CiConfig["mobile"][K]) { setC((p) => ({ ...p, mobile: { ...p.mobile, [k]: v } })); }
+  function setVis<K extends keyof CiConfig["visual"]>(k: K, v: CiConfig["visual"][K]) { setC((p) => ({ ...p, visual: { ...p.visual, [k]: v } })); }
+  function setAgent<K extends keyof CiConfig["agent"]>(k: K, v: CiConfig["agent"][K]) { setC((p) => ({ ...p, agent: { ...p.agent, [k]: v } })); }
   function setCon<K extends keyof CiConfig["contract"]>(k: K, v: CiConfig["contract"][K]) { setC((p) => ({ ...p, contract: { ...p.contract, [k]: v } })); }
 
   async function copy() {
@@ -90,7 +91,7 @@ export function CiSetup({ defaultApiUrl, defaultBranch }: { defaultApiUrl: strin
       </section>
 
       {/* ── 2. Options for the engines you picked ──────────────────── */}
-      {(c.engines.perf || c.engines.security || c.engines.mobile || c.engines.contract) && (
+      {(c.engines.perf || c.engines.security || c.engines.visual || c.engines.agent || c.engines.contract) && (
         <section>
           <h3 className="text-sm font-semibold">2 · Configure them</h3>
           <div className="mt-3 grid gap-4 lg:grid-cols-2">
@@ -137,18 +138,26 @@ export function CiSetup({ defaultApiUrl, defaultBranch }: { defaultApiUrl: strin
               </div>
             )}
 
-            {c.engines.mobile && (
+            {c.engines.visual && (
               <div className="border border-neutral-200 p-4 dark:border-neutral-800">
-                <div className="flex items-center gap-2 text-sm font-medium">📱 Mobile</div>
+                <div className="flex items-center gap-2 text-sm font-medium">🖼️ Visual</div>
+                <p className="text-[11px] text-neutral-500">Screenshot regression. Baselines are committed to your repo — a diff over the threshold shows as &ldquo;changed&rdquo;.</p>
                 <div className="mt-3 space-y-2 text-xs">
-                  <div className="flex items-center gap-3">
-                    <span className="text-[11px] text-neutral-500">Platform:</span>
-                    {(["android", "ios"] as const).map((p) => (
-                      <label key={p} className="flex items-center gap-1"><input type="radio" name="platform" checked={c.mobile.platform === p} onChange={() => setMob("platform", p)} /> <span>{p === "android" ? "Android emulator" : "iOS simulator (macOS)"}</span></label>
-                    ))}
-                  </div>
-                  <Field label="Flows directory" value={c.mobile.flowsDir} onChange={(v) => setMob("flowsDir", v)} mono />
-                  <label className="flex items-center gap-2"><input type="checkbox" checked={c.mobile.realDevice} onChange={(e) => setMob("realDevice", e.target.checked)} /> <span>Real devices via a <strong>cloud device farm</strong> <span className="text-neutral-400">(Scale/Enterprise)</span></span></label>
+                  <Field label="Snapshots / baselines directory" value={c.visual.snapshotsDir} onChange={(v) => setVis("snapshotsDir", v)} mono />
+                  <Field label="Max diff pixel ratio (0–1)" value={String(c.visual.maxDiffPixelRatio)} onChange={(v) => setVis("maxDiffPixelRatio", Number(v) || 0)} />
+                  <p className="text-[10px] text-neutral-400">Lower = stricter. 0.01 flags ~1% of pixels changing.</p>
+                </div>
+              </div>
+            )}
+
+            {c.engines.agent && (
+              <div className="border border-neutral-200 p-4 dark:border-neutral-800">
+                <div className="flex items-center gap-2 text-sm font-medium">🤖 Agent (AI) evals</div>
+                <p className="text-[11px] text-neutral-500">Evals for your <strong>own</strong> AI feature. Verity calls your endpoint and asserts a property of the reply (grounding, injection resistance, tool-use).</p>
+                <div className="mt-3 space-y-2 text-xs">
+                  <Field label="AI endpoint (reachable from CI)" value={c.agent.endpoint} onChange={(v) => setAgent("endpoint", v)} placeholder="https://api.example.com/chat" />
+                  <Field label="Token secret name" value={c.agent.authTokenSecret} onChange={(v) => setAgent("authTokenSecret", v)} mono />
+                  <p className="text-[10px] text-amber-600">Store the token as a CI secret under this name — never in the config.</p>
                 </div>
               </div>
             )}

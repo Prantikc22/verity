@@ -14,7 +14,7 @@
  *
  * Usage:
  *   node verity-engines.mjs <engine> --tier <fast|full> --report <file> [opts]
- *     engine ∈ mobile | perf | lighthouse | security-dast | security-sast | contract
+ *     engine ∈ visual | agent | perf | lighthouse | security-dast | security-sast | contract
  *
  * Env: VERITY_API_URL, VERITY_INGEST_TOKEN, VERITY_PR_NUMBER
  */
@@ -37,10 +37,12 @@ const apiUrl = (process.env.VERITY_API_URL ?? "https://verity.qashift.com").repl
 const target = arg("target", process.env.VERITY_TARGET_URL ?? "");
 const spec = arg("spec", process.env.VERITY_OPENAPI_SPEC ?? "");
 const config = arg("config", "");
-const flowsDir = arg("flows-dir", "tests/verity/mobile");
+const snapshotsDir = arg("snapshots-dir", "tests/verity/visual");
+const evalsDir = arg("evals-dir", "tests/verity/agent");
+const endpoint = arg("endpoint", process.env.AGENT_ENDPOINT ?? "");
 const base = arg("base", "origin/main");
 
-const VALID = ["mobile", "perf", "cwv", "lighthouse", "security-dast", "security-sast", "contract"];
+const VALID = ["visual", "agent", "perf", "cwv", "lighthouse", "security-dast", "security-sast", "contract"];
 if (!VALID.includes(engine)) {
   console.error(`✗ Unknown engine '${engine}'. Expected one of: ${VALID.join(", ")}`);
   process.exit(1);
@@ -82,9 +84,19 @@ function sh(cmd) {
 function runEngine() {
   if (reportPath) return reportPath; // caller supplied a report; just adapt it
   switch (engine) {
-    case "mobile": {
-      const out = `${tmp}/verity-mobile.xml`;
-      sh(`maestro test --format junit --output "${out}" "${flowsDir}"`);
+    case "visual": {
+      // Visual specs are ordinary Playwright tests whose assertion is
+      // toHaveScreenshot; run them and emit JUnit for the adapter.
+      const out = `${tmp}/verity-visual.xml`;
+      sh(`PLAYWRIGHT_JUNIT_OUTPUT_NAME="${out}" npx --yes playwright test "${snapshotsDir}" --reporter=junit`);
+      return out;
+    }
+    case "agent": {
+      // Agent evals are Playwright API tests that assert a property of the AI
+      // endpoint's reply; the endpoint is passed through to them via env.
+      const out = `${tmp}/verity-agent.xml`;
+      const endpointEnv = endpoint ? `AGENT_ENDPOINT="${endpoint}" ` : "";
+      sh(`${endpointEnv}PLAYWRIGHT_JUNIT_OUTPUT_NAME="${out}" npx --yes playwright test "${evalsDir}" --reporter=junit`);
       return out;
     }
     case "perf": {
@@ -163,12 +175,20 @@ function inferMeaning(error) {
   if (/schema|does not (match|conform)|invalid response|content.type/.test(e)) return "response-schema-mismatch";
   return null;
 }
-function adaptMaestro(xml) {
+function adaptVisual(xml) {
   return parseJUnit(xml).filter((c) => !c.skipped).map((c) => ({
     spec_path: c.classname || c.name, name: c.name, attempts: [c.ok],
     duration_ms: c.time != null ? Math.round(c.time * 1000) : undefined,
-    error_message: c.ok ? null : c.failureMessage ?? "Maestro flow failed",
-    discipline: "mobile", engine: "maestro",
+    error_message: c.ok ? null : c.failureMessage ?? "Visual snapshot changed",
+    discipline: "visual", engine: "playwright-visual",
+  }));
+}
+function adaptAgentEval(xml) {
+  return parseJUnit(xml).filter((c) => !c.skipped).map((c) => ({
+    spec_path: c.classname || c.name, name: c.name, attempts: [c.ok],
+    duration_ms: c.time != null ? Math.round(c.time * 1000) : undefined,
+    error_message: c.ok ? null : c.failureMessage ?? "Agent eval failed",
+    discipline: "agent", engine: "llm-eval",
   }));
 }
 function adaptSchemathesis(xml) {
@@ -271,10 +291,16 @@ const basePayload = {
 let payload;
 let label;
 switch (engine) {
-  case "mobile": {
-    const results = adaptMaestro(readReport());
-    payload = { ...basePayload, discipline: "mobile", results };
-    label = `Mobile — ${results.length} flow(s)`;
+  case "visual": {
+    const results = adaptVisual(readReport());
+    payload = { ...basePayload, discipline: "visual", results };
+    label = `Visual — ${results.length} snapshot(s)`;
+    break;
+  }
+  case "agent": {
+    const results = adaptAgentEval(readReport());
+    payload = { ...basePayload, discipline: "agent", results };
+    label = `Agent (AI) — ${results.length} eval(s)`;
     break;
   }
   case "contract": {

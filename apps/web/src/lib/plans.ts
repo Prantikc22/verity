@@ -183,7 +183,7 @@ export const PLANS: Record<PlanTier, PlanLimits> = {
     fde: true,
     pomConversion: true,
     highlights: [
-      "Up to 200 maintained tests · web + mobile",
+      "Up to 200 maintained tests · UI, API, visual & agent",
       "Dedicated engineer + merge-blocking",
       "Full predictions: correlation + deploy confidence",
       "10 projects · 180-day history",

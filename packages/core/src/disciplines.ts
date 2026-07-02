@@ -10,8 +10,14 @@
  * disciplines simply populate the new optional fields.
  */
 
-/** The five testing disciplines Verity supports. "ui" + "api" are the originals. */
-export type Discipline = "ui" | "api" | "mobile" | "performance" | "security";
+/**
+ * The testing disciplines Verity supports with AI. "ui" + "api" are the
+ * originals; "visual" (screenshot/pixel regression) and "agent" (LLM/AI-feature
+ * evals) are additive. NOTE: mobile app testing is offered as a human-run
+ * (non-AI) service via QAShift and is deliberately NOT a discipline here — the
+ * AI agent cannot reach a device/emulator the way it reaches a URL or an API.
+ */
+export type Discipline = "ui" | "api" | "performance" | "security" | "visual" | "agent";
 
 /**
  * The concrete tool ("engine") that produced a result. Used only internally for
@@ -20,7 +26,8 @@ export type Discipline = "ui" | "api" | "mobile" | "performance" | "security";
  */
 export type Engine =
   | "playwright" // UI + API flow tests (existing)
-  | "maestro" // mobile
+  | "playwright-visual" // visual regression (Playwright toHaveScreenshot)
+  | "llm-eval" // agent / AI-feature evals
   | "artillery" // performance load
   | "lighthouse" // performance / Core Web Vitals
   | "zap" // security DAST
@@ -112,12 +119,13 @@ export interface PerfReport {
 /**
  * One unified test result row. This is a SUPERSET of the existing UI/API
  * ingest result — `spec_path` + `attempts` carry exactly the same meaning as
- * today, and everything else is optional. Mobile (Maestro) and API-contract
- * (Schemathesis) results map cleanly onto pass/fail `attempts`; performance and
- * security do NOT use this shape (they use PerfReport / Finding[] instead).
+ * today, and everything else is optional. Visual (screenshot), agent (LLM eval)
+ * and API-contract (Schemathesis) results map cleanly onto pass/fail `attempts`;
+ * performance and security do NOT use this shape (they use PerfReport /
+ * Finding[] instead).
  */
 export interface UnifiedResult {
-  /** Spec/flow path, e.g. "tests/verity/mobile/login.yaml" or a Schemathesis op id. */
+  /** Spec/flow path, e.g. "tests/verity/visual/home.spec.ts" or a Schemathesis op id. */
   spec_path: string;
   /** Human-readable name/title. */
   name?: string;

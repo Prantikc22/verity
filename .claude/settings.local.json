@@ -12,7 +12,15 @@
       "Bash(npm run *)",
       "Bash(break)",
       "Bash(curl -s -o /tmp/verity_home.html -w \"%{http_code}\" http://localhost:3000/)",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(grep -E '\\\\.env\\\\.local|\\\\.pem$|\\\\.vercel/|node_modules')",
+      "Bash(curl -s -X POST -H \"Authorization: token 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\" -H \"Accept: application/vnd.github+json\" https://api.github.com/user/repos -d '{\"name\":\"verity\",\"description\":\"Verity — AI-augmented multi-discipline testing platform \\(QAShift\\)\",\"private\":true}')",
+      "Bash(git -c 'user.name=Prantik Chatterjee' -c user.email=prantikchatterjee22@gmail.com commit -q -m 'Initial commit: Verity platform \\(app, core, action, cli, mcp, runner\\) *)",
+      "Bash(git branch *)",
+      "Bash(git remote *)",
+      "Bash(git push *)",
+      "Bash(curl -s -H \"Authorization: token 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\" \"https://api.github.com/repos/Prantikc22/verity/contents/apps/web\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" -H \"Authorization: token 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\" \"https://api.github.com/repos/Prantikc22/verity/contents/apps/web/.env.local\")"
     ]
   }
 }

@@ -1,0 +1,16 @@
+{
+	"servers": {
+		"verity": {
+			"command": "npx",
+			"args": [
+				"-y",
+				"@qashifthq/verity-mcp"
+			],
+			"env": {
+				"VERITY_TOKEN": "3af75cefe778e6c0cf9febeff86aa2d8f1f5dcf1ca11dd5b"
+			},
+			"type": "stdio"
+		}
+	},
+	"inputs": []
+}

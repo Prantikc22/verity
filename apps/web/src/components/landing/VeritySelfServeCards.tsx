@@ -21,6 +21,11 @@ function loadRazorpay(): Promise<boolean> {
   });
 }
 
+/** Tiers that can start a Razorpay checkout: self-serve here + FDE tiers via the
+ *  QAShift "Pay & start now" deep link. The backend validates against PAID_TIERS. */
+const CHECKOUT_TIERS = ["pro", "team", "starter", "growth", "scale"] as const;
+type CheckoutTier = (typeof CHECKOUT_TIERS)[number];
+
 interface Tier {
   name: string;
   blurb: string;
@@ -87,17 +92,18 @@ export function VeritySelfServeCards({ inIndia }: { inIndia: boolean }) {
   const fmt = (t: Tier) =>
     currency === "INR" ? (t.inr === 0 ? "₹0" : `₹${t.inr.toLocaleString("en-IN")}`) : t.usd === 0 ? "$0" : `$${t.usd}`;
 
-  // Resume checkout after a login round-trip (?checkout=pro|team).
+  // Resume checkout after a login round-trip, or when arriving from the QAShift
+  // FDE "Pay & start now" deep link (?checkout=pro|team|starter|growth|scale).
   useEffect(() => {
     if (typeof window === "undefined") return;
     const c = new URLSearchParams(window.location.search).get("checkout");
-    if (c === "pro" || c === "team") startCheckout(c);
+    if (c && CHECKOUT_TIERS.includes(c as CheckoutTier)) startCheckout(c as CheckoutTier);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Paid tier → Razorpay checkout. If not signed in, bounce to login and come
   // back to /pricing so the user can complete the purchase.
-  async function startCheckout(tier: "pro" | "team") {
+  async function startCheckout(tier: CheckoutTier) {
     setBusy(tier);
     setError("");
     try {
@@ -120,7 +126,7 @@ export function VeritySelfServeCards({ inIndia }: { inIndia: boolean }) {
           key: data.keyId,
           subscription_id: data.subscriptionId,
           name: "Verity",
-          description: "Self-Serve Pro — monthly",
+          description: `Verity ${tier.charAt(0).toUpperCase() + tier.slice(1)} — monthly`,
           theme: { color: "#4f46e5" },
           handler: () => window.location.assign("/dashboard?upgraded=1"),
           modal: { ondismiss: () => setBusy(null) },
@@ -188,7 +194,7 @@ export function VeritySelfServeCards({ inIndia }: { inIndia: boolean }) {
             <div className="text-xs font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">FDE-backed · Starter and up</div>
             <h3 className="mt-1 text-xl font-semibold">Want an engineer on it?</h3>
             <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">
-              Starter, Growth, Scale, and Enterprise include a forward-deployed engineer, mobile, performance, security, and predictions. All four tiers live on the QAShift platform pricing page.
+              Starter, Growth, Scale, and Enterprise include a forward-deployed engineer, visual, agent (AI) testing, performance, security, and predictions. All four tiers live on the QAShift platform pricing page.
             </p>
           </div>
           <a href="https://qashifthq.com/pricing" target="_blank" rel="noopener noreferrer" className="mt-5 block bg-amber-500 px-4 py-2.5 text-center text-sm font-semibold text-neutral-950 transition hover:bg-amber-400">

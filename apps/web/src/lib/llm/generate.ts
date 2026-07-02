@@ -5,9 +5,9 @@ import {
   TEST_HEAL_SYSTEM,
   API_PROPOSAL_SYSTEM,
   API_GENERATION_SYSTEM,
-  MAESTRO_PROPOSAL_SYSTEM,
-  MAESTRO_GENERATION_SYSTEM,
-  MAESTRO_HEAL_SYSTEM,
+  VISUAL_GENERATION_SYSTEM,
+  AGENT_PROPOSAL_SYSTEM,
+  AGENT_GENERATION_SYSTEM,
   ARTILLERY_GENERATION_SYSTEM,
   buildGenerationPrompt,
   buildHealingPrompt,
@@ -15,9 +15,9 @@ import {
   buildTestHealPrompt,
   buildApiProposalPrompt,
   buildApiGenerationPrompt,
-  buildMaestroProposalPrompt,
-  buildMaestroGenerationPrompt,
-  buildMaestroHealPrompt,
+  buildVisualGenerationPrompt,
+  buildAgentProposalPrompt,
+  buildAgentGenerationPrompt,
   buildArtilleryGenerationPrompt,
   hardenSpec,
   type GenerateTestParams,
@@ -25,9 +25,9 @@ import {
   type ProposeParams,
   type ApiProposeParams,
   type ApiGenerateParams,
-  type MaestroProposeParams,
-  type MaestroGenerateParams,
-  type MaestroHealParams,
+  type VisualGenerateParams,
+  type AgentProposeParams,
+  type AgentGenerateParams,
   type ArtilleryGenerateParams,
 } from "@qashift/verity-core";
 import { complete, llmConfig } from "./provider";
@@ -243,45 +243,15 @@ export async function generateApiTest(params: ApiGenerateParams): Promise<Genera
 }
 
 /* ------------------------------------------------------------------ *
- * Mobile (Maestro) — mirrors the UI generator, emits YAML flows.       *
+ * Visual (Playwright screenshot regression) — reuses the UI generator  *
+ * architecture; emits a .spec.ts whose assertion is toHaveScreenshot.   *
  * ------------------------------------------------------------------ */
 
-/** Propose Maestro flows worth writing for a mobile app. */
-export async function proposeMaestroFlows(
-  params: MaestroProposeParams,
-): Promise<{ candidates: TestCandidate[] }> {
+/** Generate a Playwright visual-regression spec (snapshot of a stable UI state). */
+export async function generateVisualTest(params: VisualGenerateParams): Promise<GeneratedTest> {
   const raw = await complete({
-    system: MAESTRO_PROPOSAL_SYSTEM,
-    user: buildMaestroProposalPrompt(params),
-    temperature: 0.3,
-    json: true,
-  });
-  let candidates: TestCandidate[] = [];
-  try {
-    const parsed = JSON.parse(raw) as { candidates?: TestCandidate[] };
-    if (Array.isArray(parsed.candidates)) {
-      candidates = parsed.candidates.slice(0, params.max).map((c) => ({
-        title: String(c.title ?? "Flow"),
-        intent: String(c.intent ?? ""),
-        priority: (["high", "medium", "low"].includes(c.priority) ? c.priority : "medium") as TestCandidate["priority"],
-        plan: Array.isArray(c.plan) ? c.plan.map(String) : [],
-      }));
-    }
-  } catch {
-    candidates = [];
-  }
-  return { candidates };
-}
-
-/**
- * Generate a Maestro YAML flow (mobile). Same LLM-call architecture as the
- * Playwright generator; emits Maestro's YAML instead of a .spec.ts. hardenSpec
- * is Playwright-specific, so it is intentionally NOT applied to YAML.
- */
-export async function generateMaestroFlow(params: MaestroGenerateParams): Promise<GeneratedTest> {
-  const raw = await complete({
-    system: MAESTRO_GENERATION_SYSTEM,
-    user: buildMaestroGenerationPrompt(params),
+    system: VISUAL_GENERATION_SYSTEM,
+    user: buildVisualGenerationPrompt(params),
     temperature: 0.2,
     json: true,
   });
@@ -294,42 +264,64 @@ export async function generateMaestroFlow(params: MaestroGenerateParams): Promis
   } catch {
     code = raw;
   }
-  const specContent = stripFences(code);
-  // "assertions" in Maestro ≈ assertVisible/assertNotVisible lines.
-  const assertionCount = (specContent.match(/assert(Visible|NotVisible|True)/g) ?? []).length;
-  return { specContent, plan, model: llmConfig().model, assertionCount, usedLiveContext: Boolean(params.screenContext) };
+  const specContent = hardenSpec(stripFences(code));
+  // The screenshot comparison IS the assertion for a visual test.
+  const assertionCount = (specContent.match(/toHaveScreenshot\s*\(/g) ?? []).length;
+  return { specContent, plan, model: llmConfig().model, assertionCount, usedLiveContext: Boolean(params.pageContext) };
 }
 
-/**
- * Self-heal a broken Maestro flow using Maestro's accessibility-tree dump as the
- * equivalent of the DOM snapshot used for Playwright healing. Returns a corrected
- * flow + explanation + confidence — the caller delivers it via the EXISTING
- * PR-diff mechanism (no second delivery path).
- */
-export async function healMaestroFlow(params: MaestroHealParams): Promise<HealedTest> {
+/* ------------------------------------------------------------------ *
+ * Agent (LLM / AI-feature evals) — Playwright request tests that assert *
+ * a PROPERTY of the customer's AI endpoint reply.                       *
+ * ------------------------------------------------------------------ */
+
+/** Propose eval cases worth writing for a customer's LLM/agent feature. */
+export async function proposeAgentEvals(
+  params: AgentProposeParams,
+): Promise<{ candidates: TestCandidate[] }> {
   const raw = await complete({
-    system: MAESTRO_HEAL_SYSTEM,
-    user: buildMaestroHealPrompt(params),
-    temperature: 0,
+    system: AGENT_PROPOSAL_SYSTEM,
+    user: buildAgentProposalPrompt(params),
+    temperature: 0.3,
     json: true,
   });
-  let code = "";
-  let explanation = "";
-  let confidence = 0;
+  let candidates: TestCandidate[] = [];
   try {
-    const parsed = JSON.parse(raw) as { code?: unknown; explanation?: unknown; confidence?: unknown };
+    const parsed = JSON.parse(raw) as { candidates?: TestCandidate[] };
+    if (Array.isArray(parsed.candidates)) {
+      candidates = parsed.candidates.slice(0, params.max).map((c) => ({
+        title: String(c.title ?? "Eval"),
+        intent: String(c.intent ?? ""),
+        priority: (["high", "medium", "low"].includes(c.priority) ? c.priority : "medium") as TestCandidate["priority"],
+        plan: Array.isArray(c.plan) ? c.plan.map(String) : [],
+      }));
+    }
+  } catch {
+    candidates = [];
+  }
+  return { candidates };
+}
+
+/** Generate a Playwright API test that evaluates a property of the AI feature's reply. */
+export async function generateAgentEval(params: AgentGenerateParams): Promise<GeneratedTest> {
+  const raw = await complete({
+    system: AGENT_GENERATION_SYSTEM,
+    user: buildAgentGenerationPrompt(params),
+    temperature: 0.2,
+    json: true,
+  });
+  let plan: string[] = [];
+  let code = "";
+  try {
+    const parsed = JSON.parse(raw) as { plan?: unknown; code?: unknown };
+    if (Array.isArray(parsed.plan)) plan = parsed.plan.map((s) => String(s));
     if (typeof parsed.code === "string") code = parsed.code;
-    if (typeof parsed.explanation === "string") explanation = parsed.explanation;
-    if (typeof parsed.confidence === "number") confidence = parsed.confidence;
   } catch {
     code = raw;
   }
-  return {
-    specContent: stripFences(code),
-    explanation: explanation || "Adjusted the flow's selectors to match the current screen.",
-    confidence,
-    model: llmConfig().model,
-  };
+  const specContent = hardenSpec(stripFences(code));
+  const assertionCount = (specContent.match(/expect\s*\(/g) ?? []).length;
+  return { specContent, plan, model: llmConfig().model, assertionCount, usedLiveContext: false };
 }
 
 /* ------------------------------------------------------------------ *

@@ -52,9 +52,9 @@ function attr(tag: string, name: string): string | undefined {
 
 /**
  * Minimal JUnit XML parser. Handles the `<testcase>` elements emitted by
- * Maestro (`--format junit`) and Schemathesis (`--junit-xml`). A `<testcase>`
- * is a failure if it contains a `<failure>` or `<error>` child; skipped if it
- * contains `<skipped>`.
+ * Playwright (`--reporter junit`, used for UI + visual), Schemathesis
+ * (`--junit-xml`) and the agent-eval runner. A `<testcase>` is a failure if it
+ * contains a `<failure>` or `<error>` child; skipped if it contains `<skipped>`.
  */
 export function parseJUnit(xml: string): JUnitCase[] {
   const cases: JUnitCase[] = [];
@@ -145,14 +145,17 @@ export function adaptSarif(sarif: SarifLog, engine: Finding["engine"]): Finding[
 }
 
 /* ------------------------------------------------------------------ *
- * 1. MOBILE — Maestro (JUnit XML → pass/fail UnifiedResult[])          *
+ * 1a. VISUAL — Playwright screenshot regression (JUnit → UnifiedResult) *
  * ------------------------------------------------------------------ */
 
 /**
- * Map Maestro's JUnit output to unified pass/fail rows (same shape as UI tests).
- * Maestro runs each `.yaml` flow as a test case named after the flow.
+ * Map a Playwright visual-regression run (toHaveScreenshot) to unified pass/fail
+ * rows. Visual specs are ordinary Playwright tests, so they emit the same JUnit
+ * output as UI flows — we just tag them discipline="visual" so the dashboard can
+ * group them under a Visual panel. A failed case means a pixel diff exceeded the
+ * threshold (or a baseline was missing).
  */
-export function adaptMaestro(junitXml: string): UnifiedResult[] {
+export function adaptVisual(junitXml: string): UnifiedResult[] {
   return parseJUnit(junitXml)
     .filter((c) => !c.skipped)
     .map((c) => ({
@@ -160,9 +163,34 @@ export function adaptMaestro(junitXml: string): UnifiedResult[] {
       name: c.name,
       attempts: [c.ok],
       duration_ms: c.time != null ? Math.round(c.time * 1000) : undefined,
-      error_message: c.ok ? null : c.failureMessage ?? "Maestro flow failed",
-      discipline: "mobile" as const,
-      engine: "maestro" as const,
+      error_message: c.ok ? null : c.failureMessage ?? "Visual snapshot changed",
+      discipline: "visual" as const,
+      engine: "playwright-visual" as const,
+    }));
+}
+
+/* ------------------------------------------------------------------ *
+ * 1b. AGENT — LLM / AI-feature evals (JUnit → pass/fail UnifiedResult[]) *
+ * ------------------------------------------------------------------ */
+
+/**
+ * Map an agent/LLM-eval run to unified pass/fail rows. Each eval case asserts a
+ * property of the customer's AI feature (no hallucination, tool-call correct,
+ * prompt-injection resisted, answer grounded, …) and reports pass/fail like any
+ * other test. The runner emits JUnit so this mirrors the other pass/fail
+ * adapters; the case name is the eval's title.
+ */
+export function adaptAgentEval(junitXml: string): UnifiedResult[] {
+  return parseJUnit(junitXml)
+    .filter((c) => !c.skipped)
+    .map((c) => ({
+      spec_path: c.classname || c.name,
+      name: c.name,
+      attempts: [c.ok],
+      duration_ms: c.time != null ? Math.round(c.time * 1000) : undefined,
+      error_message: c.ok ? null : c.failureMessage ?? "Agent eval failed",
+      discipline: "agent" as const,
+      engine: "llm-eval" as const,
     }));
 }
 

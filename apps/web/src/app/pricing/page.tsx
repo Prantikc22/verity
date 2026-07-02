@@ -33,7 +33,7 @@ export default async function PricingPage() {
             <span className="inline-block border border-indigo-300 bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700 dark:border-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300">Same pricing across the QAShift platform</span>
             <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">Start free. Go self-serve at $49. Add an engineer when you&apos;re ready.</h1>
             <p className="mt-4 max-w-2xl text-lg text-neutral-600 dark:text-neutral-300">
-              Verity&apos;s self-serve tiers are below. The forward-deployed-engineer tiers (Starter and up) — with mobile, performance, security, and predictions — live on the
+              Verity&apos;s self-serve tiers are below. The forward-deployed-engineer tiers (Starter and up) — with visual, agent (AI) testing, performance, security, and predictions — live on the
               {" "}<a href="https://qashifthq.com/pricing" target="_blank" rel="noopener noreferrer" className="text-indigo-600 underline">canonical QAShift pricing page</a>.
             </p>
           </Reveal>

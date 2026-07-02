@@ -5,7 +5,7 @@ import { DocsNav, type DocSection } from "./DocsNav";
 
 export const metadata: Metadata = {
   title: "Docs",
-  description: "Wire Verity into your CI — UI, API, mobile, performance, and security testing across GitHub, GitLab, and Jenkins.",
+  description: "Wire Verity into your CI — UI, API, visual, agent (AI), performance, and security testing across GitHub, GitLab, and Jenkins.",
 };
 
 const SECTIONS: DocSection[] = [
@@ -18,7 +18,8 @@ const SECTIONS: DocSection[] = [
   { id: "cli", label: "CLI", group: "CI providers" },
   { id: "ui", label: "UI testing", group: "Disciplines" },
   { id: "api", label: "API testing", group: "Disciplines" },
-  { id: "mobile", label: "Mobile", group: "Disciplines" },
+  { id: "visual", label: "Visual", group: "Disciplines" },
+  { id: "agent", label: "Agent (AI)", group: "Disciplines" },
   { id: "performance", label: "Performance", group: "Disciplines" },
   { id: "security", label: "Security", group: "Disciplines" },
   { id: "self-healing", label: "Self-healing", group: "How it works" },
@@ -59,7 +60,7 @@ export default function DocsPage() {
         <main className="min-w-0 max-w-2xl space-y-14">
           <section>
             <H id="overview" n="">Verity docs</H>
-            <P>Verity is <strong>CI-native</strong>: every test runs in <em>your</em> pipeline and posts results to Verity&apos;s ingestion API. One platform covers UI, API, mobile, performance, and security — each an additive engine you can turn on independently. We never host your browsers for paid usage, and never receive your secrets.</P>
+            <P>Verity is <strong>CI-native</strong>: every test runs in <em>your</em> pipeline and posts results to Verity&apos;s ingestion API. One platform covers UI, API, visual, agent (AI), performance, and security — each an additive engine you can turn on independently. We never host your browsers for paid usage, and never receive your secrets.</P>
             <P>The fastest path: open <Link href="/dashboard" className="text-indigo-600 underline">the dashboard</Link> → a project → <strong>CI Setup</strong>, toggle the tests you want, and copy the generated config for your provider.</P>
           </section>
 
@@ -70,7 +71,7 @@ export default function DocsPage() {
 
           <section>
             <H id="choose-engines" n="2">Choosing which tests to run</H>
-            <P>You don&apos;t need all engines. In CI Setup, toggle any of: <code>ui</code>, <code>api</code> (flow), <code>contract</code>, <code>mobile</code>, <code>perf</code>, <code>security</code>. The <code>engines</code> input controls which steps run; the default <code>ui</code> keeps the classic behavior. Every engine maps its native output into one unified results schema, so the dashboard, PR comments, and predictions work the same regardless of what you enable.</P>
+            <P>You don&apos;t need all engines. In CI Setup, toggle any of: <code>ui</code>, <code>api</code> (flow), <code>contract</code>, <code>visual</code>, <code>agent</code>, <code>perf</code>, <code>security</code>. The <code>engines</code> input controls which steps run; the default <code>ui</code> keeps the classic behavior. Every engine maps its native output into one unified results schema, so the dashboard, PR comments, and predictions work the same regardless of what you enable.</P>
           </section>
 
           <section>
@@ -130,12 +131,21 @@ npx verity run --tier full --token $VERITY_INGEST_TOKEN`}</Code>
           </section>
 
           <section>
-            <H id="mobile" n="8">Mobile</H>
-            <P>AI-generated mobile app flows (YAML) in <code>tests/verity/mobile/</code>, run on an Android emulator or iOS simulator you provision in your workflow (cost is yours). Broken selectors self-heal from the screen&apos;s accessibility-tree dump — the mobile equivalent of a DOM snapshot — delivered as a PR diff. Real-device runs via a cloud device farm are available (Scale/Enterprise), gated behind a flag.</P>
+            <H id="visual" n="8">Visual</H>
+            <P>AI-generated Playwright visual specs in <code>tests/verity/visual/</code> whose assertion is <code>toHaveScreenshot</code>. Each spec navigates to a stable UI state, masks volatile regions (timestamps, avatars, ads), and diffs a screenshot against the <strong>baseline committed in your repo</strong>. A diff over your <code>maxDiffPixelRatio</code> is reported as a <em>changed</em> snapshot — you approve the new baseline or fix the regression. Because baselines live in your repo and run in your CI, visual coverage is unlimited, and broken navigation locators self-heal exactly as UI specs do.</P>
           </section>
 
           <section>
-            <H id="performance" n="9">Performance</H>
+            <H id="agent" n="9">Agent (AI)</H>
+            <P>Evals for your <strong>own</strong> AI features — chatbots, RAG assistants, and tool-using agents. AI-generated Playwright API tests in <code>tests/verity/agent/</code> POST to your AI endpoint and assert a <em>property</em> of the reply, never an exact string (model output varies): grounding (no hallucination), prompt-injection resistance, correct tool-use, safety/PII, valid format, or clean refusal. Point Verity at the endpoint and store its token as a CI secret; evals run on every deploy so a prompt change or model swap can&apos;t quietly break behavior. Needs a reachable endpoint — for internal AI endpoints it runs only inside your CI.</P>
+            <div className="mt-3 border border-neutral-100 bg-neutral-50 p-3 text-xs dark:border-neutral-800 dark:bg-neutral-900">
+              <p className="font-medium">Mobile app testing</p>
+              <p className="mt-1 text-neutral-600 dark:text-neutral-400">Native mobile coverage is available as a <strong>human-run (non-AI) service</strong> through QAShift — the Verity AI agent doesn&apos;t author mobile flows, because it can&apos;t reach a device or emulator the way it reaches a URL or an API. <a href="https://qashifthq.com/contact" target="_blank" rel="noopener noreferrer" className="text-indigo-600 underline">Talk to us</a> if you need it.</p>
+            </div>
+          </section>
+
+          <section>
+            <H id="performance" n="10">Performance</H>
             <P><strong>Verity&apos;s performance engine is a load test for your API</strong>, not a website crawler. It generates concurrent traffic against the endpoints/flows Verity builds from your OpenAPI spec and measures latency percentiles (p50/p95/p99) and error rate under load — it does smoke, soak, and spike by shaping <em>phases</em>. For page-load performance, enable <strong>Core Web Vitals</strong> (the front-end half).</P>
             <div className="mt-3 border border-neutral-100 bg-neutral-50 p-3 text-xs dark:border-neutral-800 dark:bg-neutral-900">
               <p className="font-medium">Key terms</p>
@@ -150,18 +160,18 @@ npx verity run --tier full --token $VERITY_INGEST_TOKEN`}</Code>
           </section>
 
           <section>
-            <H id="security" n="10">Security</H>
+            <H id="security" n="11">Security</H>
             <P><strong>Dynamic analysis</strong> scans your running app at a URL — baseline on PRs, full active scan on merge. <strong>Static analysis</strong> scans your code (diff on PRs, full repo on schedule) in an isolated container. Findings are surfaced as severity-ranked <em>issues</em>, not pass/fail tests, and never block the build.</P>
             <P><strong>How to read them:</strong> work top-down — fix Critical/High before release, schedule Medium, batch Low/Info. SAST points at a <code>file:line</code> (precise — fix at source); DAST points at a URL (baseline can be noisy — confirm first). Follow the CWE link for the bug class and standard fix; a finding that disappears next scan is resolved.</P>
           </section>
 
           <section>
-            <H id="self-healing" n="11">Self-healing</H>
-            <P>When a locator breaks, Verity sends the old selector + surrounding context (DOM for web, accessibility tree for mobile) to the healing model, which proposes a corrected locator. It is <strong>never</strong> written into your source automatically — you review and apply the diff (or merge the PR). One delivery path for every discipline.</P>
+            <H id="self-healing" n="12">Self-healing</H>
+            <P>When a locator breaks, Verity sends the old selector + surrounding DOM context to the healing model, which proposes a corrected locator. It is <strong>never</strong> written into your source automatically — you review and apply the diff (or merge the PR). One delivery path for every discipline.</P>
           </section>
 
           <section>
-            <H id="predictions" n="12">Predictions</H>
+            <H id="predictions" n="13">Predictions</H>
             <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-neutral-600 dark:text-neutral-300">
               <li><strong>Regression-prone module flagging</strong> <em>(Live)</em> — high-regression-rate files are flagged in PR comments.</li>
               <li><strong>Flake vs. real-failure disambiguation</strong> <em>(Live)</em> — each failure shows its historical flake rate.</li>
@@ -170,7 +180,7 @@ npx verity run --tier full --token $VERITY_INGEST_TOKEN`}</Code>
           </section>
 
           <section>
-            <H id="ingestion" n="13">Ingestion API</H>
+            <H id="ingestion" n="14">Ingestion API</H>
             <P>The Action, CLI, and engine adapters all call this. The contract is stable; new disciplines use additive optional fields (<code>findings</code>, <code>perf</code>, per-result <code>discipline</code>/<code>layer</code>).</P>
             <Code>{`POST /api/ingest
 Authorization: Bearer $VERITY_INGEST_TOKEN
@@ -188,7 +198,7 @@ Authorization: Bearer $VERITY_INGEST_TOKEN
           </section>
 
           <section>
-            <H id="team" n="14">Roles &amp; team</H>
+            <H id="team" n="15">Roles &amp; team</H>
             <P>Invite teammates from <Link href="/dashboard/team" className="text-indigo-600 underline">Team</Link> (they must have a Verity account first). Three roles:</P>
             <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-neutral-600 dark:text-neutral-300">
               <li><strong>Owner</strong> — full control + billing. One per org.</li>
@@ -199,12 +209,12 @@ Authorization: Bearer $VERITY_INGEST_TOKEN
           </section>
 
           <section>
-            <H id="cloud-trial" n="15">Cloud Sandbox</H>
+            <H id="cloud-trial" n="16">Cloud Sandbox</H>
             <P>To get the feel without wiring CI, generation and a capped number of runs execute on our infra. It&apos;s intentionally limited — the product lives in your CI, where runs are unlimited.</P>
           </section>
 
           <section>
-            <H id="licenses" n="16">Licenses &amp; open source</H>
+            <H id="licenses" n="17">Licenses &amp; open source</H>
             <P>The core engine (<code>@qashift/verity-core</code>) is MIT-licensed. Every test engine Verity drives is best-in-class open source, invoked in isolation (never linked into our code), so you own the test files outright and there&apos;s no lock-in. The hosted dashboard, predictions, and team management are proprietary.</P>
           </section>
         </main>

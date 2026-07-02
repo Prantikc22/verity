@@ -63,7 +63,7 @@ export default async function ProjectOverview({ params }: { params: Promise<{ pr
       <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Link href={`/dashboard/projects/${projectId}/ci`} className="group v-card border border-indigo-300 bg-indigo-50/40 p-5 hover:border-indigo-500 dark:border-indigo-800 dark:bg-indigo-950/20">
           <div className="text-sm font-semibold">⚙️ CI Setup</div>
-          <p className="mt-1 text-xs text-neutral-500">Turn UI, API, mobile, performance &amp; security on/off and get your pipeline config.</p>
+          <p className="mt-1 text-xs text-neutral-500">Turn UI, API, visual, agent, performance &amp; security on/off and get your pipeline config.</p>
         </Link>
         <Link href={`/dashboard/projects/${projectId}/generate`} className="group v-card border border-neutral-200 p-5 hover:border-indigo-400 dark:border-neutral-800">
           <div className="text-sm font-semibold">＋ Generate tests</div>

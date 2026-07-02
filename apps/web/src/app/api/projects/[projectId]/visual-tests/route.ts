@@ -1,30 +1,26 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { generateMaestroFlow } from "@/lib/llm/generate";
+import { generateVisualTest } from "@/lib/llm/generate";
 import { llmConfig } from "@/lib/llm/provider";
 import { planFor } from "@/lib/plans";
 import type { Json } from "@/lib/supabase/database.types";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 90;
 
 const Body = z.object({
-  description: z.string().min(3).max(8000),
-  name: z.string().min(1).max(120).optional(),
-  suite: z.string().max(120).optional(),
-  appId: z.string().max(200).optional(),
-  screenContext: z.string().max(20000).optional(),
+  input: z.string().min(3).max(4000),
+  baseUrl: z.string().url().optional(),
   needsAuth: z.boolean().optional(),
-  criticalPath: z.boolean().optional(),
 });
 
-function flowPathFor(name: string): string {
-  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 50) || "flow";
-  return `tests/verity/mobile/${slug}.yaml`;
+function specPathFor(name: string): string {
+  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 50) || "screen";
+  return `tests/verity/visual/${slug}.spec.ts`;
 }
 
-/** Authed: generate a Maestro YAML flow and persist it as kind='mobile'. */
+/** Authed: AI-generate a Playwright visual (toHaveScreenshot) spec and persist as kind='visual'. */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = await params;
   const supabase = await createClient();
@@ -36,6 +32,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
   const { data: project } = await supabase.from("projects").select("id, org_id").eq("id", projectId).maybeSingle();
   if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 });
 
+  // Per-tier monthly generation cap (shared with every other generate route).
   const { data: org } = await supabase.from("orgs").select("plan").eq("id", project.org_id).maybeSingle();
   const plan = planFor(org?.plan);
   const monthStart = new Date(); monthStart.setUTCDate(1); monthStart.setUTCHours(0, 0, 0, 0);
@@ -46,41 +43,26 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
   }
 
   const parsed = Body.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Provide a description." }, { status: 400 });
-  const { description, appId, screenContext, needsAuth, criticalPath } = parsed.data;
-  const name = (parsed.data.name ?? description.slice(0, 60)).slice(0, 60);
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Bad request." }, { status: 400 });
+  const { input, baseUrl, needsAuth } = parsed.data;
+  const isUrl = /^https?:\/\//i.test(input.trim());
 
   let gen;
   try {
-    gen = await generateMaestroFlow({ description, appId, screenContext, needsAuth });
+    gen = await generateVisualTest({ input, isUrl, baseUrl: baseUrl ?? (isUrl ? input.trim() : undefined), needsAuth });
   } catch (err) {
     return NextResponse.json({ error: err instanceof Error ? err.message : "generation failed" }, { status: 500 });
   }
 
-  const { data: test, error } = await supabase
-    .from("tests")
-    .insert({
-      project_id: project.id,
-      org_id: project.org_id,
-      kind: "mobile",
-      name,
-      suite: parsed.data.suite ?? null,
-      description,
-      source_url: null,
-      spec_path: flowPathFor(name),
-      spec_content: gen.specContent,
-      plan: gen.plan as unknown as Json,
-      source_files: [],
-      generated_model: gen.model,
-      critical_path: criticalPath ?? false,
-      status: "active",
-    })
-    .select("id, name")
-    .single();
+  const name = (isUrl ? `Snapshot: ${input.trim()}` : input.trim()).slice(0, 60);
+  const specPath = specPathFor(name);
+  const { data: test, error } = await supabase.from("tests").insert({
+    project_id: project.id, org_id: project.org_id, kind: "visual",
+    name, suite: "Visual", description: isUrl ? null : input.trim(),
+    source_url: isUrl ? input.trim() : baseUrl ?? null, spec_path: specPath, spec_content: gen.specContent,
+    plan: gen.plan as unknown as Json, source_files: [], generated_model: gen.model, critical_path: false, status: "draft",
+  }).select("id").single();
+  if (error) { const status = error.code === "42501" ? 403 : 500; return NextResponse.json({ error: error.message }, { status }); }
 
-  if (error) {
-    const status = error.code === "42501" ? 403 : 500;
-    return NextResponse.json({ error: error.message }, { status });
-  }
-  return NextResponse.json({ ok: true, test, plan: gen.plan });
+  return NextResponse.json({ ok: true, testId: test.id, name, spec_path: specPath, assertionCount: gen.assertionCount });
 }

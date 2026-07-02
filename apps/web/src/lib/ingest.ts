@@ -27,7 +27,7 @@ export interface IngestResultInput {
   // ---- additive discipline metadata (all optional; absent ⇒ legacy UI/API) ----
   /** Which discipline produced this row. Defaults to the payload discipline / "ui". */
   discipline?: Discipline;
-  /** Internal engine that produced it (maestro, schemathesis, …). */
+  /** Internal engine that produced it (playwright-visual, llm-eval, schemathesis, …). */
   engine?: Engine;
   /** API layer: "flow" (Playwright) or "contract" (Schemathesis). */
   layer?: ApiLayer;
@@ -100,7 +100,7 @@ export async function recordRun(
   // Disciplines whose results are genuine pass/fail tests (feed flake/regression
   // math + the existing PR comment). Performance/security do NOT — they post
   // metrics/findings instead and must never pollute flake or regression stats.
-  const isPassFail = discipline === "ui" || discipline === "api" || discipline === "mobile";
+  const isPassFail = discipline === "ui" || discipline === "api" || discipline === "visual" || discipline === "agent";
 
   // 1. Upsert a deploy for this commit (the unit Predictions 3/4 summarize over).
   const { data: existingDeploy } = await admin
@@ -224,7 +224,7 @@ export async function recordRun(
 
   // 4. Regression-stat attribution: every changed file gets a +1 change; if the
   //    run had a real failure, the changed files also get a +1 regression.
-  //    Only pass/fail disciplines (ui/api/mobile) contribute — perf/security
+  //    Only pass/fail disciplines (ui/api/visual/agent) contribute — perf/security
   //    runs must never affect regression-prone-file math.
   for (const file of isPassFail ? payload.changed_files ?? [] : []) {
     const { data: rs } = await admin

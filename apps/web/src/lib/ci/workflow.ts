@@ -11,10 +11,9 @@
  * pattern — so behavior matches without any extra package to publish.
  */
 
-export type EngineKey = "ui" | "apiFlow" | "contract" | "mobile" | "perf" | "security";
+export type EngineKey = "ui" | "apiFlow" | "contract" | "visual" | "agent" | "perf" | "security";
 export type Provider = "github" | "gitlab" | "jenkins";
 export type DastDepth = "baseline" | "full";
-export type MobilePlatform = "android" | "ios";
 
 export interface CiConfig {
   engines: Record<EngineKey, boolean>;
@@ -36,10 +35,13 @@ export interface CiConfig {
     dastTarget: string;
     dastDepth: DastDepth; // baseline (PR) vs full active scan
   };
-  mobile: {
-    platform: MobilePlatform;
-    flowsDir: string;
-    realDevice: boolean;
+  visual: {
+    snapshotsDir: string; // where committed baseline screenshots live
+    maxDiffPixelRatio: number; // allowed pixel drift before a snapshot is "changed"
+  };
+  agent: {
+    endpoint: string; // the customer's AI feature endpoint under eval
+    authTokenSecret: string; // name of the CI secret holding the endpoint token
   };
   contract: {
     openapiSpec: string;
@@ -48,12 +50,13 @@ export interface CiConfig {
 }
 
 export const DEFAULT_CONFIG: CiConfig = {
-  engines: { ui: true, apiFlow: false, contract: false, mobile: false, perf: false, security: false },
+  engines: { ui: true, apiFlow: false, contract: false, visual: false, agent: false, perf: false, security: false },
   apiUrl: "https://verity-kappa-ebon.vercel.app",
   branch: "main",
   perf: { smoke: true, fullLoad: true, arrivalRate: 10, durationSec: 120, rampTo: undefined, distributed: false, lighthouse: false, lighthouseUrl: "" },
   security: { sast: true, dast: false, dastTarget: "", dastDepth: "baseline", },
-  mobile: { platform: "android", flowsDir: "tests/verity/mobile", realDevice: false },
+  visual: { snapshotsDir: "tests/verity/visual", maxDiffPixelRatio: 0.01 },
+  agent: { endpoint: "", authTokenSecret: "AI_API_TOKEN" },
   contract: { openapiSpec: "openapi.yaml", apiBaseUrl: "" },
 };
 
@@ -63,7 +66,8 @@ export function enginesCsv(c: CiConfig): string {
   if (c.engines.ui) list.push("ui");
   if (c.engines.apiFlow) list.push("api");
   if (c.engines.contract) list.push("contract");
-  if (c.engines.mobile) list.push("mobile");
+  if (c.engines.visual) list.push("visual");
+  if (c.engines.agent) list.push("agent");
   if (c.engines.perf) list.push("perf");
   if (c.engines.security) list.push("security");
   return list.join(",") || "ui";
@@ -82,7 +86,8 @@ export const ENGINES: EngineMeta[] = [
   { key: "ui", label: "UI tests", tool: "Playwright", blurb: "Browser end-to-end tests with self-healing + flake detection.", docker: false },
   { key: "apiFlow", label: "API journey tests", tool: "Playwright", blurb: "Example-based, flow-level API coverage from your OpenAPI spec.", docker: false },
   { key: "contract", label: "API contract tests", tool: "Contract checks", blurb: "Every operation exercised automatically — only the minimal failing case is reported.", docker: true },
-  { key: "mobile", label: "Mobile tests", tool: "Mobile app flows", blurb: "Native app flows on an emulator/simulator (or real devices).", docker: false },
+  { key: "visual", label: "Visual tests", tool: "Screenshot regression", blurb: "Pixel-diff key screens against a committed baseline — catch unintended UI changes.", docker: false },
+  { key: "agent", label: "Agent (AI) evals", tool: "LLM / agent evals", blurb: "Grounding, prompt-injection, tool-use & safety checks for your own AI features.", docker: false },
   { key: "perf", label: "Performance", tool: "Load + Core Web Vitals", blurb: "Smoke check on PRs, full load test on merge, page-load vitals.", docker: false },
   { key: "security", label: "Security", tool: "Dynamic + static scanning", blurb: "Scans your running app and your code — severity-ranked findings.", docker: true },
 ];
@@ -104,7 +109,8 @@ export const CAPABILITIES: Capability[] = [
   { feature: "Self-healing delivered as a PR/MR diff", github: true, gitlab: true, jenkins: "partial", note: "Jenkins needs a SCM token to open the PR." },
   { feature: "Diff-aware Quick check (changed files)", github: true, gitlab: true, jenkins: true },
   { feature: "Containerized security & contract scans", github: true, gitlab: true, jenkins: "partial", note: "Jenkins agent must allow containers." },
-  { feature: "Android emulator / iOS simulator for mobile", github: true, gitlab: "partial", jenkins: "partial", note: "You provision the emulator on your runner; macOS needed for iOS." },
+  { feature: "Visual baselines committed to your repo (unlimited snapshots)", github: true, gitlab: true, jenkins: true },
+  { feature: "Agent/LLM evals against your AI endpoint", github: true, gitlab: true, jenkins: true, note: "Store the AI endpoint token as a CI secret." },
   { feature: "Dashboard: trends, predictions, API coverage, Security & Performance", github: true, gitlab: true, jenkins: true, note: "Every provider posts to the same ingestion API." },
 ];
 
@@ -118,12 +124,13 @@ function githubWith(c: CiConfig, tier: "fast" | "full"): string {
     `      token: \${{ secrets.VERITY_INGEST_TOKEN }}`,
     `      engines: ${enginesCsv(c)}`,
   ];
-  if (c.engines.mobile) {
-    lines.push(`      maestro-flows-dir: ${c.mobile.flowsDir}`);
-    if (c.mobile.realDevice) {
-      lines.push(`      maestro-real-device: "true"`);
-      lines.push(`      maestro-cloud-api-key: \${{ secrets.MAESTRO_CLOUD_API_KEY }}`);
-    }
+  if (c.engines.visual) {
+    lines.push(`      visual-snapshots-dir: ${c.visual.snapshotsDir}`);
+    lines.push(`      visual-max-diff-ratio: "${c.visual.maxDiffPixelRatio}"`);
+  }
+  if (c.engines.agent && c.agent.endpoint) {
+    lines.push(`      agent-endpoint: ${c.agent.endpoint}`);
+    lines.push(`      agent-token: \${{ secrets.${c.agent.authTokenSecret} }}`);
   }
   if (c.engines.perf) {
     lines.push(`      perf-config: tests/verity/perf/${tier === "fast" ? "smoke" : "load"}.yml`);
@@ -141,7 +148,8 @@ function githubWith(c: CiConfig, tier: "fast" | "full"): string {
 }
 
 export function githubWorkflow(c: CiConfig): string {
-  const needsNode = c.engines.ui || c.engines.apiFlow || c.engines.perf;
+  const needsNode = c.engines.ui || c.engines.apiFlow || c.engines.visual || c.engines.agent || c.engines.perf;
+  const needsPlaywright = c.engines.ui || c.engines.apiFlow || c.engines.visual || c.engines.agent;
   const setup: string[] = [
     `      - uses: actions/checkout@v4`,
     `        with: { fetch-depth: 0 }   # diff-aware Quick check needs history`,
@@ -149,16 +157,8 @@ export function githubWorkflow(c: CiConfig): string {
   if (needsNode) {
     setup.push(`      - uses: actions/setup-node@v4`, `        with: { node-version: "20" }`, `      - run: npm ci`);
   }
-  if (c.engines.ui || c.engines.apiFlow) {
+  if (needsPlaywright) {
     setup.push(`      - run: npx playwright install --with-deps chromium`);
-  }
-  if (c.engines.mobile) {
-    setup.push(
-      `      # Mobile: provision an emulator + the mobile test driver (cost is yours).`,
-      `      - run: curl -Ls "https://get.maestro.mobile.dev" | bash`,
-      `      - uses: reactivecircus/android-emulator-runner@v2`,
-      `        with: { api-level: 34, script: echo ready }`,
-    );
   }
   return `# .github/workflows/verity.yml
 name: Verity
@@ -168,7 +168,7 @@ on:
     branches: [${c.branch}]
 jobs:
   verity:
-    runs-on: ${c.engines.mobile && c.mobile.platform === "ios" ? "macos-latest" : "ubuntu-latest"}
+    runs-on: ubuntu-latest
     steps:
 ${setup.join("\n")}
 
@@ -193,14 +193,19 @@ function runnerCmds(c: CiConfig, tier: "fast" | "full", indent: string): string[
   out.push(`${indent}export VERITY_API_URL="${c.apiUrl}"`);
   out.push(`${indent}curl -Ls ${RAW}/verity.mjs -o verity.mjs`);
   out.push(`${indent}curl -Ls ${RAW}/verity-engines.mjs -o verity-engines.mjs`);
-  if (c.engines.ui || c.engines.apiFlow) {
+  if (c.engines.ui || c.engines.apiFlow || c.engines.visual || c.engines.agent) {
     out.push(`${indent}npx playwright install --with-deps chromium`);
+  }
+  if (c.engines.ui || c.engines.apiFlow) {
     out.push(`${indent}node verity.mjs run --tier ${tier} --token "$VERITY_INGEST_TOKEN" --base origin/${c.branch}`);
   }
   // Each engine runs through the Verity runner, which drives the underlying
   // tooling internally — so your CI config never names a specific tool.
-  if (c.engines.mobile) {
-    out.push(`${indent}node verity-engines.mjs mobile --tier ${tier} --flows-dir ${c.mobile.flowsDir}`);
+  if (c.engines.visual) {
+    out.push(`${indent}node verity-engines.mjs visual --tier ${tier} --snapshots-dir ${c.visual.snapshotsDir}`);
+  }
+  if (c.engines.agent && c.agent.endpoint) {
+    out.push(`${indent}node verity-engines.mjs agent --tier ${tier} --endpoint ${c.agent.endpoint}`);
   }
   if (c.engines.perf) {
     out.push(`${indent}node verity-engines.mjs perf --tier ${tier}`);
@@ -283,6 +288,6 @@ export function workflowFor(provider: Provider, c: CiConfig): string {
 /** A short list of secrets the user must add, given their selection. */
 export function requiredSecrets(c: CiConfig): { name: string; why: string }[] {
   const s = [{ name: "VERITY_INGEST_TOKEN", why: "Links runs to this project (from Settings)." }];
-  if (c.engines.mobile && c.mobile.realDevice) s.push({ name: "MAESTRO_CLOUD_API_KEY", why: "Real-device runs via Maestro Cloud." });
+  if (c.engines.agent && c.agent.endpoint) s.push({ name: c.agent.authTokenSecret, why: "Auth token used to call your AI endpoint during evals." });
   return s;
 }

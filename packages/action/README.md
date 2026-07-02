@@ -34,7 +34,7 @@ The runner is **self-contained** (vendored in this action), so there's nothing t
 | `token` | — | Your project's Verity ingest token (store as a secret). **Required.** |
 | `base` | `origin/main` | Base ref for diff-aware selection on the fast tier. |
 | `api-url` | Verity cloud | Override the Verity API base URL (self-hosted). |
-| `engines` | `ui` | Comma-separated engines to run: `ui,api,mobile,perf,security,contract`. |
+| `engines` | `ui` | Comma-separated engines to run: `ui,api,visual,agent,perf,security,contract`. |
 
 The default (`engines: ui`) keeps existing behavior exactly. Add engines to enable the additive disciplines below. **Every engine runs in YOUR CI — the cost is yours — and all results post through the same Verity ingestion API.** Each discipline maps its native tool output into Verity's unified results schema via a small adapter, so nothing about the existing UI/API flow changes.
 
@@ -42,40 +42,47 @@ The default (`engines: ui`) keeps existing behavior exactly. Add engines to enab
 
 ## Multi-discipline testing
 
-### 📱 Mobile (Maestro)
+### 🖼️ Visual (screenshot regression)
 
-Runs AI-generated Maestro YAML flows (in `tests/verity/mobile/`) against an Android emulator or iOS simulator. **You must provision the emulator/simulator and the Maestro CLI in your workflow** — GitHub Actions supports both (cost is yours):
+Runs AI-generated **Playwright visual specs** (in `tests/verity/visual/`) whose assertion is `toHaveScreenshot`. Each spec navigates to a stable UI state, masks volatile regions, and diffs a screenshot against the **baseline committed in your repo**. A diff over the threshold is reported as a *changed* snapshot; you approve the new baseline or fix the regression.
 
 ```yaml
-# Android emulator example (provision BEFORE the Verity step):
-- uses: reactivecircus/android-emulator-runner@v2
-  with: { api-level: 34, script: echo "emulator ready" }
-- run: curl -Ls "https://get.maestro.mobile.dev" | bash   # installs Maestro CLI
 - uses: qashift/verity-action@v1
   with:
     token: ${{ secrets.VERITY_INGEST_TOKEN }}
-    engines: ui,mobile
-    maestro-flows-dir: tests/verity/mobile
+    engines: ui,visual
+    visual-snapshots-dir: tests/verity/visual
+    visual-max-diff-ratio: "0.01"
 ```
 
-Self-healing extends to mobile: a broken Maestro selector is repaired from Maestro's **accessibility-tree dump** (the mobile equivalent of the DOM snapshot used for Playwright), delivered as a PR diff through the same GitHub App.
-
-**Real-device add-on (Maestro Cloud — Scale/Enterprise only).** Optional, gated behind `maestro-real-device: true`; never runs otherwise:
-
-```yaml
-  with:
-    engines: mobile
-    maestro-real-device: "true"
-    maestro-cloud-api-key: ${{ secrets.MAESTRO_CLOUD_API_KEY }}
-    maestro-app-file: build/app.apk
-```
+Because baselines live in your repo and run in your CI, visual coverage is unlimited. Self-healing applies as with UI specs — a broken navigation locator is repaired from the live DOM and delivered as a PR diff.
 
 | Input | Default | Description |
 |---|---|---|
-| `maestro-flows-dir` | `tests/verity/mobile` | Directory of Maestro YAML flows. |
-| `maestro-real-device` | `false` | Run on real devices via Maestro Cloud (gated). |
-| `maestro-cloud-api-key` | — | Maestro Cloud API key (only when real-device is on). |
-| `maestro-app-file` | — | Built app (`.apk`/`.app`/`.ipa`) for real-device runs. |
+| `visual-snapshots-dir` | `tests/verity/visual` | Directory of Playwright visual specs + committed baselines. |
+| `visual-max-diff-ratio` | `0.01` | Allowed pixel drift (0–1) before a snapshot counts as changed. |
+
+### 🤖 Agent (AI-feature evals)
+
+Runs AI-generated **Playwright API evals** (in `tests/verity/agent/`) against the HTTP endpoint behind your **own** AI feature (a chatbot, RAG assistant, or tool-using agent). Each eval asserts a *property* of the reply — grounding (no hallucination), prompt-injection resistance, correct tool-use, safety/PII, valid format, or clean refusal — never an exact string, since model output varies.
+
+```yaml
+- uses: qashift/verity-action@v1
+  with:
+    token: ${{ secrets.VERITY_INGEST_TOKEN }}
+    engines: agent
+    agent-endpoint: https://api.example.com/chat
+    agent-token: ${{ secrets.AI_API_TOKEN }}
+```
+
+> **Constraint:** evals need a **reachable endpoint**. For internal/firewalled AI endpoints this only runs inside your own CI. Store the endpoint's auth token as a CI secret — never in the config.
+
+| Input | Default | Description |
+|---|---|---|
+| `agent-endpoint` | — | Reachable HTTP endpoint of your AI feature. |
+| `agent-token` | — | Secret token used to authenticate eval calls to the endpoint. |
+
+> **Mobile app testing** is available as a **human-run (non-AI) service** through QAShift — the Verity AI agent does not author mobile flows, because it cannot reach a device/emulator the way it reaches a URL or an API. Talk to us if you need native mobile coverage.
 
 ### ⚡ Performance (Artillery)
 
@@ -133,7 +140,7 @@ All bundled engines are invoked as external CLIs/Docker images or as separate np
 
 | Engine | License | Notes |
 |---|---|---|
-| Maestro | Apache-2.0 | Clean. Confirm no GPL/AGPL deps if the Maestro Cloud SDK is used. |
+| Playwright (UI + visual) | Apache-2.0 | Clean. Visual = built-in `toHaveScreenshot`; no extra dep. |
 | Artillery | MPL-2.0 | Clean (file-level copyleft; we don't modify its source). |
 | OWASP ZAP | Apache-2.0 | Clean. Run via Docker. |
 | Semgrep CE | LGPL-2.1 | Clean under **subprocess/Docker-only** use — never imported or linked. |

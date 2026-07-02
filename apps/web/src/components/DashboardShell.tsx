@@ -41,9 +41,11 @@ const PROJECT_GROUPS: { heading?: string; items: { seg: string; label: string; i
     { seg: "api/run", label: "Cloud run", icon: "M6 16a4 4 0 010-8 5 5 0 019.6-1.6A4.5 4.5 0 1118 16z" },
     { seg: "api/results", label: "Coverage & results", icon: "M3 12h4l3 8 4-16 3 8h4" },
   ] },
-  { heading: "Mobile testing", items: [
-    { seg: "mobile/generate", label: "Generate", icon: "M12 2v20M2 12h20" },
-    { seg: "mobile/tests", label: "Flows", icon: "M7 2h10v20H7zM11 18h2" },
+  { heading: "Visual testing", items: [
+    { seg: "visual", label: "Snapshots", icon: "M4 5h16v14H4zM4 15l4-4 3 3 5-5 4 4" },
+  ] },
+  { heading: "Agent (AI) testing", items: [
+    { seg: "agent", label: "Evals", icon: "M12 2a3 3 0 013 3v1a3 3 0 01-1 6H10a3 3 0 01-1-6V5a3 3 0 013-3zM8 14h8v6H8z" },
   ] },
   { heading: "Performance", items: [
     { seg: "performance", label: "Results", icon: "M3 17l6-6 4 4 8-8M14 7h7v7" },
@@ -79,7 +81,8 @@ export function DashboardShell({
   // matching the current page auto-opens regardless.
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({
     "API testing": true,
-    "Mobile testing": true,
+    "Visual testing": true,
+    "Agent (AI) testing": true,
     "Performance": true,
     "Security": true,
   });

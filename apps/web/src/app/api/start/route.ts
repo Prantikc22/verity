@@ -4,6 +4,7 @@ import { generateTest } from "@/lib/llm/generate";
 import { llmConfig } from "@/lib/llm/provider";
 import { getUser, getPrimaryOrg, ensureOrgForCurrentUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { planFor } from "@/lib/plans";
 import type { Json } from "@/lib/supabase/database.types";
 
 export const runtime = "nodejs";
@@ -37,6 +38,26 @@ export async function POST(req: NextRequest) {
   if (!org) return NextResponse.json({ error: "No organization found." }, { status: 400 });
 
   const admin = createAdminClient();
+
+  // Per-tier monthly generation cap — /start creates a real (paid) LLM
+  // generation, so it must honor the same cap as the dashboard generate routes.
+  const { data: orgRow } = await admin.from("orgs").select("plan").eq("id", org.org.id).maybeSingle();
+  const plan = planFor(orgRow?.plan);
+  const monthStart = new Date();
+  monthStart.setUTCDate(1);
+  monthStart.setUTCHours(0, 0, 0, 0);
+  const { count: usedThisMonth } = await admin
+    .from("tests")
+    .select("id", { count: "exact", head: true })
+    .eq("org_id", org.org.id)
+    .gte("created_at", monthStart.toISOString());
+  if ((usedThisMonth ?? 0) >= plan.testGensPerMonth) {
+    return NextResponse.json(
+      { error: `You've used all ${plan.testGensPerMonth} AI generations on the ${plan.name} plan this month. Upgrade for more.` },
+      { status: 402 },
+    );
+  }
+
   let { data: proj } = await admin
     .from("projects").select("id").eq("org_id", org.org.id)
     .order("created_at", { ascending: true }).limit(1).maybeSingle();

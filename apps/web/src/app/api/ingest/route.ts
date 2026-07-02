@@ -106,7 +106,7 @@ export async function POST(req: NextRequest) {
     try {
       // Performance/security post a SEPARATE, additive comment + Check Run (own
       // marker) so the existing UI/API comment format is never altered. Pass/fail
-      // disciplines (ui/api/mobile) use the existing path unchanged.
+      // disciplines (ui/api/visual/agent) use the existing path unchanged.
       if (result.discipline === "performance" || result.discipline === "security") {
         checkUrl = await postDisciplineResults(project, result, payload.commit_sha, payload.pr_number ?? null, {
           gatingAllowed: plan.prGating,

@@ -29,7 +29,13 @@ export function CreateProjectForm() {
         .insert({ org_id: m.org_id, name: name.trim(), repo: repo.trim() || null })
         .select("id")
         .single();
-      if (insErr) throw new Error(insErr.message);
+      if (insErr) {
+        // The DB enforces the per-plan project cap via a trigger; surface it cleanly.
+        const msg = insErr.message.includes("PROJECT_CAP_REACHED")
+          ? insErr.message.split("PROJECT_CAP_REACHED:").pop()!.trim() + " Upgrade in Settings for more projects."
+          : insErr.message;
+        throw new Error(msg);
+      }
 
       if (posthog.__loaded) posthog.capture(FUNNEL_EVENTS.projectCreated, { project_id: project.id });
       setName("");

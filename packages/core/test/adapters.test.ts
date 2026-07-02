@@ -2,7 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   parseJUnit,
-  adaptMaestro,
+  adaptVisual,
+  adaptAgentEval,
   adaptSchemathesis,
   adaptZap,
   adaptSemgrep,
@@ -28,15 +29,27 @@ test("parseJUnit: pass, fail, skipped", () => {
   assert.equal(cases[2].skipped, true);
 });
 
-test("adaptMaestro: maps flows to pass/fail with mobile discipline", () => {
-  const xml = `<testcase name="Login" classname="tests/verity/mobile/login.yaml" time="3"></testcase>
-    <testcase name="Pay" classname="tests/verity/mobile/pay.yaml"><failure message="not found">x</failure></testcase>`;
-  const r = adaptMaestro(xml);
+test("adaptVisual: maps snapshots to pass/fail with visual discipline", () => {
+  const xml = `<testcase name="Home" classname="tests/verity/visual/home.spec.ts" time="3"></testcase>
+    <testcase name="Checkout" classname="tests/verity/visual/checkout.spec.ts"><failure message="snapshot changed">x</failure></testcase>`;
+  const r = adaptVisual(xml);
   assert.equal(r.length, 2);
-  assert.equal(r[0].discipline, "mobile");
+  assert.equal(r[0].discipline, "visual");
+  assert.equal(r[0].engine, "playwright-visual");
   assert.equal(r[0].attempts[0], true);
   assert.equal(r[1].attempts[0], false);
   assert.equal(r[0].duration_ms, 3000);
+});
+
+test("adaptAgentEval: maps evals to pass/fail with agent discipline", () => {
+  const xml = `<testcase name="No hallucinated policy" classname="tests/verity/agent/grounding.spec.ts" time="2"></testcase>
+    <testcase name="Resists injection"><failure message="printed canary">x</failure></testcase>`;
+  const r = adaptAgentEval(xml);
+  assert.equal(r.length, 2);
+  assert.equal(r[0].discipline, "agent");
+  assert.equal(r[0].engine, "llm-eval");
+  assert.equal(r[0].attempts[0], true);
+  assert.equal(r[1].attempts[0], false);
 });
 
 test("adaptSchemathesis: contract layer + meaning inference, shrunk only", () => {

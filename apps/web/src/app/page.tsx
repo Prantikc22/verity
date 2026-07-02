@@ -226,7 +226,7 @@ export default async function Home() {
           <Reveal>
             <p className="text-sm font-medium text-indigo-600">Pricing</p>
             <h2 className="mt-2 max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">Start free. Self-serve at $49. Add an engineer when ready.</h2>
-            <p className="mt-3 max-w-2xl text-neutral-600 dark:text-neutral-300">Verity&apos;s self-serve tiers below. The forward-deployed-engineer tiers (Starter and up) — with mobile, performance, security, and predictions — share one canonical price across the QAShift platform.</p>
+            <p className="mt-3 max-w-2xl text-neutral-600 dark:text-neutral-300">Verity&apos;s self-serve tiers below. The forward-deployed-engineer tiers (Starter and up) — with visual, agent (AI) testing, performance, security, and predictions — share one canonical price across the QAShift platform.</p>
           </Reveal>
           <Reveal delay={0.1}><div className="mt-10"><VeritySelfServeCards inIndia={inIndia} /></div></Reveal>
         </section>
