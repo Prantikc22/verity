@@ -89,10 +89,10 @@ server.tool(
 
 server.tool(
   "verity_propose_tests",
-  "Propose a set of Playwright tests to write. scope 'full' covers the whole app/page; scope 'diff' focuses on your uncommitted/branch changes (uses git diff). Optionally pass a localhost url and/or a PRD for accuracy.",
+  "Propose a set of Playwright tests to write. scope 'full' covers the whole app/page; scope 'diff' focuses on your uncommitted/branch changes (uses git diff). For accuracy, pass the user's local dev server url — if you don't know the exact port, ASK the user (do not assume 3000). A PRD is optional.",
   {
     scope: z.enum(["full", "diff"]).default("full"),
-    url: z.string().url().optional(),
+    url: z.string().url().optional().describe("Your LOCAL dev server URL including the exact port, e.g. http://localhost:5000. ALWAYS ask the user which port their app runs on — never assume 3000."),
     prd: z.string().optional(),
   },
   async ({ scope, url, prd }) => {
@@ -115,10 +115,10 @@ server.tool(
 
 server.tool(
   "verity_generate_test",
-  "Generate a Playwright test and save it to the Verity project AND write the .spec.ts into this repo. Provide a localhost url and/or a description (and optional PRD).",
+  "Generate a Playwright test and save it to the Verity project AND write the .spec.ts into this repo. Provide the user's local dev server url (ASK the user for the exact port if unknown — never assume 3000) and/or a description (and optional PRD).",
   {
     name: z.string().optional(),
-    url: z.string().url().optional(),
+    url: z.string().url().optional().describe("Your LOCAL dev server URL including the exact port, e.g. http://localhost:5000. ALWAYS ask the user which port their app runs on — never assume 3000."),
     description: z.string().optional(),
     prd: z.string().optional(),
     criticalPath: z.boolean().optional(),
