@@ -53,12 +53,22 @@ export function GenerateInput() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Paste a URL, or describe a flow — e.g. “log in, add to cart, check out”"
-          className="flex-1 border border-neutral-300 bg-white/70 px-4 py-3 text-sm outline-none backdrop-blur focus:border-indigo-500 dark:border-neutral-700 dark:bg-neutral-900/70 dark:focus:border-indigo-400"
+          className="flex-1 border border-neutral-300 bg-white/70 px-5 py-4 text-base outline-none backdrop-blur focus:border-indigo-500 dark:border-neutral-700 dark:bg-neutral-900/70 dark:focus:border-indigo-400"
         />
-        <button type="submit" disabled={busy} className="border-0 bg-indigo-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:opacity-50">
-          {busy ? "Opening page…" : "Generate test"}
+        <button type="submit" disabled={busy} className="border-0 bg-indigo-600 px-7 py-4 text-base font-semibold text-white transition hover:bg-indigo-500 disabled:opacity-50">
+          {busy ? "Opening page…" : "Generate test →"}
         </button>
       </form>
+
+      {/* Coverage chips + trust line */}
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        {["UI", "API", "Accessibility", "Performance", "Security"].map((d) => (
+          <span key={d} className="border border-neutral-300 px-2.5 py-1 text-xs text-neutral-500 dark:border-neutral-700 dark:text-neutral-400">{d}</span>
+        ))}
+      </div>
+      {!spec && !error && (
+        <p className="mt-3 text-left text-xs text-neutral-500">Free, no install — your first test in ~2 min. No card.</p>
+      )}
 
       {error && <p className="mt-3 text-left text-sm text-red-600">{error}</p>}
 
