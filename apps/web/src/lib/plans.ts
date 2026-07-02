@@ -51,7 +51,9 @@ export const PLANS: Record<PlanTier, PlanLimits> = {
     priceUsd: 0,
     priceInr: 0,
     billingNote: "Free forever",
-    maxTests: 5,
+    // Keep up to 15 saved tests — matches the 15 monthly generations so the
+    // headline "15/mo" holds (you can keep everything you generate).
+    maxTests: 15,
     maxProjects: 1,
     testGensPerMonth: 15,
     cloudRunsPerMonth: 10,
@@ -66,7 +68,7 @@ export const PLANS: Record<PlanTier, PlanLimits> = {
     fde: false,
     pomConversion: false,
     highlights: [
-      "AI test generation (15 / mo)",
+      "15 AI test generations / mo · keep up to 15 tests",
       "Run a few times in the cloud to try it",
       "Unlimited runs once you wire your CI",
       "1 project · self-serve",
