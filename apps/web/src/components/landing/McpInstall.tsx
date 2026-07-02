@@ -77,6 +77,18 @@ export function McpInstall() {
             </a>
             <p className="mt-5 text-sm font-medium">Or from the terminal:</p>
             <CodeRow code={VSCODE_CLI} />
+            <details className="mt-4 text-sm text-neutral-600 dark:text-neutral-300">
+              <summary className="cursor-pointer font-medium">Or add it manually (Command Palette)</summary>
+              <ol className="mt-2 list-decimal space-y-1 pl-5">
+                <li>Open the Command Palette (<kbd>⌘⇧P</kbd>)</li>
+                <li>Run <strong>MCP: Add Server</strong></li>
+                <li>Choose <strong>Command (stdio)</strong></li>
+                <li>Command to run: <code>npx -y {PKG}</code></li>
+                <li>Name it <strong>verity</strong></li>
+                <li>Pick the scope (workspace or global)</li>
+                <li>Add env <code>VERITY_TOKEN</code> = your project token</li>
+              </ol>
+            </details>
           </div>
         )}
         {tab === "Cursor" && (
