@@ -31,7 +31,7 @@ interface Tier {
   note?: string;
   cta: { label: string; href: string };
   /** A paid tier initiates Razorpay checkout instead of just linking. */
-  paidTier?: "pro";
+  paidTier?: "pro" | "team";
   highlight?: boolean;
 }
 
@@ -64,6 +64,20 @@ const TIERS: Tier[] = [
     paidTier: "pro",
     highlight: true,
   },
+  {
+    name: "Team",
+    blurb: "Self-serve, scaled for a whole team.",
+    usd: 149, inr: 9999,
+    cap: "AI UI + API tests — 750/month",
+    features: [
+      "AI test generation, UI + API — 750/month",
+      "Self-healing locators + flake detection",
+      "Unlimited CI runs · 10 projects",
+      "Priority support — still no engineer, no call",
+    ],
+    cta: { label: "Start Team", href: "/login?next=/pricing" },
+    paidTier: "team",
+  },
 ];
 
 export function VeritySelfServeCards({ inIndia }: { inIndia: boolean }) {
@@ -73,17 +87,17 @@ export function VeritySelfServeCards({ inIndia }: { inIndia: boolean }) {
   const fmt = (t: Tier) =>
     currency === "INR" ? (t.inr === 0 ? "₹0" : `₹${t.inr.toLocaleString("en-IN")}`) : t.usd === 0 ? "$0" : `$${t.usd}`;
 
-  // Resume checkout after a login round-trip (?checkout=pro).
+  // Resume checkout after a login round-trip (?checkout=pro|team).
   useEffect(() => {
-    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("checkout") === "pro") {
-      startCheckout("pro");
-    }
+    if (typeof window === "undefined") return;
+    const c = new URLSearchParams(window.location.search).get("checkout");
+    if (c === "pro" || c === "team") startCheckout(c);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Paid tier → Razorpay checkout. If not signed in, bounce to login and come
   // back to /pricing so the user can complete the purchase.
-  async function startCheckout(tier: "pro") {
+  async function startCheckout(tier: "pro" | "team") {
     setBusy(tier);
     setError("");
     try {
@@ -94,7 +108,7 @@ export function VeritySelfServeCards({ inIndia }: { inIndia: boolean }) {
       });
       if (res.status === 401) {
         // Not signed in — send to login, then resume checkout on return.
-        window.location.href = "/login?next=" + encodeURIComponent("/pricing?checkout=pro");
+        window.location.href = "/login?next=" + encodeURIComponent("/pricing?checkout=" + tier);
         return;
       }
       const data = await res.json();
@@ -137,7 +151,7 @@ export function VeritySelfServeCards({ inIndia }: { inIndia: boolean }) {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {TIERS.map((t) => (
           <div key={t.name} className={`flex flex-col border p-6 ${t.highlight ? "border-indigo-500 dark:border-indigo-500" : "border-neutral-200 dark:border-neutral-800"}`}>
             <div className="text-xs font-semibold uppercase tracking-wide text-neutral-400">Self-serve · no FDE</div>

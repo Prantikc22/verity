@@ -14,12 +14,14 @@ function planId(tier: PlanTier, currency: "USD" | "INR" = "INR"): string | undef
   // USD-specific plan if configured; otherwise the base (INR) plan.
   const usd: Partial<Record<PlanTier, string | undefined>> = {
     pro: process.env.RAZORPAY_PLAN_PRO_USD,
+    team: process.env.RAZORPAY_PLAN_TEAM_USD,
     starter: process.env.RAZORPAY_PLAN_STARTER_USD,
     growth: process.env.RAZORPAY_PLAN_GROWTH_USD,
     scale: process.env.RAZORPAY_PLAN_SCALE_USD,
   };
   const inr: Partial<Record<PlanTier, string | undefined>> = {
     pro: process.env.RAZORPAY_PLAN_PRO,
+    team: process.env.RAZORPAY_PLAN_TEAM,
     starter: process.env.RAZORPAY_PLAN_STARTER,
     growth: process.env.RAZORPAY_PLAN_GROWTH,
     scale: process.env.RAZORPAY_PLAN_SCALE,

@@ -102,12 +102,40 @@ export const PLANS: Record<PlanTier, PlanLimits> = {
       "Self-serve — no engineer, no call",
     ],
   },
+  team: {
+    tier: "team",
+    name: "Team",
+    tagline: "Self-serve, scaled for a whole team.",
+    priceUsd: 149,
+    priceInr: 9999,
+    billingNote: "per month · billed monthly",
+    maxTests: 150,
+    maxProjects: 10,
+    testGensPerMonth: 750,
+    cloudRunsPerMonth: 40,
+    cloudTrialsPerMonth: 3,
+    ciRuns: "unlimited",
+    maxRunHistory: 60,
+    selfHealing: true,
+    prGating: true,
+    mergeBlocking: false,
+    predictionsGA: false,
+    predictionsBeta: false,
+    fde: false,
+    pomConversion: false,
+    highlights: [
+      "AI test generation, UI + API (750 / mo)",
+      "Self-healing locators + flake detection",
+      "Unlimited CI runs · 10 projects",
+      "Priority support · still self-serve, no call",
+    ],
+  },
   starter: {
     tier: "starter",
     name: "Starter",
     tagline: "AI + a forward-deployed engineer. From day one.",
-    priceUsd: 399,
-    priceInr: 24999,
+    priceUsd: 499,
+    priceInr: 34999,
     billingNote: "per month · billed monthly",
     maxTests: 60,
     maxProjects: 3,
@@ -219,7 +247,7 @@ export const PLANS: Record<PlanTier, PlanLimits> = {
   },
 };
 
-export const PAID_TIERS: PlanTier[] = ["pro", "starter", "growth", "scale"];
+export const PAID_TIERS: PlanTier[] = ["pro", "team", "starter", "growth", "scale"];
 
 export function planFor(tier: PlanTier | null | undefined): PlanLimits {
   return PLANS[tier ?? "free"];
