@@ -8,16 +8,60 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { StatusDot } from "@/components/StatusDot";
 import { createClient } from "@/lib/supabase/client";
 
-const LINKS = [
-  { href: "#how", label: "How it works" },
-  { href: "#predictions", label: "Predictions" },
-  { href: "#fde", label: "FDE" },
-  { href: "#security", label: "Security" },
-  { href: "/github", label: "GitHub App" },
-  { href: "/mcp", label: "MCP Server" },
+type Child = { href: string; label: string; external?: boolean };
+type NavItem = { label: string; href?: string; children?: Child[] };
+
+const NAV: NavItem[] = [
+  {
+    label: "Product",
+    children: [
+      { href: "/#how", label: "How it works" },
+      { href: "/#predictions", label: "Predictions" },
+      { href: "/#fde", label: "Forward-deployed engineer" },
+      { href: "/#security", label: "Security" },
+    ],
+  },
+  {
+    label: "Developers",
+    children: [
+      { href: "/mcp", label: "MCP Server" },
+      { href: "/github", label: "GitHub App" },
+      { href: "/docs", label: "Docs" },
+    ],
+  },
   { href: "/pricing", label: "Pricing" },
-  { href: "/docs", label: "Docs" },
+  {
+    label: "Company",
+    children: [
+      { href: "https://qashifthq.com/about", label: "About", external: true },
+      { href: "https://qashifthq.com/about#careers", label: "Careers", external: true },
+      { href: "https://qashifthq.com/contact", label: "Contact", external: true },
+      { href: "https://qashifthq.com", label: "QAShift platform", external: true },
+    ],
+  },
 ];
+
+function Dropdown({ item }: { item: NavItem }) {
+  return (
+    <div className="group relative">
+      <button className="inline-flex items-center gap-1 transition hover:text-neutral-900 dark:hover:text-white">
+        {item.label}
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="transition group-hover:rotate-180"><path d="M6 9l6 6 6-6" /></svg>
+      </button>
+      <div className="invisible absolute left-1/2 top-full z-50 w-56 -translate-x-1/2 pt-3 opacity-0 transition group-hover:visible group-hover:opacity-100">
+        <div className="flex flex-col border border-neutral-200 bg-white p-1.5 shadow-lg dark:border-neutral-800 dark:bg-neutral-950">
+          {item.children!.map((c) =>
+            c.external ? (
+              <a key={c.href} href={c.href} target="_blank" rel="noreferrer" className="px-3 py-2 text-sm text-neutral-600 transition hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-900 dark:hover:text-white">{c.label}</a>
+            ) : (
+              <a key={c.href} href={c.href} className="px-3 py-2 text-sm text-neutral-600 transition hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-900 dark:hover:text-white">{c.label}</a>
+            ),
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function Navbar() {
   const { scrollY } = useScroll();
@@ -45,11 +89,11 @@ export function Navbar() {
       >
         <Link href="/"><Logo /></Link>
         <nav className="hidden items-center gap-7 text-sm text-neutral-600 md:flex dark:text-neutral-300">
-          {LINKS.map((l) =>
-            l.href.startsWith("/") ? (
-              <Link key={l.href} href={l.href} className="transition hover:text-neutral-900 dark:hover:text-white">{l.label}</Link>
+          {NAV.map((item) =>
+            item.children ? (
+              <Dropdown key={item.label} item={item} />
             ) : (
-              <a key={l.href} href={l.href} className="transition hover:text-neutral-900 dark:hover:text-white">{l.label}</a>
+              <Link key={item.href} href={item.href!} className="transition hover:text-neutral-900 dark:hover:text-white">{item.label}</Link>
             ),
           )}
         </nav>

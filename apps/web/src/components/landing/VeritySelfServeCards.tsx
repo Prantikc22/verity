@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
 type RazorpayCtor = new (opts: Record<string, unknown>) => { open: () => void };
@@ -73,6 +73,14 @@ export function VeritySelfServeCards({ inIndia }: { inIndia: boolean }) {
   const fmt = (t: Tier) =>
     currency === "INR" ? (t.inr === 0 ? "₹0" : `₹${t.inr.toLocaleString("en-IN")}`) : t.usd === 0 ? "$0" : `$${t.usd}`;
 
+  // Resume checkout after a login round-trip (?checkout=pro).
+  useEffect(() => {
+    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("checkout") === "pro") {
+      startCheckout("pro");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Paid tier → Razorpay checkout. If not signed in, bounce to login and come
   // back to /pricing so the user can complete the purchase.
   async function startCheckout(tier: "pro") {
@@ -85,7 +93,8 @@ export function VeritySelfServeCards({ inIndia }: { inIndia: boolean }) {
         body: JSON.stringify({ tier, currency }),
       });
       if (res.status === 401) {
-        window.location.href = "/login?next=" + encodeURIComponent("/pricing");
+        // Not signed in — send to login, then resume checkout on return.
+        window.location.href = "/login?next=" + encodeURIComponent("/pricing?checkout=pro");
         return;
       }
       const data = await res.json();
