@@ -99,7 +99,18 @@ server.tool(
     const changedFiles = scope === "diff"
       ? git("diff --name-only HEAD").split("\n").filter(Boolean).concat(git("diff --name-only --cached").split("\n").filter(Boolean))
       : [];
+    // Refuse to guess: a full-app proposal needs the REAL running app, or we
+    // just hallucinate generic tests. Force the agent to get the real URL.
+    if (scope === "full" && !url) {
+      return text("⚠️ I won't guess your app. To propose tests, ASK THE USER for their dev server URL and exact port (e.g. http://localhost:5000), then call verity_propose_tests again with that `url`. Do not assume localhost:3000.");
+    }
     const pageHtml = await fetchHtml(url); // fetched locally so localhost works
+    if (url && !pageHtml) {
+      return text(`⚠️ Couldn't reach ${url} — the dev server isn't running there or it's on a different port. ASK THE USER to confirm the exact URL + port, then retry. Not proposing tests from a URL I can't load (that would hallucinate).`);
+    }
+    if (scope === "full" && !pageHtml) {
+      return text("⚠️ No reachable app to inspect. Ask the user for the correct dev server URL + port and retry — I won't propose tests without loading the real app.");
+    }
     const d = await api("/api/mcp/propose", "POST", { scope, url, prd, changedFiles: [...new Set(changedFiles)], pageHtml });
     if (!d.candidates?.length) return text("No tests proposed. Try passing a url and/or a PRD.");
     const lines = d.candidates.map((c, i) =>
@@ -125,7 +136,14 @@ server.tool(
     writeFile: z.boolean().default(true),
   },
   async ({ name, url, description, prd, criticalPath, writeFile }) => {
+    // Need something real to work from: a reachable url OR an explicit description.
+    if (!url && !description) {
+      return text("⚠️ Give me either a description of the test, or your app's URL + exact port (ask the user — don't assume 3000).");
+    }
     const pageHtml = await fetchHtml(url); // fetched locally so localhost works
+    if (url && !pageHtml) {
+      return text(`⚠️ Couldn't reach ${url}. Ask the user to confirm their exact dev server URL + port, then retry — I won't generate against a URL I can't load.`);
+    }
     const d = await api("/api/mcp/generate", "POST", { name, url, description, prd, criticalPath, pageHtml });
     let wrote = "";
     if (writeFile) {

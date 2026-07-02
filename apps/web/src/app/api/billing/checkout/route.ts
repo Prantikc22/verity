@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getPaymentProvider } from "@/lib/billing";
-import { getUser, getPrimaryOrg } from "@/lib/auth";
+import { getUser, getPrimaryOrg, ensureOrgForCurrentUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { captureServer } from "@/lib/analytics/posthog-server";
 import { FUNNEL_EVENTS } from "@/lib/analytics/events";
@@ -12,7 +12,10 @@ export async function POST(req: NextRequest) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: "Sign in to upgrade." }, { status: 401 });
 
-  const orgCtx = await getPrimaryOrg();
+  // Provision an org on-demand — a user who upgrades before ever opening the
+  // dashboard wouldn't have one yet.
+  let orgCtx = await getPrimaryOrg();
+  if (!orgCtx) { await ensureOrgForCurrentUser(); orgCtx = await getPrimaryOrg(); }
   if (!orgCtx) return NextResponse.json({ error: "No organization found." }, { status: 400 });
   if (orgCtx.role !== "owner" && orgCtx.role !== "admin") {
     return NextResponse.json({ error: "Only org admins can change billing." }, { status: 403 });
