@@ -145,9 +145,31 @@ async function explore({ url, explorationId, callbackUrl, callbackToken }) {
   }
 }
 
+/**
+ * Load a URL in a REAL browser and return the fully-rendered HTML (post-JS), so
+ * generation grounds on the actual DOM — including client-rendered (SPA) content
+ * that a static HTTP fetch never sees. The web app runs its own extractor on this.
+ */
+async function renderContext({ url }) {
+  let browser;
+  try {
+    browser = await chromium.launch({ args: ["--no-sandbox", "--disable-dev-shm-usage"] });
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 25_000 });
+    // Let client-rendered content settle so SPA elements are in the DOM.
+    await page.waitForLoadState("networkidle", { timeout: 6_000 }).catch(() => {});
+    await page.waitForTimeout(600);
+    const html = await page.content();
+    const title = await page.title().catch(() => "");
+    return { ok: true, html: html.slice(0, 800_000), title };
+  } finally {
+    await browser?.close().catch(() => {});
+  }
+}
+
 const server = createServer(async (req, res) => {
   if (req.url === "/health") { res.writeHead(200, { "content-type": "application/json" }); res.end('{"ok":true}'); return; }
-  if (req.method !== "POST" || !["/explore", "/run"].includes(req.url)) { res.writeHead(404).end(); return; }
+  if (req.method !== "POST" || !["/explore", "/run", "/context"].includes(req.url)) { res.writeHead(404).end(); return; }
 
   if (!TOKEN || req.headers["authorization"] !== `Bearer ${TOKEN}`) {
     res.writeHead(401, { "content-type": "application/json" }); res.end('{"error":"unauthorized"}'); return;
@@ -161,6 +183,20 @@ const server = createServer(async (req, res) => {
     res.writeHead(202, { "content-type": "application/json" });
     res.end('{"accepted":true}');
     explore(body);
+    return;
+  }
+
+  // /context — render the page in a real browser, return the post-JS HTML.
+  if (req.url === "/context") {
+    if (!body?.url) { res.writeHead(400, { "content-type": "application/json" }); res.end('{"error":"url required"}'); return; }
+    try {
+      const out = await renderContext({ url: body.url });
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify(out));
+    } catch (err) {
+      res.writeHead(500, { "content-type": "application/json" });
+      res.end(JSON.stringify({ ok: false, error: err?.message ?? "render failed" }));
+    }
     return;
   }
 

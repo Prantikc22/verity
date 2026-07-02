@@ -35,8 +35,8 @@ function uniq(arr: string[], cap: number): string[] {
   return [...new Set(arr.filter(Boolean))].slice(0, cap);
 }
 
-/** Fetch + extract. Never throws — returns null on failure so generation degrades. */
-export async function fetchPageContext(url: string): Promise<PageContext | null> {
+/** Static HTTP fetch + extract. Fast + cheap; sees only server-rendered HTML. */
+async function fetchStaticContext(url: string): Promise<PageContext | null> {
   let html: string;
   try {
     const ctrl = new AbortController();
@@ -55,6 +55,47 @@ export async function fetchPageContext(url: string): Promise<PageContext | null>
     return null;
   }
   return extractPageContext(html, url);
+}
+
+/**
+ * Render the page in a REAL browser on the Fly runner and extract from the
+ * post-JS DOM — this is the only way to see client-rendered (SPA) content.
+ * Returns null when the runner isn't configured or the render fails.
+ */
+async function fetchRenderedContext(url: string): Promise<PageContext | null> {
+  const runnerUrl = process.env.RUNNER_SERVICE_URL;
+  const runnerToken = process.env.RUNNER_SERVICE_TOKEN;
+  if (!runnerUrl || !runnerToken) return null;
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 30000);
+    const res = await fetch(`${runnerUrl.replace(/\/$/, "")}/context`, {
+      method: "POST",
+      signal: ctrl.signal,
+      headers: { "content-type": "application/json", authorization: `Bearer ${runnerToken}` },
+      body: JSON.stringify({ url }),
+    });
+    clearTimeout(t);
+    if (!res.ok) return null;
+    const data = (await res.json()) as { ok?: boolean; html?: string };
+    if (!data?.ok || !data.html) return null;
+    return extractPageContext(data.html, url);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Fetch + extract page context. Static-first (fast, cheap, and now href-aware);
+ * only falls back to a real browser render when the static HTML is SPARSE (a
+ * likely SPA) or the fetch failed — so server-rendered pages pay nothing and
+ * only client-rendered apps incur the browser cost. Never throws.
+ */
+export async function fetchPageContext(url: string): Promise<PageContext | null> {
+  const staticCtx = await fetchStaticContext(url);
+  if (staticCtx && !staticCtx.likelyClientRendered) return staticCtx;
+  const rendered = await fetchRenderedContext(url);
+  return rendered ?? staticCtx;
 }
 
 /**
