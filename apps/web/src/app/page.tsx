@@ -269,7 +269,7 @@ export default async function Home() {
               <span className="text-neutral-300 dark:text-neutral-700">·</span>
               <span className="font-medium text-neutral-700 dark:text-neutral-200">Verity</span>
               <span className="text-neutral-300 dark:text-neutral-700">·</span>
-              <a href="https://clearpath-sandy.vercel.app" target="_blank" rel="noreferrer" className="hover:text-neutral-900 dark:hover:text-white">Clearpath</a>
+              <a href="https://clearpath.qashifthq.com" target="_blank" rel="noreferrer" className="hover:text-neutral-900 dark:hover:text-white">Clearpath</a>
             </span>
           </div>
         </div>
