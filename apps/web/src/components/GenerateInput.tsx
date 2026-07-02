@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import posthog from "posthog-js";
 
@@ -84,7 +85,15 @@ export function GenerateInput() {
               <pre className="max-h-96 overflow-auto border border-neutral-200 bg-neutral-950 p-4 text-xs leading-relaxed text-neutral-200 dark:border-neutral-800"><code>{spec}</code></pre>
             )}
 
-            <p className="mt-2 text-xs text-neutral-500">Sign in to save this to a project, push it to your repo, and run it in CI — where it self-heals and predicts risk over time.</p>
+            <div className="mt-3 flex flex-col items-start gap-2 sm:flex-row sm:items-center">
+              <Link
+                href={`/start?input=${encodeURIComponent(input.trim())}`}
+                className="bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-500"
+              >
+                Create a free account to save &amp; run this →
+              </Link>
+              <span className="text-xs text-neutral-500">Saves it to a project, pushes to your repo, and runs in CI — where it self-heals and predicts risk.</span>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
