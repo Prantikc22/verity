@@ -5,6 +5,7 @@ import { testConfidence, flakeRate } from "@qashift/verity-core";
 import { TestList } from "../TestList";
 import { ExportTests } from "../ExportTests";
 import { PushAll } from "../PushAll";
+import { VerifyDrafts } from "../VerifyDrafts";
 
 export const metadata: Metadata = { title: "Tests", robots: { index: false } };
 
@@ -31,6 +32,11 @@ export default async function TestsPage({ params }: { params: Promise<{ projectI
           <ExportTests projectId={projectId} />
           <PushAll projectId={projectId} repoLinked={Boolean(project?.repo)} />
         </div>
+      </div>
+
+      <div className="mt-3 flex items-center justify-between border border-emerald-200 bg-emerald-50/40 px-4 py-2.5 dark:border-emerald-900/50 dark:bg-emerald-950/20">
+        <p className="text-xs text-neutral-600 dark:text-neutral-300"><strong>Verified generation:</strong> run drafts in a real browser and self-heal them — a <span className="text-emerald-600">Verified ✓</span> test has actually passed, not just been generated.</p>
+        <VerifyDrafts projectId={projectId} draftCount={(tests ?? []).filter((t) => t.status === "draft").length} />
       </div>
 
       <TestList

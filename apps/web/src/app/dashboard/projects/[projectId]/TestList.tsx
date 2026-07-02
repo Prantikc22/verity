@@ -126,7 +126,12 @@ export function TestList({ projectId, rows, repoLinked }: { projectId: string; r
                       </td>
                       <td className="p-3">{t.confidenceLabel}</td>
                       <td className="p-3">{t.flakeLabel}</td>
-                      <td className="p-3 text-xs">{t.status}</td>
+                      <td className="p-3 text-xs">{
+                        t.status === "active" ? <span className="text-emerald-600 dark:text-emerald-400">Verified ✓</span>
+                        : t.status === "quarantined" ? <span className="text-amber-600 dark:text-amber-400" title="Failed in a real browser after healing — review the code/plan">Needs review</span>
+                        : t.status === "draft" ? <span className="text-neutral-400" title="Generated but not yet run in a browser">Unverified</span>
+                        : <span className="text-neutral-500">{t.status}</span>
+                      }</td>
                       <td className="p-3 text-right"><button onClick={() => { setOpen(open === t.id ? null : t.id); setTab("plan"); }} className="text-xs text-indigo-600 hover:underline">{open === t.id ? "hide" : "view"}</button></td>
                     </tr>
                     {open === t.id && (
