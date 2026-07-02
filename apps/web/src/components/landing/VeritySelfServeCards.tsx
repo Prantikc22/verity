@@ -82,7 +82,7 @@ export function VeritySelfServeCards({ inIndia }: { inIndia: boolean }) {
       const res = await fetch("/api/billing/checkout", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ tier }),
+        body: JSON.stringify({ tier, currency }),
       });
       if (res.status === 401) {
         window.location.href = "/login?next=" + encodeURIComponent("/pricing");

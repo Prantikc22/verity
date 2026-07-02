@@ -14,6 +14,7 @@ const LINKS = [
   { href: "#fde", label: "FDE" },
   { href: "#security", label: "Security" },
   { href: "/github", label: "GitHub App" },
+  { href: "/mcp", label: "MCP Server" },
   { href: "/pricing", label: "Pricing" },
   { href: "/docs", label: "Docs" },
 ];

@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Only org admins can change billing." }, { status: 403 });
   }
 
-  let body: { tier?: PlanTier };
+  let body: { tier?: PlanTier; currency?: "USD" | "INR" };
   try {
     body = await req.json();
   } catch {
@@ -44,6 +44,7 @@ export async function POST(req: NextRequest) {
       orgId: orgCtx.org.id,
       tier,
       customerEmail: user.email,
+      currency: body.currency === "USD" ? "USD" : "INR",
     });
 
     const admin = createAdminClient();

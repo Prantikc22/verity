@@ -4,6 +4,8 @@ export interface CreateSubscriptionInput {
   orgId: string;
   tier: PlanTier;
   customerEmail?: string;
+  /** Billing currency — selects the matching plan so the charge matches the price shown. */
+  currency?: "USD" | "INR";
 }
 
 export interface CreateSubscriptionResult {

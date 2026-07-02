@@ -10,14 +10,21 @@ import type {
 } from "./provider";
 
 /** Map our plan tiers to Razorpay plan IDs (created in the Razorpay dashboard). */
-function planId(tier: PlanTier): string | undefined {
-  const map: Partial<Record<PlanTier, string | undefined>> = {
+function planId(tier: PlanTier, currency: "USD" | "INR" = "INR"): string | undefined {
+  // USD-specific plan if configured; otherwise the base (INR) plan.
+  const usd: Partial<Record<PlanTier, string | undefined>> = {
+    pro: process.env.RAZORPAY_PLAN_PRO_USD,
+    starter: process.env.RAZORPAY_PLAN_STARTER_USD,
+    growth: process.env.RAZORPAY_PLAN_GROWTH_USD,
+    scale: process.env.RAZORPAY_PLAN_SCALE_USD,
+  };
+  const inr: Partial<Record<PlanTier, string | undefined>> = {
     pro: process.env.RAZORPAY_PLAN_PRO,
     starter: process.env.RAZORPAY_PLAN_STARTER,
     growth: process.env.RAZORPAY_PLAN_GROWTH,
     scale: process.env.RAZORPAY_PLAN_SCALE,
   };
-  return map[tier];
+  return (currency === "USD" ? usd[tier] : inr[tier]) ?? inr[tier];
 }
 
 /** Razorpay status → our subscription status enum. */
@@ -56,7 +63,7 @@ export class RazorpayProvider implements PaymentProvider {
 
   async createSubscription(input: CreateSubscriptionInput): Promise<CreateSubscriptionResult> {
     if (!this.client) throw new Error("Razorpay is not configured (missing RAZORPAY_KEY_ID/SECRET).");
-    const plan_id = planId(input.tier);
+    const plan_id = planId(input.tier, input.currency ?? "INR");
     if (!plan_id) throw new Error(`No Razorpay plan configured for tier "${input.tier}".`);
 
     const sub = await this.client.subscriptions.create({
