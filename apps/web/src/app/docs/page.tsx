@@ -118,6 +118,7 @@ npx verity run --tier full --token $VERITY_INGEST_TOKEN`}</Code>
           <section>
             <H id="ui" n="6">UI testing (Playwright)</H>
             <P>AI-generated Playwright specs with grounded locators, run in your CI. Failures are rerun to separate <em>flaky</em> from <em>broken</em>; broken locators are self-healed (below). The fast tier is a diff-aware <strong>Quick check</strong>; only the <strong>Full regression</strong> tier can block a merge.</P>
+            <P><strong>Verified generation:</strong> on the Tests page, <em>Verify drafts</em> runs newly generated specs in a real cloud browser and self-heals any failure before you trust them — each test is badged <span className="text-emerald-600">Verified ✓</span> (it actually passed) or <em>Needs review</em>. Verification is part of authoring: it consumes no cloud-run quota.</P>
           </section>
 
           <section>

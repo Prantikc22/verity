@@ -23,7 +23,7 @@ export function VisualGenerate({ projectId }: { projectId: string }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Could not generate.");
-      setOk(`Saved “${data.name}” as a draft (${data.assertionCount} snapshot${data.assertionCount === 1 ? "" : "s"}). Review it in Tests, then commit it to your repo.`);
+      setOk(`Saved “${data.name}” as a draft (${data.assertionCount} snapshot${data.assertionCount === 1 ? "" : "s"}) — review it below, then commit it to your repo.`);
       setInput("");
       router.refresh();
     } catch (e) {

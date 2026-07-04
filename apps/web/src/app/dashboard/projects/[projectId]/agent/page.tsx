@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { createClient } from "@/lib/supabase/server";
 import { AgentGenerate } from "./AgentGenerate";
+import { SavedSpecs } from "../SavedSpecs";
 
 export const metadata: Metadata = { title: "Agent (AI) testing", robots: { index: false } };
 
@@ -15,6 +17,14 @@ const CATEGORIES: { title: string; blurb: string }[] = [
 
 export default async function AgentPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = await params;
+  const supabase = await createClient();
+  const { data: savedSpecs } = await supabase
+    .from("tests")
+    .select("id, name, spec_path, status, description, plan, spec_content, created_at")
+    .eq("project_id", projectId)
+    .eq("kind", "agent")
+    .neq("status", "archived")
+    .order("created_at", { ascending: false });
 
   return (
     <div className="space-y-6">
@@ -41,6 +51,12 @@ export default async function AgentPage({ params }: { params: Promise<{ projectI
       </section>
 
       <AgentGenerate projectId={projectId} />
+
+      <SavedSpecs
+        title="Saved agent evals"
+        hint="Nothing yet — describe your AI feature above and generate. Evals appear here with their code, ready to commit."
+        rows={savedSpecs ?? []}
+      />
 
       <div className="flex items-center justify-between border border-neutral-200 p-4 text-xs dark:border-neutral-800">
         <p className="text-neutral-500">Prefer we set it up? Your forward-deployed engineer can wire the first evals against your AI endpoint this week.</p>

@@ -59,7 +59,7 @@ export function AgentGenerate({ projectId }: { projectId: string }) {
       {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
       {saved && (
         <div className="mt-3 border border-emerald-200 bg-emerald-50 p-3 text-xs dark:border-emerald-900/50 dark:bg-emerald-950/20">
-          <p className="font-medium text-emerald-700 dark:text-emerald-300">Saved {saved.length} eval draft{saved.length === 1 ? "" : "s"} — review in Tests, then commit to your repo:</p>
+          <p className="font-medium text-emerald-700 dark:text-emerald-300">Saved {saved.length} eval draft{saved.length === 1 ? "" : "s"} — review below, then commit to your repo:</p>
           <ul className="mt-1 list-disc space-y-0.5 pl-5 text-neutral-600 dark:text-neutral-400">
             {saved.map((s) => <li key={s.name}>{s.name}</li>)}
           </ul>

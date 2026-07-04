@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { VisualGenerate } from "./VisualGenerate";
+import { SavedSpecs } from "../SavedSpecs";
 
 export const metadata: Metadata = { title: "Visual", robots: { index: false } };
 
@@ -17,14 +18,23 @@ export default async function VisualPage({ params }: { params: Promise<{ project
   const { projectId } = await params;
   const supabase = await createClient();
 
-  const { data: latestRun } = await supabase
-    .from("test_runs")
-    .select("id, commit_sha, created_at")
-    .eq("project_id", projectId)
-    .eq("discipline", "visual")
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const [{ data: latestRun }, { data: savedSpecs }] = await Promise.all([
+    supabase
+      .from("test_runs")
+      .select("id, commit_sha, created_at")
+      .eq("project_id", projectId)
+      .eq("discipline", "visual")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("tests")
+      .select("id, name, spec_path, status, description, plan, spec_content, created_at")
+      .eq("project_id", projectId)
+      .eq("kind", "visual")
+      .neq("status", "archived")
+      .order("created_at", { ascending: false }),
+  ]);
 
   const { data: results } = latestRun
     ? await supabase.from("test_results").select("*").eq("run_id", latestRun.id).eq("discipline", "visual")
@@ -44,6 +54,12 @@ export default async function VisualPage({ params }: { params: Promise<{ project
       </div>
 
       <VisualGenerate projectId={projectId} />
+
+      <SavedSpecs
+        title="Saved visual specs"
+        hint="Nothing yet — generate a snapshot above. Specs appear here with their code, ready to commit."
+        rows={savedSpecs ?? []}
+      />
 
       <details className="border border-neutral-200 dark:border-neutral-800">
         <summary className="cursor-pointer px-5 py-3 text-sm font-semibold">How visual testing works <span className="font-normal text-neutral-400">— screenshots, not selectors</span></summary>
