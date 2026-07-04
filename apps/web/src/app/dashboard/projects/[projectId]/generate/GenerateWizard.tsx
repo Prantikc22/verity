@@ -23,7 +23,6 @@ export function GenerateWizard({ projectId }: { projectId: string }) {
   const [phase, setPhase] = useState<Phase>("choose");
 
   // setup
-  const [testType, setTestType] = useState<"frontend" | "backend">("frontend");
   const [url, setUrl] = useState("");
   const [prd, setPrd] = useState("");
   const [username, setUsername] = useState("");
@@ -131,7 +130,7 @@ export function GenerateWizard({ projectId }: { projectId: string }) {
 
         {phase === "setup" && (
           <Setup
-            {...{ testType, setTestType, url, setUrl, prd, setPrd, username, setUsername, password, setPassword, error }}
+            {...{ url, setUrl, prd, setPrd, username, setUsername, password, setPassword, error }}
             onPrd={(t) => setPrd((p) => (p ? p + "\n\n" : "") + t)}
             onBack={() => setPhase("choose")}
             onSubmit={explore}
@@ -229,12 +228,11 @@ function McpPanel({ projectId, onBack }: { projectId: string; onBack: () => void
 
 /* ---------- setup form ---------- */
 function Setup(props: {
-  testType: "frontend" | "backend"; setTestType: (t: "frontend" | "backend") => void;
   url: string; setUrl: (s: string) => void; prd: string; setPrd: (s: string) => void;
   username: string; setUsername: (s: string) => void; password: string; setPassword: (s: string) => void;
   error: string; onPrd: (t: string) => void; onBack: () => void; onSubmit: () => void;
 }) {
-  const { testType, setTestType, url, setUrl, prd, setPrd, username, setUsername, password, setPassword, error, onPrd, onBack, onSubmit } = props;
+  const { url, setUrl, prd, setPrd, username, setUsername, password, setPassword, error, onPrd, onBack, onSubmit } = props;
   return (
     <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }}>
       <button type="button" onClick={onBack} className="text-xs text-neutral-400 hover:text-neutral-600">← Back</button>
@@ -242,18 +240,12 @@ function Setup(props: {
       <p className="mt-1 text-xs text-neutral-500">Choose the type of test to create and share the details we&apos;ll use to generate your test plan.</p>
 
       <div className="mt-4 grid gap-4">
-        <Field label="Test type">
-          <div className="inline-grid grid-cols-2 border border-neutral-300 dark:border-neutral-700">
-            <button type="button" disabled title="Coming soon"
-              className="cursor-not-allowed px-4 py-2 text-sm text-neutral-400">
-              Backend (APIs) <span className="ml-1 text-[10px]">soon</span>
-            </button>
-            <button type="button" onClick={() => setTestType("frontend")}
-              className={`px-4 py-2 text-sm font-medium ${testType === "frontend" ? "bg-indigo-600 text-white" : ""}`}>
-              Frontend (URLs)
-            </button>
-          </div>
-        </Field>
+        {/* This wizard generates browser (UI) tests. API tests have their own
+            generator under API testing — point there instead of a dead toggle. */}
+        <p className="text-[11px] text-neutral-400">
+          This generates <strong className="text-neutral-600 dark:text-neutral-300">browser UI tests</strong>. Testing an API? Use{" "}
+          <a href="../api/generate" className="text-indigo-600 underline">API testing → Generate</a>.
+        </p>
 
         <Field label="Website URL">
           <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://app.example.com/login"

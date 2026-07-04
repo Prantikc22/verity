@@ -26,7 +26,7 @@ const DOCS = [
 
 // Project sub-sections, shown in the sidebar when inside a project.
 // Project nav, grouped so UI testing and API testing never blur together.
-const PROJECT_GROUPS: { heading?: string; items: { seg: string; label: string; icon: string }[] }[] = [
+const PROJECT_GROUPS: { heading?: string; badge?: string; items: { seg: string; label: string; icon: string }[] }[] = [
   { items: [
     { seg: "", label: "Overview", icon: "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" },
     { seg: "predictions", label: "Predictions", icon: "M3 17l6-6 4 4 8-8M14 7h7v7" },
@@ -45,11 +45,12 @@ const PROJECT_GROUPS: { heading?: string; items: { seg: string; label: string; i
   { heading: "Visual testing", items: [
     { seg: "visual", label: "Snapshots", icon: "M4 5h16v14H4zM4 15l4-4 3 3 5-5 4 4" },
   ] },
-  { heading: "Agent (AI) testing", items: [
+  { heading: "Agent (AI) testing", badge: "beta", items: [
     { seg: "agent", label: "Evals", icon: "M12 2a3 3 0 013 3v1a3 3 0 01-1 6H10a3 3 0 01-1-6V5a3 3 0 013-3zM8 14h8v6H8z" },
   ] },
   { heading: "Performance", items: [
     { seg: "performance", label: "Results", icon: "M3 17l6-6 4 4 8-8M14 7h7v7" },
+    { seg: "performance/configure", label: "Configure", icon: "M4 6h16M4 12h16M4 18h16M8 3v3M8 15v3M16 9v3" },
   ] },
   { heading: "Security", items: [
     { seg: "security", label: "Findings", icon: "M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z" },
@@ -155,7 +156,10 @@ export function DashboardShell({
                       onClick={() => toggleGroup(key)}
                       className="flex w-full items-center justify-between px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wide text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200"
                     >
-                      {group.heading}
+                      <span className="flex items-center gap-1.5">
+                        {group.heading}
+                        {group.badge && <span className="border border-amber-400 px-1 text-[9px] font-semibold lowercase text-amber-600 dark:text-amber-400">{group.badge}</span>}
+                      </span>
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`transition-transform ${isOpen ? "" : "-rotate-90"}`}><path d="M6 9l6 6 6-6" /></svg>
                     </button>
                   )}

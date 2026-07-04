@@ -15,6 +15,10 @@ export default async function RunsPage({ params }: { params: Promise<{ projectId
   ]);
 
   const tierLabel = (t: string) => (t === "fast" ? "Quick check" : "Full regression");
+  // Where a run executed: CI triggers come from the pipeline; trigger=manual splits
+  // into Cloud (our infra, branch "cloud"/"cloud-trial") vs Local (the user's MCP).
+  const sourceLabel = (r: { trigger: string; branch: string | null }) =>
+    r.trigger !== "manual" ? "CI" : r.branch === "cloud" || r.branch === "cloud-trial" ? "Cloud" : "Local";
 
   return (
     <div className="space-y-10">
@@ -26,7 +30,7 @@ export default async function RunsPage({ params }: { params: Promise<{ projectId
           <div className="mt-3 overflow-x-auto border border-neutral-200 dark:border-neutral-800">
             <table className="w-full min-w-[640px] text-sm">
               <thead className="border-b border-neutral-200 text-left text-xs text-neutral-400 dark:border-neutral-800">
-                <tr><th className="p-3">Tier</th><th className="p-3">Commit</th><th className="p-3">Passed</th><th className="p-3">Failed</th><th className="p-3">Flaky</th><th className="p-3">When</th><th className="p-3"></th></tr>
+                <tr><th className="p-3">Tier</th><th className="p-3">Source</th><th className="p-3">Commit</th><th className="p-3">Passed</th><th className="p-3">Failed</th><th className="p-3">Flaky</th><th className="p-3">When</th><th className="p-3"></th></tr>
               </thead>
               <tbody>
                 {runs.map((r) => (
@@ -34,6 +38,7 @@ export default async function RunsPage({ params }: { params: Promise<{ projectId
                     <td className="p-3">
                       <span className={`border px-2 py-0.5 text-[11px] font-medium ${r.tier === "fast" ? "border-amber-300 text-amber-700 dark:border-amber-800 dark:text-amber-300" : "border-indigo-300 text-indigo-700 dark:border-indigo-800 dark:text-indigo-300"}`}>{tierLabel(r.tier)}</span>
                     </td>
+                    <td className="p-3 text-xs">{(() => { const s = sourceLabel(r); return <span className={s === "CI" ? "text-indigo-600 dark:text-indigo-400" : s === "Cloud" ? "text-sky-600 dark:text-sky-400" : "text-neutral-500"}>{s}</span>; })()}</td>
                     <td className="p-3 font-mono text-xs text-neutral-500">{r.commit_sha?.slice(0, 7) ?? "—"}</td>
                     <td className="p-3 text-emerald-600">{r.passed}</td>
                     <td className="p-3 text-red-600">{r.failed}</td>

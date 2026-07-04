@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { AgentGenerate } from "./AgentGenerate";
 import { TestList } from "../TestList";
+import { PushAll } from "../PushAll";
 
 export const metadata: Metadata = { title: "Agent (AI) testing", robots: { index: false } };
 
@@ -56,7 +57,10 @@ export default async function AgentPage({ params }: { params: Promise<{ projectI
       <AgentGenerate projectId={projectId} />
 
       <section>
-        <h3 className="text-sm font-medium text-neutral-500">Saved agent evals ({savedSpecs?.length ?? 0})</h3>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h3 className="text-sm font-medium text-neutral-500">Saved agent evals ({savedSpecs?.length ?? 0})</h3>
+          <PushAll projectId={projectId} repoLinked={Boolean(project?.repo)} />
+        </div>
         <TestList
           projectId={projectId}
           repoLinked={Boolean(project?.repo)}
