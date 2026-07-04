@@ -56,6 +56,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
 
   const name = (isUrl ? `Snapshot: ${input.trim()}` : input.trim()).slice(0, 60);
   const specPath = specPathFor(name);
+  // Upsert-by-path: regenerating the same screen replaces the old spec instead of
+  // piling up duplicates (same pattern as the performance route).
+  await supabase.from("tests").update({ status: "archived" }).eq("project_id", project.id).eq("kind", "visual").eq("spec_path", specPath).neq("status", "archived");
   const { data: test, error } = await supabase.from("tests").insert({
     project_id: project.id, org_id: project.org_id, kind: "visual",
     name, suite: "Visual", description: isUrl ? null : input.trim(),
