@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { AgentGenerate } from "./AgentGenerate";
-import { SavedSpecs } from "../SavedSpecs";
+import { TestList } from "../TestList";
 
 export const metadata: Metadata = { title: "Agent (AI) testing", robots: { index: false } };
 
@@ -18,13 +18,16 @@ const CATEGORIES: { title: string; blurb: string }[] = [
 export default async function AgentPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = await params;
   const supabase = await createClient();
-  const { data: savedSpecs } = await supabase
-    .from("tests")
-    .select("id, name, spec_path, status, description, plan, spec_content, created_at")
-    .eq("project_id", projectId)
-    .eq("kind", "agent")
-    .neq("status", "archived")
-    .order("created_at", { ascending: false });
+  const [{ data: savedSpecs }, { data: project }] = await Promise.all([
+    supabase
+      .from("tests")
+      .select("*")
+      .eq("project_id", projectId)
+      .eq("kind", "agent")
+      .neq("status", "archived")
+      .order("created_at", { ascending: false }),
+    supabase.from("projects").select("repo").eq("id", projectId).maybeSingle(),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -52,11 +55,26 @@ export default async function AgentPage({ params }: { params: Promise<{ projectI
 
       <AgentGenerate projectId={projectId} />
 
-      <SavedSpecs
-        title="Saved agent evals"
-        hint="Nothing yet — describe your AI feature above and generate. Evals appear here with their code, ready to commit."
-        rows={savedSpecs ?? []}
-      />
+      <section>
+        <h3 className="text-sm font-medium text-neutral-500">Saved agent evals ({savedSpecs?.length ?? 0})</h3>
+        <TestList
+          projectId={projectId}
+          repoLinked={Boolean(project?.repo)}
+          rows={(savedSpecs ?? []).map((t) => ({
+            id: t.id,
+            name: t.name,
+            spec_path: t.spec_path,
+            suite: t.suite ?? null,
+            status: t.status,
+            critical_path: t.critical_path,
+            is_pom: t.is_pom,
+            confidenceLabel: "—",
+            flakeLabel: "—",
+            plan: Array.isArray(t.plan) ? (t.plan as unknown[]).map(String) : [],
+            spec_content: t.spec_content,
+          }))}
+        />
+      </section>
 
       <div className="flex items-center justify-between border border-neutral-200 p-4 text-xs dark:border-neutral-800">
         <p className="text-neutral-500">Prefer we set it up? Your forward-deployed engineer can wire the first evals against your AI endpoint this week.</p>
