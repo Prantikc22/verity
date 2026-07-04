@@ -121,7 +121,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
       source_files: sourceFiles ?? [],
       generated_model: gen.model,
       critical_path: criticalPath ?? false,
-      status: "active",
+      // New UI specs start as drafts (Unverified) — "Verify drafts" runs them in a
+      // real browser and promotes them to active (Verified ✓) or quarantined.
+      status: "draft",
     })
     .select("*")
     .single();

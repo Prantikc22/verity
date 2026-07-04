@@ -42,6 +42,7 @@ export default async function TestsPage({ params }: { params: Promise<{ projectI
       <TestList
         projectId={projectId}
         repoLinked={Boolean(project?.repo)}
+        verifiable
         rows={(tests ?? []).map((t) => {
           const fs = flakeByTest.get(t.id);
           const fr = fs ? flakeRate({ runsTotal: fs.runs_total, flakyTotal: fs.flaky_total }) : 0;
