@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { NavigationProgress } from "@/components/NavigationProgress";
 import { PostHogProvider } from "@/components/PostHogProvider";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { CookieConsent } from "@/components/CookieConsent";
 
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
+// Inter reads better than Geist at small UI sizes (bigger x-height, tuned for
+// dense dashboards / sidebar scanning). Keeps the same CSS variable name.
+const geistSans = Inter({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
