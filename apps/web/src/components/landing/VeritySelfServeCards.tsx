@@ -51,7 +51,7 @@ const TIERS: Tier[] = [
       "Try it instantly in our cloud sandbox",
       "Unlimited CI runs once you wire your pipeline",
     ],
-    note: "Self-healing and flake triage start at Self-Serve Pro.",
+    note: "No self-healing on free — generated tests self-heal from Self-Serve Pro up.",
     cta: { label: "Start free", href: "/login?next=/dashboard" },
   },
   {
@@ -61,7 +61,7 @@ const TIERS: Tier[] = [
     cap: "AI UI + API tests — 200/month",
     features: [
       "AI test generation, UI + API — 200/month",
-      "Self-healing locators + flake detection included",
+      "Every generated test self-heals its locators + flake detection",
       "Unlimited CI runs",
       "3 projects",
     ],
@@ -76,7 +76,7 @@ const TIERS: Tier[] = [
     cap: "AI UI + API tests — 750/month",
     features: [
       "AI test generation, UI + API — 750/month",
-      "Self-healing locators + flake detection",
+      "Every generated test self-heals its locators + flake detection",
       "Unlimited CI runs · 10 projects",
       "Priority support — still no engineer, no call",
     ],

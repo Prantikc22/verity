@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { healSelector } from "@/lib/llm/generate";
 import { llmConfig } from "@/lib/llm/provider";
+import { planFor } from "@/lib/plans";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -38,10 +39,21 @@ export async function POST(req: NextRequest) {
   const admin = createAdminClient();
   const { data: project } = await admin
     .from("projects")
-    .select("id")
+    .select("id, org_id")
     .eq("ingest_token", token)
     .maybeSingle();
   if (!project) return NextResponse.json({ error: "Invalid ingest token" }, { status: 401 });
+
+  // Plan gate — self-healing is a paid feature. Reject BEFORE any LLM call so
+  // free-tier CI can't burn our token budget. Generated tests self-heal from
+  // Self-Serve Pro up (see lib/plans.ts).
+  const { data: org } = await admin.from("orgs").select("plan").eq("id", project.org_id).maybeSingle();
+  if (!planFor(org?.plan).selfHealing) {
+    return NextResponse.json(
+      { error: "Self-healing is a paid feature — it's included from Self-Serve Pro. Upgrade to enable locator healing in CI.", healed: false, upgrade: true },
+      { status: 402 },
+    );
+  }
 
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
