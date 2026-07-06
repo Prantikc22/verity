@@ -42,6 +42,19 @@ function killBareTextLocators(code: string): string {
 }
 
 /**
+ * Container roles like `listitem`/`list` do NOT derive an accessible name from
+ * their child text, so `getByRole('listitem', { name: 'Buy milk' })` matches
+ * nothing — a very common AI mistake for list/todo UIs. Rewrite it to filter by
+ * visible text instead, which is what the author actually meant.
+ */
+function relaxContainerRoleNames(code: string): string {
+  return code.replace(
+    /getByRole\(\s*(['"`])(listitem|list)\1\s*,\s*\{\s*name:\s*([^}]+?)\s*\}\s*\)/g,
+    (_m, _q, role: string, name: string) => `getByRole(${JSON.stringify(role)}).filter({ hasText: ${name.trim()} })`,
+  );
+}
+
+/**
  * Append `.first()` to every getByText/getByRole locator that isn't already
  * disambiguated — the fix for strict-mode "resolved to N elements" violations.
  * Works whether the locator is the whole argument to expect(...) (followed by
@@ -61,6 +74,7 @@ export function hardenSpec(code: string): string {
   if (!code) return code;
   let out = code;
   out = killBareTextLocators(out);
+  out = relaxContainerRoleNames(out);
   out = relaxUrlAssertions(out);
   out = disambiguate(out);
   return out;

@@ -238,16 +238,33 @@ export default async function Home() {
 
         {/* CTA */}
         <Reveal>
-          <section className="mx-auto my-16 max-w-6xl bg-gradient-to-br from-indigo-600 to-violet-600 px-8 py-16 text-center text-white">
-            <h2 className="mx-auto max-w-3xl text-3xl font-semibold tracking-tight sm:text-4xl">Stop babysitting your test suite.</h2>
-            <p className="mx-auto mt-4 max-w-2xl text-lg text-indigo-100">
-              Verity writes the tests, heals the flaky ones, and flags real regressions before they ship — with a forward-deployed engineer accountable for green. Start free; live in your CI this afternoon.
-            </p>
-            <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <Link href="/login?next=/dashboard" className="bg-white px-7 py-3 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-50">Start free — no card</Link>
-              <Link href="/pricing" className="border border-white/40 px-7 py-3 text-sm font-semibold transition hover:bg-white/10">See pricing</Link>
+          <section className="relative mx-auto my-16 max-w-6xl overflow-hidden bg-neutral-950 px-8 py-20 text-center text-white">
+            {/* Layered aurora glow */}
+            <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background:
+              "radial-gradient(60% 80% at 12% 8%, rgba(99,102,241,0.55), transparent 60%)," +
+              "radial-gradient(55% 75% at 88% 22%, rgba(139,92,246,0.5), transparent 60%)," +
+              "radial-gradient(75% 95% at 50% 118%, rgba(56,189,248,0.28), transparent 60%)" }} />
+            {/* Grid texture, faded at the edges */}
+            <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.14]" style={{
+              backgroundImage: "linear-gradient(rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.4) 1px, transparent 1px)",
+              backgroundSize: "46px 46px",
+              WebkitMaskImage: "radial-gradient(ellipse 70% 70% at center, black 35%, transparent 78%)",
+              maskImage: "radial-gradient(ellipse 70% 70% at center, black 35%, transparent 78%)",
+            }} />
+            <div className="relative">
+              <span className="inline-block border border-white/20 bg-white/5 px-3 py-1 text-xs font-medium tracking-wide text-indigo-200 backdrop-blur">AI writes · an engineer verifies · runs in your CI</span>
+              <h2 className="mx-auto mt-5 max-w-3xl text-4xl font-semibold tracking-tight sm:text-5xl">
+                Stop babysitting<br /><span className="bg-gradient-to-r from-indigo-300 to-violet-300 bg-clip-text text-transparent">your test suite.</span>
+              </h2>
+              <p className="mx-auto mt-5 max-w-2xl text-lg text-neutral-300">
+                Verity writes the tests, heals the flaky ones, and flags real regressions before they ship — with a forward-deployed engineer accountable for green. Start free; live in your CI this afternoon.
+              </p>
+              <div className="mt-8 flex flex-wrap justify-center gap-3">
+                <Link href="/login?next=/dashboard" className="bg-white px-7 py-3 text-sm font-semibold text-neutral-950 transition hover:bg-indigo-50">Start free — no card</Link>
+                <Link href="/pricing" className="border border-white/30 px-7 py-3 text-sm font-semibold text-white transition hover:bg-white/10">See pricing</Link>
+              </div>
+              <p className="mt-6 text-xs text-neutral-400">Unlimited runs in your own CI · You own the code · No per-test meter</p>
             </div>
-            <p className="mt-5 text-xs text-indigo-200">Unlimited runs in your own CI · You own the code · No per-test meter</p>
           </section>
         </Reveal>
       </main>

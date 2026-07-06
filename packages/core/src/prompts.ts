@@ -44,6 +44,13 @@ Rules for the code:
     or getByPlaceholder using the exact label/placeholder from PAGE CONTEXT; links
     → getByRole('link', { name }); headings → getByRole('heading', { name }).
   * Avoid CSS/XPath and test-id selectors unless PAGE CONTEXT shows nothing else.
+  * Container roles (listitem, list, row) do NOT take an accessible name from their
+    child text — NEVER write getByRole('listitem', { name: 'X' }); it matches nothing.
+    To target an item by its text use getByRole('listitem').filter({ hasText: 'X' }).
+  * Icon-only or hover-revealed controls (a delete 'x', edit pencil, close, a toggle)
+    usually have NO visible label and won't appear in PAGE CONTEXT. Do NOT invent an
+    accessible name for them. Scope to the item's container first (e.g. the listitem
+    filtered by its text) and act on the control within that scope.
 - Assert CONCRETELY. Every test must end with real expect() checks based on the
   page context (e.g. a success heading/text/URL you can see). Do NOT write vague
   or speculative assertions, and do NOT leave comments like "assuming…",

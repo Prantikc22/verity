@@ -27,13 +27,13 @@ export interface ManagedTest {
   spec_content: string;
 }
 
-const KIND_META: Record<string, { label: string; badge: string }> = {
-  ui: { label: "UI", badge: "border-indigo-300 text-indigo-600 dark:border-indigo-800 dark:text-indigo-300" },
-  api: { label: "API", badge: "border-sky-300 text-sky-600 dark:border-sky-800 dark:text-sky-300" },
-  visual: { label: "Visual", badge: "border-violet-300 text-violet-600 dark:border-violet-800 dark:text-violet-300" },
-  agent: { label: "Agent", badge: "border-emerald-300 text-emerald-600 dark:border-emerald-800 dark:text-emerald-300" },
+const KIND_META: Record<string, { label: string; badge: string; dot: string }> = {
+  ui: { label: "UI", badge: "border-indigo-300 text-indigo-600 dark:border-indigo-800 dark:text-indigo-300", dot: "bg-indigo-500" },
+  api: { label: "API", badge: "border-sky-300 text-sky-600 dark:border-sky-800 dark:text-sky-300", dot: "bg-sky-500" },
+  visual: { label: "Visual", badge: "border-violet-300 text-violet-600 dark:border-violet-800 dark:text-violet-300", dot: "bg-violet-500" },
+  agent: { label: "Agent", badge: "border-emerald-300 text-emerald-600 dark:border-emerald-800 dark:text-emerald-300", dot: "bg-emerald-500" },
 };
-const kindMeta = (k: string) => KIND_META[k] ?? { label: k, badge: "border-neutral-300 text-neutral-500 dark:border-neutral-700" };
+const kindMeta = (k: string) => KIND_META[k] ?? { label: k, badge: "border-neutral-300 text-neutral-500 dark:border-neutral-700", dot: "bg-neutral-400" };
 
 type SortKey = "recent" | "name" | "confidence" | "flake" | "status";
 type GroupKey = "kind" | "suite" | "none";
@@ -44,6 +44,20 @@ function StatusCell({ status, verifiable }: { status: string; verifiable: boolea
   if (status === "draft") return <span className="text-neutral-400" title={verifiable ? "Generated but not yet run in a browser" : "Generated — review, then Activate"}>{verifiable ? "Unverified" : "Draft"}</span>;
   if (status === "archived") return <span className="text-neutral-400">Archived</span>;
   return <span className="text-neutral-500">{status}</span>;
+}
+
+/** Compact per-group status summary, Linear-style. */
+function groupSummary(rows: ManagedTest[]): string {
+  const verified = rows.filter((t) => t.status === "active" && t.verifiable).length;
+  const active = rows.filter((t) => t.status === "active" && !t.verifiable).length;
+  const draft = rows.filter((t) => t.status === "draft").length;
+  const review = rows.filter((t) => t.status === "quarantined").length;
+  const parts: string[] = [];
+  if (verified) parts.push(`${verified} verified`);
+  if (active) parts.push(`${active} active`);
+  if (draft) parts.push(`${draft} draft`);
+  if (review) parts.push(`${review} to review`);
+  return parts.join(" · ") || `${rows.length} test${rows.length === 1 ? "" : "s"}`;
 }
 
 function PushButton({ projectId, testId, repoLinked }: { projectId: string; testId: string; repoLinked: boolean }) {
@@ -85,13 +99,15 @@ export function TestManager({ projectId, rows, repoLinked }: { projectId: string
   const [criticalOnly, setCriticalOnly] = useState(false);
   const [sort, setSort] = useState<SortKey>("recent");
   const [group, setGroup] = useState<GroupKey>("kind");
+  // Which groups the user has expanded. Empty = all collapsed (tidy overview).
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
-  // Which kinds actually exist (so we only show relevant filter chips)
   const kindsPresent = useMemo(() => [...new Set(rows.map((r) => r.kind))], [rows]);
+  const filtersActive = Boolean(q.trim()) || kind !== "all" || status !== "all" || criticalOnly;
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    let out = rows.filter((r) => {
+    const out = rows.filter((r) => {
       if (kind !== "all" && r.kind !== kind) return false;
       if (status !== "all" && r.status !== status) return false;
       if (criticalOnly && !r.critical_path) return false;
@@ -108,11 +124,9 @@ export function TestManager({ projectId, rows, repoLinked }: { projectId: string
       flake: (a, b) => (b.flakePct ?? -1) - (a.flakePct ?? -1),
       status: (a, b) => a.status.localeCompare(b.status),
     };
-    out = [...out].sort(cmp[sort]);
-    return out;
+    return [...out].sort(cmp[sort]);
   }, [rows, q, kind, status, criticalOnly, sort]);
 
-  // Group the filtered rows for rendering.
   const grouped = useMemo(() => {
     if (group === "none") return [["", filtered]] as [string, ManagedTest[]][];
     const map = new Map<string, ManagedTest[]>();
@@ -121,16 +135,18 @@ export function TestManager({ projectId, rows, repoLinked }: { projectId: string
       (map.get(key) ?? map.set(key, []).get(key)!).push(t);
     }
     const entries = [...map.entries()];
-    // Keep "Ungrouped" last when grouping by suite.
     if (group === "suite") entries.sort((a, b) => (a[0] === "Ungrouped" ? 1 : b[0] === "Ungrouped" ? -1 : 0));
     return entries;
   }, [filtered, group]);
 
+  // A group renders open when the user expanded it, OR filters are active (so
+  // matches are never hidden), OR there's only one group to show.
+  const isGroupOpen = (label: string) => group === "none" || filtersActive || expanded.has(label) || grouped.length === 1;
+  const toggleExpand = (label: string) => setExpanded((p) => { const n = new Set(p); n.has(label) ? n.delete(label) : n.add(label); return n; });
+  const allOpen = grouped.every(([l]) => isGroupOpen(l));
+  const setAll = (openAll: boolean) => setExpanded(openAll ? new Set(grouped.map(([l]) => l)) : new Set());
+
   const toggle = (id: string) => setSel((p) => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n; });
-  const toggleGroup = (gr: ManagedTest[]) => setSel((p) => {
-    const n = new Set(p); const all = gr.every((t) => n.has(t.id));
-    gr.forEach((t) => (all ? n.delete(t.id) : n.add(t.id))); return n;
-  });
 
   async function bulk(action: string, suite?: string | null) {
     if (sel.size === 0) return;
@@ -155,12 +171,15 @@ export function TestManager({ projectId, rows, repoLinked }: { projectId: string
     <div>
       {/* Filter / search / view toolbar */}
       <div className="flex flex-wrap items-center gap-2">
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Search tests, paths, sets…"
-          className="min-w-[180px] flex-1 border border-neutral-300 bg-white px-3 py-1.5 text-xs text-neutral-800 placeholder:text-neutral-400 focus:border-indigo-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
-        />
+        <div className="relative min-w-[200px] flex-1">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg>
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search tests, paths, sets…"
+            className="w-full border border-neutral-300 bg-white py-1.5 pl-8 pr-3 text-xs text-neutral-800 placeholder:text-neutral-400 focus:border-indigo-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+          />
+        </div>
         <select value={kind} onChange={(e) => setKind(e.target.value)} className={selectClass} title="Discipline">
           <option value="all">All disciplines</option>
           {kindsPresent.map((k) => <option key={k} value={k}>{kindMeta(k).label}</option>)}
@@ -191,10 +210,15 @@ export function TestManager({ projectId, rows, repoLinked }: { projectId: string
       </div>
 
       <div className="mt-2 flex items-center justify-between text-xs text-neutral-400">
-        <span>Showing {filtered.length} of {rows.length} test{rows.length === 1 ? "" : "s"}</span>
-        {(q || kind !== "all" || status !== "all" || criticalOnly) && (
-          <button onClick={() => { setQ(""); setKind("all"); setStatus("all"); setCriticalOnly(false); }} className="text-indigo-600 hover:underline">Clear filters</button>
-        )}
+        <span>Showing {filtered.length} of {rows.length} test{rows.length === 1 ? "" : "s"}{group !== "none" && ` across ${grouped.length} group${grouped.length === 1 ? "" : "s"}`}</span>
+        <div className="flex items-center gap-3">
+          {group !== "none" && !filtersActive && grouped.length > 1 && (
+            <button onClick={() => setAll(!allOpen)} className="text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300">{allOpen ? "Collapse all" : "Expand all"}</button>
+          )}
+          {filtersActive && (
+            <button onClick={() => { setQ(""); setKind("all"); setStatus("all"); setCriticalOnly(false); }} className="text-indigo-600 hover:underline">Clear filters</button>
+          )}
+        </div>
       </div>
 
       {/* Bulk toolbar */}
@@ -218,65 +242,76 @@ export function TestManager({ projectId, rows, repoLinked }: { projectId: string
       {filtered.length === 0 ? (
         <p className="mt-3 text-sm text-neutral-500">No tests match these filters.</p>
       ) : (
-        <div className="border border-neutral-200 dark:border-neutral-800">
-          <table className="w-full text-sm">
-            <thead className="border-b border-neutral-200 text-left text-xs text-neutral-400 dark:border-neutral-800">
-              <tr><th className="w-8 p-3"></th><th className="p-3">Name</th><th className="p-3">Discipline</th><th className="p-3">Confidence</th><th className="p-3">Flake</th><th className="p-3">Status</th><th className="p-3"></th></tr>
-            </thead>
-            <tbody>
-              {grouped.map(([label, gr]) => (
-                <Fragment key={label || "flat"}>
-                  {label && (
-                    <tr className="bg-neutral-50 dark:bg-neutral-900/60">
-                      <td className="p-2 text-center">
-                        <input type="checkbox" checked={gr.every((t) => sel.has(t.id))} onChange={() => toggleGroup(gr)} title="Select whole group" />
-                      </td>
-                      <td colSpan={6} className="px-1 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">{label} <span className="text-neutral-400">({gr.length})</span></td>
-                    </tr>
-                  )}
-                  {gr.map((t) => (
-                    <Fragment key={t.id}>
-                      <tr className="border-b border-neutral-100 last:border-0 dark:border-neutral-800/60">
-                        <td className="p-3 text-center"><input type="checkbox" checked={sel.has(t.id)} onChange={() => toggle(t.id)} /></td>
-                        <td className="p-3">
-                          <button onClick={() => { setOpen(open === t.id ? null : t.id); setTab("plan"); }} className="text-left font-medium hover:text-indigo-600">{open === t.id ? "▾ " : "▸ "}{t.name}</button>
-                          <div className="flex flex-wrap items-center gap-1 pt-0.5">
-                            {t.critical_path && <span className="border border-indigo-300 px-1 text-[10px] text-indigo-600 dark:border-indigo-800 dark:text-indigo-300">critical</span>}
-                            {t.is_pom && <span className="border border-emerald-300 px-1 text-[10px] text-emerald-600 dark:border-emerald-800 dark:text-emerald-300">POM</span>}
-                            <span className="font-mono text-[10px] text-neutral-400">{t.spec_path}</span>
-                          </div>
-                        </td>
-                        <td className="p-3"><span className={`border px-1.5 py-0.5 text-[10px] font-medium ${kindMeta(t.kind).badge}`}>{kindMeta(t.kind).label}</span></td>
-                        <td className="p-3">{t.confidenceLabel}</td>
-                        <td className="p-3">{t.flakeLabel}</td>
-                        <td className="p-3 text-xs"><StatusCell status={t.status} verifiable={t.verifiable} /></td>
-                        <td className="p-3 text-right"><button onClick={() => { setOpen(open === t.id ? null : t.id); setTab("plan"); }} className="text-xs text-indigo-600 hover:underline">{open === t.id ? "hide" : "view"}</button></td>
-                      </tr>
-                      {open === t.id && (
-                        <tr className="border-b border-neutral-100 dark:border-neutral-800/60">
-                          <td colSpan={7} className="p-3">
-                            <div className="border border-neutral-200 dark:border-neutral-800">
-                              <div className="flex border-b border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900">
-                                {(["plan", "code"] as const).map((tb) => (
-                                  <button key={tb} onClick={() => setTab(tb)} className={`px-4 py-2 text-xs font-medium ${tab === tb ? "border-b-2 border-indigo-500 text-indigo-600 dark:text-indigo-400" : "text-neutral-500"}`}>{tb === "plan" ? "Plan (English)" : "Playwright code"}</button>
-                                ))}
+        <div className="divide-y divide-neutral-200 border border-neutral-200 dark:divide-neutral-800 dark:border-neutral-800">
+          {grouped.map(([label, gr]) => {
+            const openGroup = isGroupOpen(label);
+            const groupColor = group === "kind" ? kindMeta(gr[0]?.kind ?? "").dot : "bg-neutral-400";
+            return (
+              <div key={label || "flat"}>
+                {/* Group header — click to drill in (Linear/Jira style) */}
+                {label && (
+                  <button
+                    onClick={() => toggleExpand(label)}
+                    disabled={filtersActive || grouped.length === 1}
+                    className="flex w-full items-center gap-3 bg-neutral-50 px-3 py-2.5 text-left transition hover:bg-neutral-100 disabled:cursor-default disabled:hover:bg-neutral-50 dark:bg-neutral-900/60 dark:hover:bg-neutral-900 dark:disabled:hover:bg-neutral-900/60"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={`shrink-0 text-neutral-400 transition-transform ${openGroup ? "" : "-rotate-90"}`}><path d="M6 9l6 6 6-6" /></svg>
+                    <span className={`h-2 w-2 shrink-0 ${groupColor}`} />
+                    <span className="text-sm font-semibold">{label}</span>
+                    <span className="rounded-full bg-neutral-200 px-2 py-0.5 text-[11px] font-medium text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">{gr.length}</span>
+                    <span className="ml-auto truncate text-xs text-neutral-400">{groupSummary(gr)}</span>
+                  </button>
+                )}
+
+                {/* Rows */}
+                {openGroup && (
+                  <table className="w-full text-sm">
+                    <tbody>
+                      {gr.map((t) => (
+                        <Fragment key={t.id}>
+                          <tr className="border-t border-neutral-100 hover:bg-neutral-50/60 dark:border-neutral-800/60 dark:hover:bg-neutral-900/30">
+                            <td className="w-8 py-2.5 pl-3 text-center align-top"><input type="checkbox" checked={sel.has(t.id)} onChange={() => toggle(t.id)} className="mt-1" /></td>
+                            <td className="py-2.5 pr-3">
+                              <button onClick={() => { setOpen(open === t.id ? null : t.id); setTab("plan"); }} className="text-left font-medium hover:text-indigo-600">{open === t.id ? "▾ " : "▸ "}{t.name}</button>
+                              <div className="flex flex-wrap items-center gap-1 pt-0.5">
+                                {group !== "kind" && <span className={`border px-1 text-[10px] font-medium ${kindMeta(t.kind).badge}`}>{kindMeta(t.kind).label}</span>}
+                                {t.critical_path && <span className="border border-indigo-300 px-1 text-[10px] text-indigo-600 dark:border-indigo-800 dark:text-indigo-300">critical</span>}
+                                {t.is_pom && <span className="border border-emerald-300 px-1 text-[10px] text-emerald-600 dark:border-emerald-800 dark:text-emerald-300">POM</span>}
+                                <span className="font-mono text-[10px] text-neutral-400">{t.spec_path}</span>
                               </div>
-                              {tab === "plan" ? (
-                                <ol className="list-decimal space-y-1.5 p-4 pl-8 text-sm">{t.plan.length ? t.plan.map((s, i) => <li key={i} className="text-neutral-700 dark:text-neutral-300">{s}</li>) : <li className="text-neutral-500">No plan stored.</li>}</ol>
-                              ) : (
-                                <pre className="max-h-80 overflow-auto bg-neutral-950 p-4 text-xs text-neutral-200"><code>{t.spec_content}</code></pre>
-                              )}
-                            </div>
-                            <div className="mt-3"><PushButton projectId={projectId} testId={t.id} repoLinked={repoLinked} /></div>
-                          </td>
-                        </tr>
-                      )}
-                    </Fragment>
-                  ))}
-                </Fragment>
-              ))}
-            </tbody>
-          </table>
+                            </td>
+                            <td className="hidden py-2.5 pr-3 text-xs text-neutral-500 sm:table-cell">{t.confidenceLabel}</td>
+                            <td className="hidden py-2.5 pr-3 text-xs text-neutral-500 md:table-cell">{t.flakeLabel}</td>
+                            <td className="py-2.5 pr-3 text-xs"><StatusCell status={t.status} verifiable={t.verifiable} /></td>
+                            <td className="py-2.5 pr-3 text-right"><button onClick={() => { setOpen(open === t.id ? null : t.id); setTab("plan"); }} className="text-xs text-indigo-600 hover:underline">{open === t.id ? "hide" : "view"}</button></td>
+                          </tr>
+                          {open === t.id && (
+                            <tr className="border-t border-neutral-100 dark:border-neutral-800/60">
+                              <td colSpan={6} className="p-3">
+                                <div className="border border-neutral-200 dark:border-neutral-800">
+                                  <div className="flex border-b border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900">
+                                    {(["plan", "code"] as const).map((tb) => (
+                                      <button key={tb} onClick={() => setTab(tb)} className={`px-4 py-2 text-xs font-medium ${tab === tb ? "border-b-2 border-indigo-500 text-indigo-600 dark:text-indigo-400" : "text-neutral-500"}`}>{tb === "plan" ? "Plan (English)" : "Playwright code"}</button>
+                                    ))}
+                                  </div>
+                                  {tab === "plan" ? (
+                                    <ol className="list-decimal space-y-1.5 p-4 pl-8 text-sm">{t.plan.length ? t.plan.map((s, i) => <li key={i} className="text-neutral-700 dark:text-neutral-300">{s}</li>) : <li className="text-neutral-500">No plan stored.</li>}</ol>
+                                  ) : (
+                                    <pre className="max-h-80 overflow-auto bg-neutral-950 p-4 text-xs text-neutral-200"><code>{t.spec_content}</code></pre>
+                                  )}
+                                </div>
+                                <div className="mt-3"><PushButton projectId={projectId} testId={t.id} repoLinked={repoLinked} /></div>
+                              </td>
+                            </tr>
+                          )}
+                        </Fragment>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
