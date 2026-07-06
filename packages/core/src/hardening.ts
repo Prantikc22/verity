@@ -63,10 +63,18 @@ function relaxContainerRoleNames(code: string): string {
  * level of nested parens (enough for our generated option objects).
  */
 function disambiguate(code: string): string {
-  return code.replace(
-    /\b(getByText|getByRole)\(((?:[^()]|\([^()]*\))*)\)(?!\s*\.(?:first|nth|last|filter|or|and|count)\b)/g,
-    (_m, fn: string, args: string) => `${fn}(${args}).first()`,
-  );
+  const re = /\b(getByText|getByRole)\(((?:[^()]|\([^()]*\))*)\)(?!\s*\.(?:first|nth|last|filter|or|and|count)\b)/g;
+  return code
+    .split("\n")
+    .map((line) => {
+      // Skip locators STORED in a variable — they're often reused for counting
+      // (.toHaveCount), iteration, or .nth(), where a forced .first() breaks the
+      // assertion. Only inline locators (inside expect(...) / chained to an
+      // action) get auto-disambiguated.
+      const isAssignment = /(?:\b(?:const|let|var)\b[^=]*|^\s*[A-Za-z_$][\w$.]*\s*)=\s*(?:await\s+)?[\w$.]*\bgetBy(?:Text|Role)\(/.test(line);
+      return isAssignment ? line : line.replace(re, (_m, fn: string, args: string) => `${fn}(${args}).first()`);
+    })
+    .join("\n");
 }
 
 /** Apply all deterministic hardening transforms to a generated/stored spec. */
