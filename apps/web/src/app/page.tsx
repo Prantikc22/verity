@@ -239,12 +239,15 @@ export default async function Home() {
         {/* CTA */}
         <Reveal>
           <section className="mx-auto my-16 max-w-6xl bg-gradient-to-br from-indigo-600 to-violet-600 px-8 py-16 text-center text-white">
-            <h2 className="mx-auto max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">Generate your first test in 30 seconds.</h2>
-            <p className="mx-auto mt-3 max-w-xl text-indigo-100">Try it free in the cloud, wire it into your CI, or hand the whole suite to a forward-deployed engineer.</p>
+            <h2 className="mx-auto max-w-3xl text-3xl font-semibold tracking-tight sm:text-4xl">Stop babysitting your test suite.</h2>
+            <p className="mx-auto mt-4 max-w-2xl text-lg text-indigo-100">
+              Verity writes the tests, heals the flaky ones, and flags real regressions before they ship — with a forward-deployed engineer accountable for green. Start free; live in your CI this afternoon.
+            </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <Link href="/login?next=/dashboard" className="bg-white px-6 py-3 text-sm font-semibold text-indigo-700">Start free</Link>
-              <Link href="/pricing" className="border border-white/40 px-6 py-3 text-sm font-semibold">See pricing</Link>
+              <Link href="/login?next=/dashboard" className="bg-white px-7 py-3 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-50">Start free — no card</Link>
+              <Link href="/pricing" className="border border-white/40 px-7 py-3 text-sm font-semibold transition hover:bg-white/10">See pricing</Link>
             </div>
+            <p className="mt-5 text-xs text-indigo-200">Unlimited runs in your own CI · You own the code · No per-test meter</p>
           </section>
         </Reveal>
       </main>

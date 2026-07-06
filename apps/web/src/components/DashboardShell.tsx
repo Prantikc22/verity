@@ -29,11 +29,11 @@ const DOCS = [
 const PROJECT_GROUPS: { heading?: string; badge?: string; items: { seg: string; label: string; icon: string }[] }[] = [
   { items: [
     { seg: "", label: "Overview", icon: "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" },
+    { seg: "tests", label: "Test Library", icon: "M4 4h5v16H4zM10 4h4v16h-4zM16 5l3.5 15 1-16z" },
     { seg: "predictions", label: "Predictions", icon: "M3 17l6-6 4 4 8-8M14 7h7v7" },
   ] },
   { heading: "UI testing", items: [
     { seg: "generate", label: "Generate", icon: "M12 2v20M2 12h20" },
-    { seg: "tests", label: "Tests", icon: "M9 11l3 3 8-8M4 4v16h16" },
     { seg: "cloud", label: "Cloud run", icon: "M6 16a4 4 0 010-8 5 5 0 019.6-1.6A4.5 4.5 0 1118 16z" },
   ] },
   { heading: "API testing", items: [

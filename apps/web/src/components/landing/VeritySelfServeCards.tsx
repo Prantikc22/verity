@@ -193,9 +193,12 @@ export function VeritySelfServeCards({ inIndia }: { inIndia: boolean }) {
           <div>
             <div className="text-xs font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">FDE-backed · Starter and up</div>
             <h3 className="mt-1 text-xl font-semibold">Want an engineer on it?</h3>
-            <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">
-              Starter, Growth, Scale, and Enterprise include a forward-deployed engineer, visual, agent (AI) testing, performance, security, and predictions. All four tiers live on the QAShift platform pricing page.
-            </p>
+            <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">A forward-deployed engineer plus the full-discipline engine:</p>
+            <ul className="mt-3 space-y-1.5 text-sm text-neutral-600 dark:text-neutral-300">
+              {["Visual (screenshot) regression", "Agent (AI) test generation", "Performance & load testing", "Dynamic + static security scanning", "Regression & deploy-confidence predictions"].map((f) => (
+                <li key={f} className="flex gap-2"><span className="text-amber-500">✓</span>{f}</li>
+              ))}
+            </ul>
           </div>
           <a href="https://qashifthq.com/pricing" target="_blank" rel="noopener noreferrer" className="mt-5 block bg-amber-500 px-4 py-2.5 text-center text-sm font-semibold text-neutral-950 transition hover:bg-amber-400">
             See all six tiers →
