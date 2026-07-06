@@ -4,6 +4,7 @@ import { Navbar } from "@/components/landing/Navbar";
 import { VeritySelfServeCards } from "@/components/landing/VeritySelfServeCards";
 import { Comparison } from "@/components/landing/Comparison";
 import { SecuritySection } from "@/components/landing/SecuritySection";
+import { AskAI } from "@/components/landing/AskAI";
 import { Reveal } from "@/components/Reveal";
 import { isIndia } from "@/lib/geo";
 
@@ -69,6 +70,7 @@ export default async function PricingPage() {
           </div>
         </Reveal>
       </main>
+      <AskAI />
     </div>
   );
 }

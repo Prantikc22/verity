@@ -4,6 +4,8 @@ import { Hero } from "@/components/landing/Hero";
 import { Reveal } from "@/components/Reveal";
 import { Logo } from "@/components/Logo";
 import { Pipeline } from "@/components/landing/Pipeline";
+import { PlatformStages } from "@/components/landing/PlatformStages";
+import { AskAI } from "@/components/landing/AskAI";
 import { Comparison } from "@/components/landing/Comparison";
 import { VeritySelfServeCards } from "@/components/landing/VeritySelfServeCards";
 import { PredictionsShowcase } from "@/components/landing/PredictionsShowcase";
@@ -72,6 +74,9 @@ export default async function Home() {
             ))}
           </div>
         </section>
+
+        {/* One platform, every stage — capability map */}
+        <PlatformStages />
 
         {/* How it works — pipeline */}
         <section id="how" className="scroll-mt-24 border-y border-neutral-200 bg-neutral-50/60 py-24 dark:border-neutral-900 dark:bg-neutral-950/40">
@@ -274,6 +279,9 @@ export default async function Home() {
           </div>
         </div>
       </footer>
+
+      {/* Floating "Summarize with AI" — pure links, no backend/cost */}
+      <AskAI />
     </div>
   );
 }
