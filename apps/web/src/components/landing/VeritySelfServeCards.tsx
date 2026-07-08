@@ -33,6 +33,8 @@ interface Tier {
   inr: number;
   cap: string;
   features: string[];
+  /** What this tier does NOT get — loss-aversion framing, shown muted + struck. */
+  missing?: string[];
   note?: string;
   cta: { label: string; href: string };
   /** A paid tier initiates Razorpay checkout instead of just linking. */
@@ -51,7 +53,13 @@ const TIERS: Tier[] = [
       "Try it instantly in our cloud sandbox",
       "Unlimited CI runs once you wire your pipeline",
     ],
-    note: "No self-healing on free — generated tests self-heal from Self-Serve Pro up.",
+    missing: [
+      "Self-healing locators — broken tests stay broken",
+      "Flake detection & confidence scoring",
+      "API, visual & agent (AI) tests",
+      "Regression & deploy-confidence predictions",
+      "More than 1 project",
+    ],
     cta: { label: "Start free", href: "/login?next=/dashboard" },
   },
   {
@@ -64,6 +72,11 @@ const TIERS: Tier[] = [
       "Every generated test self-heals its locators + flake detection",
       "Unlimited CI runs",
       "3 projects",
+    ],
+    missing: [
+      "A forward-deployed engineer who owns your suite",
+      "Merge-blocking PR gates + full predictions",
+      "Visual, agent (AI), performance & security",
     ],
     cta: { label: "Start Self-Serve Pro", href: "/login?next=/pricing" },
     paidTier: "pro",
@@ -168,10 +181,19 @@ export function VeritySelfServeCards({ inIndia }: { inIndia: boolean }) {
               <span className="text-sm text-neutral-400">{t.usd === 0 ? "" : "/mo"}</span>
             </div>
             <div className="mt-1 text-xs font-medium uppercase tracking-wide text-emerald-600 dark:text-emerald-400">{t.cap}</div>
-            <ul className="mt-4 flex-1 space-y-2 text-sm text-neutral-600 dark:text-neutral-300">
+            <ul className="mt-4 space-y-2 text-sm text-neutral-600 dark:text-neutral-300">
               {t.features.map((f) => <li key={f} className="flex gap-2"><span className="text-emerald-500">✓</span>{f}</li>)}
               {t.note && <li className="flex gap-2 text-neutral-400"><span>·</span>{t.note}</li>}
             </ul>
+            {t.missing && (
+              <div className="mt-4 flex-1 border-t border-dashed border-neutral-200 pt-3 dark:border-neutral-800">
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-neutral-400">You&apos;d be leaving on the table</p>
+                <ul className="space-y-1.5 text-sm text-neutral-400 dark:text-neutral-500">
+                  {t.missing.map((m) => <li key={m} className="flex gap-2"><span className="text-neutral-300 dark:text-neutral-600">✕</span><span className="line-through decoration-neutral-300 dark:decoration-neutral-700">{m}</span></li>)}
+                </ul>
+              </div>
+            )}
+            {!t.missing && <div className="flex-1" />}
             {t.paidTier ? (
               <button
                 onClick={() => startCheckout(t.paidTier!)}
