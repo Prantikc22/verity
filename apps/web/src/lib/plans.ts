@@ -139,10 +139,11 @@ export const PLANS: Record<PlanTier, PlanLimits> = {
     priceUsd: 499,
     priceInr: 34999,
     billingNote: "per month · billed monthly",
-    maxTests: 150,
+    maxTests: 60,
     maxProjects: 3,
     // FDE tiers: AI generation is unlimited — the engineer drives it, and the unit
-    // customers care about is the MAINTAINED suite, not generations.
+    // customers care about is the MAINTAINED suite (capped, since a human keeps it
+    // green), not generations. Extra maintained tests are billed per-test.
     testGensPerMonth: 100000,
     cloudRunsPerMonth: 25,
     cloudTrialsPerMonth: 3,
@@ -159,7 +160,7 @@ export const PLANS: Record<PlanTier, PlanLimits> = {
     fde: true,
     pomConversion: true,
     highlights: [
-      "Unlimited AI generation · up to 150 engineer-maintained tests",
+      "Unlimited AI generation · up to 60 engineer-maintained tests",
       "A dedicated forward-deployed engineer who owns the suite",
       "Self-healing locators + flake detection",
       "Predictions: regression-prone + flake triage",
@@ -172,7 +173,7 @@ export const PLANS: Record<PlanTier, PlanLimits> = {
     priceUsd: 1799,
     priceInr: 109999,
     billingNote: "per month · billed monthly",
-    maxTests: 600,
+    maxTests: 200,
     maxProjects: 10,
     testGensPerMonth: 100000,
     cloudRunsPerMonth: 25,
@@ -187,7 +188,7 @@ export const PLANS: Record<PlanTier, PlanLimits> = {
     fde: true,
     pomConversion: true,
     highlights: [
-      "Unlimited AI generation · up to 600 engineer-maintained tests",
+      "Unlimited AI generation · up to 200 engineer-maintained tests",
       "Dedicated engineer + merge-blocking · UI, API, visual & agent",
       "Full predictions: correlation + deploy confidence",
       "10 projects · 180-day history",
@@ -200,7 +201,7 @@ export const PLANS: Record<PlanTier, PlanLimits> = {
     priceUsd: 2499,
     priceInr: 154999,
     billingNote: "per month · billed monthly",
-    maxTests: 2500,
+    maxTests: 500,
     maxProjects: 50,
     testGensPerMonth: 100000,
     cloudRunsPerMonth: 50,
@@ -215,7 +216,7 @@ export const PLANS: Record<PlanTier, PlanLimits> = {
     fde: true,
     pomConversion: true,
     highlights: [
-      "Unlimited AI generation · up to 2,500 engineer-maintained tests",
+      "Unlimited AI generation · up to 500 engineer-maintained tests",
       "Priority triage SLA · monthly strategy sync",
       "Performance & security QA (via QAShift)",
       "50 projects · 365-day history",
