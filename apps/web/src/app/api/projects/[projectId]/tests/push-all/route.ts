@@ -44,6 +44,8 @@ export default defineConfig({
     baseURL: process.env.BASE_URL,
     screenshot: 'only-on-failure',
     trace: 'on-first-retry',
+    // Record a video for every failing test — near-zero cost, kept only on failure.
+    video: 'retain-on-failure',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
 });
@@ -67,6 +69,15 @@ jobs:
       - run: npx playwright test
         env:
           BASE_URL: \${{ secrets.BASE_URL }}
+      # Keep the HTML report + failure videos/traces as a downloadable artifact.
+      - uses: actions/upload-artifact@v4
+        if: \${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
 `;
 
 interface Bundle { path: string; content: string; count: number; kind: string }

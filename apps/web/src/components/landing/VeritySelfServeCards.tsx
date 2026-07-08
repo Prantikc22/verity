@@ -158,6 +158,11 @@ export function VeritySelfServeCards({ inIndia }: { inIndia: boolean }) {
 
   return (
     <div>
+      {/* Contrast anchor — a managed QA hire runs $8k–15k/mo; against that the
+          self-serve prices below read as almost free. */}
+      <p className="mb-4 text-center text-sm text-neutral-500">
+        A dedicated QA engineer costs <span className="font-semibold text-neutral-700 line-through dark:text-neutral-300">$8,000+/mo</span>. Managed Verity with a forward-deployed engineer starts at <span className="font-semibold text-neutral-700 dark:text-neutral-200">$499/mo</span>. Or self-serve, from <span className="font-semibold text-indigo-600">$0</span>:
+      </p>
       {/* Currency toggle — above the cards, matching the platform pattern */}
       <div className="mb-6 flex items-center justify-center gap-2">
         <div className="inline-flex border border-neutral-300 p-0.5 dark:border-neutral-700">
