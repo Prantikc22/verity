@@ -177,7 +177,10 @@ export function VeritySelfServeCards({ inIndia }: { inIndia: boolean }) {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {TIERS.map((t) => (
-          <div key={t.name} className={`flex flex-col border p-6 ${t.highlight ? "border-indigo-500 dark:border-indigo-500" : "border-neutral-200 dark:border-neutral-800"}`}>
+          <div key={t.name} className={`relative flex flex-col border p-6 ${t.highlight ? "border-indigo-500 shadow-[0_16px_48px_-12px_rgba(99,102,241,0.55)] dark:border-indigo-500" : "border-neutral-200 dark:border-neutral-800"}`}>
+            {t.highlight && (
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap bg-indigo-600 px-3 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">Most Popular</div>
+            )}
             <div className="text-xs font-semibold uppercase tracking-wide text-neutral-400">Self-serve · no FDE</div>
             <h3 className="mt-1 text-xl font-semibold">{t.name}</h3>
             <p className="mt-1 min-h-[40px] text-sm text-neutral-500">{t.blurb}</p>
