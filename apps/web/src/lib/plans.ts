@@ -197,9 +197,9 @@ export const PLANS: Record<PlanTier, PlanLimits> = {
   scale: {
     tier: "scale",
     name: "Scale",
-    tagline: "High-velocity coverage with an SLA.",
-    priceUsd: 2499,
-    priceInr: 154999,
+    tagline: "Everything included. High-velocity coverage with an SLA.",
+    priceUsd: 3499,
+    priceInr: 214999,
     billingNote: "per month · billed monthly",
     maxTests: 500,
     maxProjects: 50,
@@ -216,9 +216,9 @@ export const PLANS: Record<PlanTier, PlanLimits> = {
     fde: true,
     pomConversion: true,
     highlights: [
+      "Everything included — performance, security & agent, none metered",
       "Unlimited AI generation · a living 500-test suite that evolves as you ship",
       "Priority triage SLA · monthly strategy sync",
-      "Performance & security QA (via QAShift)",
       "50 projects · 365-day history",
     ],
   },
