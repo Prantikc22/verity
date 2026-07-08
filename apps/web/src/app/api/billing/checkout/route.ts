@@ -44,19 +44,25 @@ export async function POST(req: NextRequest) {
 
   const admin = createAdminClient();
 
-  // Upgrade / downgrade: if the org already has a live subscription, cancel it at
-  // the provider BEFORE creating the new one, so the customer is never billed for
-  // two plans at once. (orgs.plan flips to the new tier when the new sub activates.)
+  // Upgrade / downgrade / retry. Look at the org's existing subscription:
+  //  - Only a GENUINELY PAID sub (active/authenticated) of the SAME tier blocks
+  //    re-checkout ("you're already on it").
+  //  - A paid sub on a DIFFERENT tier is cancelled first (no double billing).
+  //  - A never-completed sub ("created"/"pending" — e.g. a payment that failed)
+  //    must NOT block a retry; we just cancel the stale one and proceed.
   const { data: existing } = await admin
     .from("subscriptions")
     .select("provider_subscription_id, status, tier")
     .eq("org_id", orgCtx.org.id)
     .maybeSingle();
-  if (existing?.provider_subscription_id && ["active", "authenticated", "created", "pending"].includes(existing.status ?? "")) {
-    if (existing.tier === tier) {
+  const paidStatuses = ["active", "authenticated"];
+  const isPaid = paidStatuses.includes(existing?.status ?? "");
+  if (existing?.provider_subscription_id) {
+    if (isPaid && existing.tier === tier) {
       return NextResponse.json({ error: `You're already on the ${tier} plan.` }, { status: 409 });
     }
-    try { await provider.cancelSubscription(existing.provider_subscription_id); } catch { /* stale sub — continue */ }
+    // Different paid tier, or a stale/failed attempt — cancel it so nothing lingers.
+    try { await provider.cancelSubscription(existing.provider_subscription_id); } catch { /* already gone / never activated */ }
   }
 
   try {
