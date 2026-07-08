@@ -160,7 +160,7 @@ export const PLANS: Record<PlanTier, PlanLimits> = {
     fde: true,
     pomConversion: true,
     highlights: [
-      "Unlimited AI generation · up to 60 engineer-maintained tests",
+      "Unlimited AI generation · a living 60-test suite, kept green as you ship",
       "A dedicated forward-deployed engineer who owns the suite",
       "Self-healing locators + flake detection",
       "Predictions: regression-prone + flake triage",
@@ -188,7 +188,7 @@ export const PLANS: Record<PlanTier, PlanLimits> = {
     fde: true,
     pomConversion: true,
     highlights: [
-      "Unlimited AI generation · up to 200 engineer-maintained tests",
+      "Unlimited AI generation · a living 200-test suite that evolves as you ship",
       "Dedicated engineer + merge-blocking · UI, API, visual & agent",
       "Full predictions: correlation + deploy confidence",
       "10 projects · 180-day history",
@@ -216,7 +216,7 @@ export const PLANS: Record<PlanTier, PlanLimits> = {
     fde: true,
     pomConversion: true,
     highlights: [
-      "Unlimited AI generation · up to 500 engineer-maintained tests",
+      "Unlimited AI generation · a living 500-test suite that evolves as you ship",
       "Priority triage SLA · monthly strategy sync",
       "Performance & security QA (via QAShift)",
       "50 projects · 365-day history",
@@ -244,7 +244,7 @@ export const PLANS: Record<PlanTier, PlanLimits> = {
     fde: true,
     pomConversion: true,
     highlights: [
-      "Unlimited tests · multiple engineers",
+      "Unlimited maintained tests · a team of engineers",
       "SOC 2 / GDPR · SSO / SAML · RBAC",
       "Self-host the MIT runner",
       "White-glove onboarding",
