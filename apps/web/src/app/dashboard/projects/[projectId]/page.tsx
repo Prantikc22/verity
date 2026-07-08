@@ -6,15 +6,31 @@ import { GettingStarted } from "./GettingStarted";
 
 export const metadata: Metadata = { title: "Project", robots: { index: false } };
 
-function Stat({ v, k, href }: { v: string; k: string; href?: string }) {
+type Tone = "neutral" | "good" | "warn" | "bad";
+const TONE: Record<Tone, { text: string; dot: string }> = {
+  neutral: { text: "", dot: "bg-neutral-300 dark:bg-neutral-700" },
+  good: { text: "text-emerald-600 dark:text-emerald-400", dot: "bg-emerald-500" },
+  warn: { text: "text-amber-600 dark:text-amber-400", dot: "bg-amber-500" },
+  bad: { text: "text-red-600 dark:text-red-400", dot: "bg-red-500" },
+};
+
+function Stat({ v, k, href, tone = "neutral" }: { v: string; k: string; href?: string; tone?: Tone }) {
+  const t = TONE[tone];
   const inner = (
     <div className="v-card border border-neutral-200 p-4 hover:border-indigo-400 dark:border-neutral-800 dark:hover:border-indigo-600">
-      <div className="tnum text-2xl font-semibold">{v}</div>
-      <div className="mt-1 text-xs text-neutral-500">{k}</div>
+      <div className={`tnum text-2xl font-semibold ${t.text}`}>{v}</div>
+      <div className="mt-1 flex items-center gap-1.5 text-xs text-neutral-500">
+        {tone !== "neutral" && <span className={`h-1.5 w-1.5 rounded-full ${t.dot}`} />}
+        {k}
+      </div>
     </div>
   );
   return href ? <Link href={href}>{inner}</Link> : inner;
 }
+
+// At-a-glance health so the two quality metrics read instantly, not as bare numbers.
+const passTone = (p: number | null): Tone => (p === null ? "neutral" : p >= 80 ? "good" : p >= 50 ? "warn" : "bad");
+const flakeTone = (f: number | null): Tone => (f === null ? "neutral" : f <= 5 ? "good" : f <= 15 ? "warn" : "bad");
 
 export default async function ProjectOverview({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = await params;
@@ -38,8 +54,8 @@ export default async function ProjectOverview({ params }: { params: Promise<{ pr
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <Stat v={`${testCount ?? 0}`} k="tests" href={`/dashboard/projects/${projectId}/tests`} />
         <Stat v={`${runCount ?? 0}`} k="CI runs" href={`/dashboard/projects/${projectId}/runs`} />
-        <Stat v={passRate === null ? "—" : `${passRate}%`} k="latest pass rate" />
-        <Stat v={flakeRate === null ? "—" : `${flakeRate}%`} k="latest flake rate" />
+        <Stat v={passRate === null ? "—" : `${passRate}%`} k="latest pass rate" tone={passTone(passRate)} />
+        <Stat v={flakeRate === null ? "—" : `${flakeRate}%`} k="latest flake rate" tone={flakeTone(flakeRate)} />
       </div>
 
       {/* Trend */}
