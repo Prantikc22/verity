@@ -42,6 +42,23 @@ export async function POST(req: NextRequest) {
 
   await captureServer(orgCtx.org.id, FUNNEL_EVENTS.upgradeInitiated, { tier });
 
+  const admin = createAdminClient();
+
+  // Upgrade / downgrade: if the org already has a live subscription, cancel it at
+  // the provider BEFORE creating the new one, so the customer is never billed for
+  // two plans at once. (orgs.plan flips to the new tier when the new sub activates.)
+  const { data: existing } = await admin
+    .from("subscriptions")
+    .select("provider_subscription_id, status, tier")
+    .eq("org_id", orgCtx.org.id)
+    .maybeSingle();
+  if (existing?.provider_subscription_id && ["active", "authenticated", "created", "pending"].includes(existing.status ?? "")) {
+    if (existing.tier === tier) {
+      return NextResponse.json({ error: `You're already on the ${tier} plan.` }, { status: 409 });
+    }
+    try { await provider.cancelSubscription(existing.provider_subscription_id); } catch { /* stale sub — continue */ }
+  }
+
   try {
     const result = await provider.createSubscription({
       orgId: orgCtx.org.id,
@@ -50,7 +67,6 @@ export async function POST(req: NextRequest) {
       currency: body.currency === "USD" ? "USD" : "INR",
     });
 
-    const admin = createAdminClient();
     await admin.from("subscriptions").upsert(
       {
         org_id: orgCtx.org.id,

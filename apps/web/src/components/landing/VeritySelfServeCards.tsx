@@ -99,7 +99,9 @@ const TIERS: Tier[] = [
 ];
 
 export function VeritySelfServeCards({ inIndia }: { inIndia: boolean }) {
-  const [currency, setCurrency] = useState<"USD" | "INR">(inIndia ? "INR" : "USD");
+  // USD is the default for everyone (global-standard for dev tools); INR stays a
+  // one-click toggle for teams who prefer to pay in rupees.
+  const [currency, setCurrency] = useState<"USD" | "INR">("USD");
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState("");
   // Tier a checkout was auto-started for (from a QAShift deep link or a
@@ -122,6 +124,7 @@ export function VeritySelfServeCards({ inIndia }: { inIndia: boolean }) {
   // Paid tier → Razorpay checkout. If not signed in, bounce to login and come
   // back to /pricing so the user can complete the purchase.
   async function startCheckout(tier: CheckoutTier) {
+    setDeepLink(tier); // remember the tier for the modal label + retry
     setBusy(tier);
     setError("");
     try {
@@ -163,16 +166,33 @@ export function VeritySelfServeCards({ inIndia }: { inIndia: boolean }) {
 
   return (
     <div>
-      {/* Checkout handoff banner — makes the QAShift → Verity → Razorpay handoff
-          legible so the user is never left wondering what just happened. */}
-      {(deepLink || error) && (
-        <div className={`mb-6 border p-4 text-center text-sm ${error ? "border-red-300 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300" : "border-indigo-300 bg-indigo-50 text-indigo-800 dark:border-indigo-800 dark:bg-indigo-950/30 dark:text-indigo-200"}`}>
-          {error ? (
-            <>Couldn&apos;t start your {deepLink ? tierName(deepLink) : ""} checkout: {error}{" "}
-              <a href="mailto:hello@qashifthq.com" className="underline">Contact us</a> and we&apos;ll sort it fast.</>
-          ) : (
-            <><strong>Completing your {tierName(deepLink!)} plan…</strong> The secure Razorpay payment window will open in a moment — if you&apos;re not signed in, we&apos;ll ask you to sign in first, then bring you right back here. Billing is handled on Verity (the QAShift engine).</>
-          )}
+      {/* Animated checkout-handoff modal — the QAShift → Verity → Razorpay
+          hand-off is never a silent page load; the user always sees what's up. */}
+      {(busy || error) && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-neutral-950/70 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm border border-neutral-200 bg-background p-8 text-center shadow-2xl dark:border-neutral-800">
+            {error ? (
+              <>
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-950/50">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-red-600"><path d="M12 8v5M12 16.5v.5" /><circle cx="12" cy="12" r="9" /></svg>
+                </div>
+                <h3 className="mt-4 text-base font-semibold">Checkout couldn&apos;t start</h3>
+                <p className="mt-1.5 text-sm text-neutral-500">{error}</p>
+                <div className="mt-5 flex justify-center gap-2">
+                  <button onClick={() => { setError(""); if (deepLink) startCheckout(deepLink as CheckoutTier); }} className="bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500">Try again</button>
+                  <a href="mailto:hello@qashifthq.com" className="border border-neutral-300 px-4 py-2 text-sm font-medium hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-900">Contact us</a>
+                </div>
+                <button onClick={() => { setError(""); setDeepLink(null); setBusy(null); }} className="mt-3 text-xs text-neutral-400 hover:text-neutral-600">Dismiss</button>
+              </>
+            ) : (
+              <>
+                <svg className="mx-auto h-10 w-10 animate-spin text-indigo-600" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-20" /><path d="M22 12a10 10 0 0 0-10-10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" /></svg>
+                <h3 className="mt-4 text-base font-semibold">Opening secure checkout{deepLink ? ` — ${tierName(deepLink)}` : ""}…</h3>
+                <p className="mt-1.5 text-sm text-neutral-500">The Razorpay payment window is loading. If you&apos;re not signed in yet, we&apos;ll take you to sign in first, then bring you right back.</p>
+                <p className="mt-3 text-[11px] text-neutral-400">Billing runs on Verity — the QAShift engine.</p>
+              </>
+            )}
+          </div>
         </div>
       )}
       {/* Contrast anchor — a managed QA hire runs $8k–15k/mo; against that the

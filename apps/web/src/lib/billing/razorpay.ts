@@ -66,14 +66,25 @@ export class RazorpayProvider implements PaymentProvider {
   async createSubscription(input: CreateSubscriptionInput): Promise<CreateSubscriptionResult> {
     if (!this.client) throw new Error("Razorpay is not configured (missing RAZORPAY_KEY_ID/SECRET).");
     const plan_id = planId(input.tier, input.currency ?? "INR");
-    if (!plan_id) throw new Error(`No Razorpay plan configured for tier "${input.tier}".`);
+    if (!plan_id) {
+      throw new Error(`No Razorpay plan is configured for the ${input.tier} plan${input.currency === "USD" ? " (USD)" : ""}. Set RAZORPAY_PLAN_${input.tier.toUpperCase()}${input.currency === "USD" ? "_USD" : ""} to a valid plan id.`);
+    }
 
-    const sub = await this.client.subscriptions.create({
-      plan_id,
-      total_count: 12,
-      customer_notify: 1,
-      notes: { org_id: input.orgId, tier: input.tier },
-    });
+    let sub;
+    try {
+      sub = await this.client.subscriptions.create({
+        plan_id,
+        total_count: 12,
+        customer_notify: 1,
+        notes: { org_id: input.orgId, tier: input.tier },
+      });
+    } catch (e) {
+      // Razorpay SDK throws { statusCode, error: { code, description } } — surface
+      // the REAL reason instead of a generic "could not start checkout".
+      const rz = e as { error?: { description?: string; code?: string }; message?: string };
+      const detail = rz?.error?.description || rz?.message || "Razorpay rejected the subscription.";
+      throw new Error(`${detail} (plan ${plan_id}, ${input.currency ?? "INR"})`);
+    }
 
     return {
       providerSubscriptionId: sub.id,
