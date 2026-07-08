@@ -102,6 +102,9 @@ export function VeritySelfServeCards({ inIndia }: { inIndia: boolean }) {
   const [currency, setCurrency] = useState<"USD" | "INR">(inIndia ? "INR" : "USD");
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState("");
+  // Tier a checkout was auto-started for (from a QAShift deep link or a
+  // post-login resume) — drives the "what's happening" banner.
+  const [deepLink, setDeepLink] = useState<string | null>(null);
   const fmt = (t: Tier) =>
     currency === "INR" ? (t.inr === 0 ? "₹0" : `₹${t.inr.toLocaleString("en-IN")}`) : t.usd === 0 ? "$0" : `$${t.usd}`;
 
@@ -110,9 +113,11 @@ export function VeritySelfServeCards({ inIndia }: { inIndia: boolean }) {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const c = new URLSearchParams(window.location.search).get("checkout");
-    if (c && CHECKOUT_TIERS.includes(c as CheckoutTier)) startCheckout(c as CheckoutTier);
+    if (c && CHECKOUT_TIERS.includes(c as CheckoutTier)) { setDeepLink(c); startCheckout(c as CheckoutTier); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const tierName = (t: string) => ({ pro: "Self-Serve Pro", team: "Team", starter: "Starter", growth: "Growth", scale: "Scale" }[t] ?? t);
 
   // Paid tier → Razorpay checkout. If not signed in, bounce to login and come
   // back to /pricing so the user can complete the purchase.
@@ -158,6 +163,18 @@ export function VeritySelfServeCards({ inIndia }: { inIndia: boolean }) {
 
   return (
     <div>
+      {/* Checkout handoff banner — makes the QAShift → Verity → Razorpay handoff
+          legible so the user is never left wondering what just happened. */}
+      {(deepLink || error) && (
+        <div className={`mb-6 border p-4 text-center text-sm ${error ? "border-red-300 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300" : "border-indigo-300 bg-indigo-50 text-indigo-800 dark:border-indigo-800 dark:bg-indigo-950/30 dark:text-indigo-200"}`}>
+          {error ? (
+            <>Couldn&apos;t start your {deepLink ? tierName(deepLink) : ""} checkout: {error}{" "}
+              <a href="mailto:hello@qashifthq.com" className="underline">Contact us</a> and we&apos;ll sort it fast.</>
+          ) : (
+            <><strong>Completing your {tierName(deepLink!)} plan…</strong> The secure Razorpay payment window will open in a moment — if you&apos;re not signed in, we&apos;ll ask you to sign in first, then bring you right back here. Billing is handled on Verity (the QAShift engine).</>
+          )}
+        </div>
+      )}
       {/* Contrast anchor — a managed QA hire runs $8k–15k/mo; against that the
           self-serve prices below read as almost free. */}
       <p className="mb-4 text-center text-sm text-neutral-500">
