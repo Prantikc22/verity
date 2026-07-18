@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { PERF_PROFILES } from "@qashift/verity-core";
 import {
   CAPABILITIES,
   DEFAULT_CONFIG,
@@ -100,16 +101,21 @@ export function CiSetup({ defaultApiUrl, defaultBranch }: { defaultApiUrl: strin
                 <div className="flex items-center gap-2 text-sm font-medium">⚡ Performance</div>
                 <p className="text-[11px] text-neutral-500">Choose which performance checks run.</p>
                 <div className="mt-3 space-y-2 text-xs">
-                  <label className="flex items-center gap-2"><input type="checkbox" checked={c.perf.smoke} onChange={(e) => setPerf("smoke", e.target.checked)} /> <span><strong>Perf smoke check</strong> on every PR <span className="text-neutral-400">— light, ~30s, a few endpoints (never a full load test)</span></span></label>
-                  <label className="flex items-center gap-2"><input type="checkbox" checked={c.perf.fullLoad} onChange={(e) => setPerf("fullLoad", e.target.checked)} /> <span><strong>Full load test</strong> on merge/schedule</span></label>
+                  <label className="flex items-center gap-2"><input type="checkbox" checked={c.perf.smoke} onChange={(e) => setPerf("smoke", e.target.checked)} /> <span><strong>Smoke profile</strong> on every PR <span className="text-neutral-400">— light, ~30s (never a full load test)</span></span></label>
+                  <label className="flex items-center gap-2"><input type="checkbox" checked={c.perf.fullLoad} onChange={(e) => setPerf("fullLoad", e.target.checked)} /> <span><strong>Heavier profile</strong> on merge/schedule</span></label>
                   {c.perf.fullLoad && (
-                    <div className="grid grid-cols-3 gap-2 pl-6">
-                      <Field label="VUs/sec" value={String(c.perf.arrivalRate)} onChange={(v) => setPerf("arrivalRate", Number(v) || 0)} />
-                      <Field label="Duration (s)" value={String(c.perf.durationSec)} onChange={(v) => setPerf("durationSec", Number(v) || 0)} />
-                      <Field label="Ramp to (opt)" value={c.perf.rampTo ? String(c.perf.rampTo) : ""} onChange={(v) => setPerf("rampTo", v ? Number(v) : undefined)} />
+                    <div className="space-y-2 pl-6">
+                      <label className="block"><span className="text-[11px] text-neutral-500">Profile on merge</span>
+                        <select value={c.perf.profile} onChange={(e) => setPerf("profile", e.target.value as CiConfig["perf"]["profile"])} className="mt-1 block w-full border border-neutral-300 bg-transparent px-2 py-1 text-xs dark:border-neutral-700">
+                          {PERF_PROFILES.filter((p) => p.tier === "full").map((p) => <option key={p.profile} value={p.profile}>{p.label} — {p.question}</option>)}
+                        </select>
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Field label="Peak VUs" value={String(c.perf.arrivalRate)} onChange={(v) => setPerf("arrivalRate", Number(v) || 0)} />
+                        <Field label="Duration (s)" value={String(c.perf.durationSec)} onChange={(v) => setPerf("durationSec", Number(v) || 0)} />
+                      </div>
                     </div>
                   )}
-                  <label className="flex items-center gap-2"><input type="checkbox" checked={c.perf.distributed} onChange={(e) => setPerf("distributed", e.target.checked)} /> <span>Distributed/serverless load <span className="text-neutral-400">(more load than one runner)</span></span></label>
                   <label className="flex items-center gap-2"><input type="checkbox" checked={c.perf.lighthouse} onChange={(e) => setPerf("lighthouse", e.target.checked)} /> <span><strong>Core Web Vitals</strong> (page-load score)</span></label>
                   {c.perf.lighthouse && <div className="pl-6"><Field label="Page URL" value={c.perf.lighthouseUrl} onChange={(v) => setPerf("lighthouseUrl", v)} placeholder="https://staging.example.com" /></div>}
                 </div>

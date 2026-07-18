@@ -1,24 +1,27 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { generateArtilleryScenario } from "@/lib/llm/generate";
+import { generateK6Script } from "@/lib/llm/generate";
 import { llmConfig } from "@/lib/llm/provider";
 import { planFor } from "@/lib/plans";
+import { PERF_PROFILE_NAMES } from "@qashift/verity-core";
 import type { Json } from "@/lib/supabase/database.types";
 
 export const runtime = "nodejs";
 export const maxDuration = 90;
+
+const K6_PATH = "tests/verity/perf/verity.k6.js";
 
 const Body = z.object({
   spec: z.string().max(60000).optional(),
   specUrl: z.string().url().optional(),
   baseUrl: z.string().url(),
   instructions: z.string().max(4000).optional(),
-  // which tiers to generate
-  smoke: z.boolean().default(true),
-  full: z.boolean().default(true),
-  load: z.object({ durationSec: z.number().int().positive().max(7200), arrivalRate: z.number().int().positive().max(10000), rampToRate: z.number().int().positive().max(10000).optional() }).optional(),
-}).refine((b) => b.smoke || b.full, { message: "Pick at least one tier (smoke and/or full)." });
+  // Load knobs baked into the generated script as defaults (overridable via env
+  // at run time). One script runs every profile; these size the peak.
+  vus: z.number().int().positive().max(10000).optional(),
+  durationSec: z.number().int().positive().max(7200).optional(),
+});
 
 async function fetchSpec(url: string): Promise<string | null> {
   try {
@@ -57,27 +60,25 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
     if (!spec) return NextResponse.json({ error: "Couldn't fetch that spec URL. Paste the spec text instead." }, { status: 400 });
   }
 
-  const tiers: { tier: "fast" | "full"; path: string; name: string }[] = [];
-  if (parsed.data.smoke) tiers.push({ tier: "fast", path: "tests/verity/perf/smoke.yml", name: "Perf smoke check" });
-  if (parsed.data.full) tiers.push({ tier: "full", path: "tests/verity/perf/load.yml", name: "Full load test" });
-
   const saved: { name: string; spec_path: string }[] = [];
   try {
-    for (const t of tiers) {
-      const gen = await generateArtilleryScenario({ spec, baseUrl: parsed.data.baseUrl, tier: t.tier, load: t.tier === "full" ? parsed.data.load : undefined, instructions: parsed.data.instructions });
-      // Upsert-by-path: archive any existing config at this path, then insert fresh.
-      await supabase.from("tests").update({ status: "archived" }).eq("project_id", project.id).eq("kind", "performance").eq("spec_path", t.path).neq("status", "archived");
-      const { error } = await supabase.from("tests").insert({
-        project_id: project.id, org_id: project.org_id, kind: "performance",
-        name: t.name, suite: "Performance", description: parsed.data.instructions ?? `${t.name} for ${parsed.data.baseUrl}`,
-        source_url: parsed.data.baseUrl, spec_path: t.path, spec_content: gen.specContent,
-        plan: gen.plan as unknown as Json, source_files: [], generated_model: gen.model, critical_path: false, status: "active",
-      });
-      if (error) { const status = error.code === "42501" ? 403 : 500; return NextResponse.json({ error: error.message }, { status }); }
-      saved.push({ name: t.name, spec_path: t.path });
-    }
+    const gen = await generateK6Script({
+      spec, baseUrl: parsed.data.baseUrl, instructions: parsed.data.instructions,
+      defaults: { vus: parsed.data.vus, duration: parsed.data.durationSec ? `${parsed.data.durationSec}s` : undefined },
+    });
+    const name = "Performance suite (k6)";
+    // Upsert-by-path: archive any existing config at this path, then insert fresh.
+    await supabase.from("tests").update({ status: "archived" }).eq("project_id", project.id).eq("kind", "performance").eq("spec_path", K6_PATH).neq("status", "archived");
+    const { error } = await supabase.from("tests").insert({
+      project_id: project.id, org_id: project.org_id, kind: "performance",
+      name, suite: "Performance", description: parsed.data.instructions ?? `Load/spike/soak/stress profiles for ${parsed.data.baseUrl}`,
+      source_url: parsed.data.baseUrl, spec_path: K6_PATH, spec_content: gen.specContent,
+      plan: gen.plan as unknown as Json, source_files: [], generated_model: gen.model, critical_path: false, status: "active",
+    });
+    if (error) { const status = error.code === "42501" ? 403 : 500; return NextResponse.json({ error: error.message }, { status }); }
+    saved.push({ name, spec_path: K6_PATH });
   } catch (err) {
     return NextResponse.json({ error: err instanceof Error ? err.message : "generation failed" }, { status: 500 });
   }
-  return NextResponse.json({ ok: true, saved });
+  return NextResponse.json({ ok: true, saved, profiles: PERF_PROFILE_NAMES });
 }

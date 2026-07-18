@@ -41,8 +41,12 @@ const snapshotsDir = arg("snapshots-dir", "tests/verity/visual");
 const evalsDir = arg("evals-dir", "tests/verity/agent");
 const endpoint = arg("endpoint", process.env.AGENT_ENDPOINT ?? "");
 const base = arg("base", "origin/main");
+// k6 load profile. Defaults from the tier: fast ⇒ smoke, full ⇒ load.
+const PERF_PROFILES = ["smoke", "load", "stress", "spike", "soak", "breakpoint"];
+let profile = arg("profile", process.env.VERITY_PERF_PROFILE ?? "");
+if (!profile) profile = tier === "fast" ? "smoke" : "load";
 
-const VALID = ["visual", "agent", "perf", "cwv", "lighthouse", "security-dast", "security-sast", "contract"];
+const VALID = ["visual", "agent", "perf", "k6", "cwv", "lighthouse", "security-dast", "security-sast", "contract"];
 if (!VALID.includes(engine)) {
   console.error(`✗ Unknown engine '${engine}'. Expected one of: ${VALID.join(", ")}`);
   process.exit(1);
@@ -103,6 +107,16 @@ function runEngine() {
       const out = `${tmp}/verity-perf.json`;
       const cfg = config || `tests/verity/perf/${tier === "fast" ? "smoke" : "load"}.yml`;
       sh(`npx --yes artillery@latest run --output "${out}" "${cfg}"`);
+      return out;
+    }
+    case "k6": {
+      // One script, every profile. The script's handleSummary writes the JSON
+      // summary to K6_SUMMARY; we point it at our temp file and adapt that.
+      const out = `${tmp}/verity-k6.json`;
+      const cfg = config || `tests/verity/perf/verity.k6.js`;
+      if (!PERF_PROFILES.includes(profile)) { console.error(`✗ Unknown --profile '${profile}'. One of: ${PERF_PROFILES.join(", ")}`); process.exit(1); }
+      const targetEnv = target ? `-e BASE_URL="${target}" ` : "";
+      sh(`k6 run -e PROFILE="${profile}" -e K6_SUMMARY="${out}" ${targetEnv}"${cfg}"`);
       return out;
     }
     case "cwv":
@@ -260,6 +274,25 @@ function artilleryMetrics(agg) {
   };
 }
 function adaptArtillery(json, t) { return { engine: "artillery", tier: t, aggregate: artilleryMetrics(json.aggregate ?? {}) }; }
+function k6Vals(m, name) { const e = m && m[name]; if (!e) return {}; return e.values ?? e; }
+function k6Metrics(m) {
+  const dur = k6Vals(m, "http_req_duration"), reqs = k6Vals(m, "http_reqs"), failed = k6Vals(m, "http_req_failed");
+  const requests = Math.round(reqs.count ?? 0);
+  // http_req_failed Rate gotcha: `passes` = FAILED requests, `fails` = OK ones.
+  // Prefer the rate; fall back to `passes`. Never read `fails` as errors.
+  const rate = failed.rate ?? failed.value;
+  let errorRate, errors;
+  if (rate != null) { errorRate = rate; errors = Math.round(rate * requests); }
+  else if (failed.passes != null) { errors = failed.passes; errorRate = requests > 0 ? failed.passes / requests : 0; }
+  else { errors = 0; errorRate = 0; }
+  const pick = (o, ...ks) => { for (const k of ks) if (o[k] != null) return Math.round(o[k]); return null; };
+  return {
+    requests, errors, errorRate: Math.min(1, Math.max(0, errorRate)),
+    p50: pick(dur, "med", "p(50)"), p95: pick(dur, "p(95)"), p99: pick(dur, "p(99)"),
+    min: pick(dur, "min"), max: pick(dur, "max"), rps: reqs.rate != null ? Math.round(reqs.rate * 10) / 10 : null,
+  };
+}
+function adaptK6(json, t, prof) { return { engine: "k6", tier: t, profile: prof, aggregate: k6Metrics(json.metrics) }; }
 function adaptLighthouse(lhr, t) {
   const a = lhr.audits ?? {};
   const num = (k) => (a[k]?.numericValue != null ? Math.round(a[k].numericValue) : null);
@@ -313,6 +346,12 @@ switch (engine) {
     const perf = adaptArtillery(JSON.parse(readReport()), tier);
     payload = { ...basePayload, discipline: "performance", results: [], perf };
     label = `Performance — ${tier === "fast" ? "smoke check" : "full load test"}`;
+    break;
+  }
+  case "k6": {
+    const perf = adaptK6(JSON.parse(readReport()), tier, profile);
+    payload = { ...basePayload, discipline: "performance", results: [], perf };
+    label = `Performance — ${profile} test`;
     break;
   }
   case "cwv":

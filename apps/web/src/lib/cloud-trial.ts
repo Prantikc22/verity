@@ -65,7 +65,7 @@ export async function runPerfTrial(url: string, opts?: { total?: number; concurr
     min: sorted.length ? Math.round(sorted[0]) : null,
     max: sorted.length ? Math.round(sorted[sorted.length - 1]) : null,
   };
-  return { engine: "artillery", tier: "fast", aggregate };
+  return { engine: "k6", tier: "fast", profile: "smoke", aggregate };
 }
 
 interface HeaderCheck { header: string; title: string; severity: Severity; advice: string }

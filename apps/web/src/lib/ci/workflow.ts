@@ -11,6 +11,8 @@
  * pattern — so behavior matches without any extra package to publish.
  */
 
+import type { PerfProfile } from "@qashift/verity-core";
+
 export type EngineKey = "ui" | "apiFlow" | "contract" | "visual" | "agent" | "perf" | "security";
 export type Provider = "github" | "gitlab" | "jenkins";
 export type DastDepth = "baseline" | "full";
@@ -20,12 +22,11 @@ export interface CiConfig {
   apiUrl: string;
   branch: string;
   perf: {
-    smoke: boolean; // Perf smoke check on every PR
-    fullLoad: boolean; // full load test on merge/schedule
-    arrivalRate: number; // VUs/sec for the full load test
-    durationSec: number;
-    rampTo?: number;
-    distributed: boolean; // Artillery distributed/serverless
+    smoke: boolean; // smoke profile on every PR (fast tier)
+    fullLoad: boolean; // heavier profile on merge/schedule (full tier)
+    profile: PerfProfile; // which profile runs on merge: load|stress|spike|soak|breakpoint
+    arrivalRate: number; // peak VUs (concurrency) for the merge profile
+    durationSec: number; // steady-phase duration (s)
     lighthouse: boolean; // Core Web Vitals
     lighthouseUrl: string;
   };
@@ -53,7 +54,7 @@ export const DEFAULT_CONFIG: CiConfig = {
   engines: { ui: true, apiFlow: false, contract: false, visual: false, agent: false, perf: false, security: false },
   apiUrl: "https://verity-kappa-ebon.vercel.app",
   branch: "main",
-  perf: { smoke: true, fullLoad: true, arrivalRate: 10, durationSec: 120, rampTo: undefined, distributed: false, lighthouse: false, lighthouseUrl: "" },
+  perf: { smoke: true, fullLoad: true, profile: "load", arrivalRate: 10, durationSec: 120, lighthouse: false, lighthouseUrl: "" },
   security: { sast: true, dast: false, dastTarget: "", dastDepth: "baseline", },
   visual: { snapshotsDir: "tests/verity/visual", maxDiffPixelRatio: 0.01 },
   agent: { endpoint: "", authTokenSecret: "AI_API_TOKEN" },
@@ -133,8 +134,9 @@ function githubWith(c: CiConfig, tier: "fast" | "full"): string {
     lines.push(`      agent-token: \${{ secrets.${c.agent.authTokenSecret} }}`);
   }
   if (c.engines.perf) {
-    lines.push(`      perf-config: tests/verity/perf/${tier === "fast" ? "smoke" : "load"}.yml`);
-    if (tier === "full" && c.perf.distributed) lines.push(`      perf-distributed: "true"`);
+    lines.push(`      perf-config: tests/verity/perf/verity.k6.js`);
+    // fast tier ⇒ smoke; full tier ⇒ the chosen profile.
+    if (tier === "full") lines.push(`      perf-profile: ${c.perf.profile}`);
     if (c.perf.lighthouse && c.perf.lighthouseUrl) lines.push(`      lighthouse-url: ${c.perf.lighthouseUrl}`);
   }
   if (c.engines.security && c.security.dast && c.security.dastTarget) {
@@ -208,7 +210,10 @@ function runnerCmds(c: CiConfig, tier: "fast" | "full", indent: string): string[
     out.push(`${indent}node verity-engines.mjs agent --tier ${tier} --endpoint ${c.agent.endpoint}`);
   }
   if (c.engines.perf) {
-    out.push(`${indent}node verity-engines.mjs perf --tier ${tier}`);
+    // Needs the k6 binary on the runner (https://k6.io/docs/get-started/installation).
+    const prof = tier === "full" ? ` --profile ${c.perf.profile}` : "";
+    const tgt = c.contract.apiBaseUrl ? ` --target ${c.contract.apiBaseUrl}` : "";
+    out.push(`${indent}node verity-engines.mjs k6 --tier ${tier}${prof}${tgt}`);
     if (c.perf.lighthouse && c.perf.lighthouseUrl) {
       out.push(`${indent}node verity-engines.mjs cwv --tier ${tier} --target ${c.perf.lighthouseUrl}`);
     }

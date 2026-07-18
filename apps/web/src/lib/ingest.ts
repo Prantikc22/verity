@@ -297,6 +297,7 @@ export async function recordRun(
       org_id: project.org_id,
       engine: perf.engine,
       tier: perf.tier,
+      profile: perf.profile ?? null,
       aggregate: perf.aggregate as unknown as TablesInsert<"perf_reports">["aggregate"],
       scenarios: (perf.scenarios ?? null) as unknown as TablesInsert<"perf_reports">["scenarios"],
       web_vitals: (perf.webVitals ?? null) as unknown as TablesInsert<"perf_reports">["web_vitals"],

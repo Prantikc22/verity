@@ -15,6 +15,7 @@ import type {
   GroupedApiEndpoint,
   GroupedApiEntry,
   PerfMetrics,
+  PerfProfile,
   PerfReport,
   Severity,
   UnifiedResult,
@@ -253,6 +254,69 @@ export function adaptArtillery(json: ArtilleryJson, tier: "fast" | "full"): Perf
     engine: "artillery",
     tier,
     aggregate: artilleryMetrics(agg),
+  };
+}
+
+/**
+ * Shape of a k6 summary. We accept BOTH the object k6 hands to `handleSummary`
+ * (`metrics[name].values["p(95)"]`) and the flatter `--summary-export` file
+ * (`metrics[name]["p(95)"]`) so the adapter is robust to how the script emits.
+ */
+export interface K6Json {
+  metrics?: Record<string, { values?: Record<string, number> } & Record<string, number | undefined>>;
+}
+
+function k6Vals(m: K6Json["metrics"], name: string): Record<string, number> {
+  const entry = m?.[name];
+  if (!entry) return {};
+  // handleSummary nests under `.values`; --summary-export is flat.
+  return (entry.values ?? (entry as Record<string, number>)) as Record<string, number>;
+}
+
+function k6Metrics(m: K6Json["metrics"]): PerfMetrics {
+  const dur = k6Vals(m, "http_req_duration");
+  const reqs = k6Vals(m, "http_reqs");
+  const failed = k6Vals(m, "http_req_failed");
+  const requests = Math.round(reqs.count ?? 0);
+  // http_req_failed is a Rate metric: `rate` in [0,1] (handleSummary) or `value`
+  // (--summary-export) is the fraction that FAILED. Its counters are a k6 gotcha:
+  // `passes` = truthy adds = FAILED requests, `fails` = OK requests — so never
+  // read `fails` as the error count. Prefer the rate; fall back to `passes`.
+  const rate = failed.rate ?? failed.value;
+  let errorRate: number;
+  let errors: number;
+  if (rate != null) { errorRate = rate; errors = Math.round(rate * requests); }
+  else if (failed.passes != null) { errors = failed.passes; errorRate = requests > 0 ? failed.passes / requests : 0; }
+  else { errors = 0; errorRate = 0; }
+  const pick = (o: Record<string, number>, ...keys: string[]) => {
+    for (const k of keys) if (o[k] != null) return Math.round(o[k]);
+    return null;
+  };
+  return {
+    requests,
+    errors,
+    errorRate: Math.min(1, Math.max(0, errorRate)),
+    p50: pick(dur, "med", "p(50)"),
+    p95: pick(dur, "p(95)"),
+    p99: pick(dur, "p(99)"),
+    min: pick(dur, "min"),
+    max: pick(dur, "max"),
+    rps: reqs.rate != null ? Math.round(reqs.rate * 10) / 10 : null,
+  };
+}
+
+/**
+ * Adapt a k6 summary into a PerfReport. `profile` is the load shape the run
+ * used (smoke/load/stress/spike/soak/breakpoint); it rides along so the
+ * dashboard can label the run precisely. `tier` keeps the fast/full honesty
+ * split (smoke ⇒ fast, everything heavier ⇒ full).
+ */
+export function adaptK6(json: K6Json, tier: "fast" | "full", profile: PerfProfile): PerfReport {
+  return {
+    engine: "k6",
+    tier,
+    profile,
+    aggregate: k6Metrics(json.metrics),
   };
 }
 

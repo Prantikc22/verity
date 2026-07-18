@@ -44,15 +44,15 @@ inputs:
     description: "Secret token used to authenticate eval calls to the AI endpoint."
     required: false
     default: ""
-  # ---- performance (Artillery / Lighthouse) ----
+  # ---- performance (k6 named profiles / Lighthouse) ----
   perf-config:
-    description: "Path to the AI-generated Artillery config (YAML)."
+    description: "Path to the AI-generated load-test script (one script, every profile)."
     required: false
-    default: "tests/verity/perf/smoke.yml"
-  perf-distributed:
-    description: "If 'true', run Artillery in distributed/serverless mode for higher load than one runner can generate."
+    default: "tests/verity/perf/verity.k6.js"
+  perf-profile:
+    description: "Load profile to run: smoke|load|stress|spike|soak|breakpoint. Empty ⇒ derived from tier (fast=smoke, full=load)."
     required: false
-    default: "false"
+    default: ""
   lighthouse-url:
     description: "If set, run Lighthouse CI against this URL for Core Web Vitals (optional, separate from Artillery)."
     required: false
@@ -114,21 +114,28 @@ runs:
         set -e
         node "${{ github.action_path }}/verity-engines.mjs" agent --tier "${{ inputs.tier }}" --endpoint "${{ inputs.agent-endpoint }}"
 
-    # ============================ PERFORMANCE (Artillery) =======================
-    # fast = "Perf smoke check" on every PR; full = complete load test.
-    - name: "Verity — Performance (Artillery)"
+    # ============================ PERFORMANCE (k6 profiles) =====================
+    # fast ⇒ smoke profile on every PR; full ⇒ your chosen profile on merge.
+    # One script runs every profile; the runner invokes k6 itself and posts the
+    # summary. No tool is named in YOUR workflow — only "perf".
+    - name: "Verity — Performance (load profiles)"
       if: contains(inputs.engines, 'perf')
       shell: bash
       env:
         VERITY_INGEST_TOKEN: ${{ inputs.token }}
         VERITY_API_URL: ${{ inputs.api-url }}
         VERITY_PR_NUMBER: ${{ github.event.pull_request.number }}
+        VERITY_TARGET_URL: ${{ inputs.api-base-url }}
+        VERITY_PERF_PROFILE: ${{ inputs.perf-profile }}
       run: |
         set -e
-        ARTILLERY_FLAGS=""
-        if [ "${{ inputs.perf-distributed }}" = "true" ]; then ARTILLERY_FLAGS="--platform aws:fargate"; fi
-        npx --yes artillery@latest run $ARTILLERY_FLAGS --output "$RUNNER_TEMP/perf.json" "${{ inputs.perf-config }}" || true
-        node "${{ github.action_path }}/verity-engines.mjs" perf --tier "${{ inputs.tier }}" --report "$RUNNER_TEMP/perf.json"
+        # Install k6 if the runner doesn't have it (self-contained, no external action).
+        if ! command -v k6 >/dev/null 2>&1; then
+          K6_VER=v0.54.0
+          curl -fsSL "https://github.com/grafana/k6/releases/download/${K6_VER}/k6-${K6_VER}-linux-amd64.tar.gz" | tar xz
+          sudo mv k6-*/k6 /usr/local/bin/ 2>/dev/null || mv k6-*/k6 /usr/local/bin/
+        fi
+        node "${{ github.action_path }}/verity-engines.mjs" k6 --tier "${{ inputs.tier }}" --config "${{ inputs.perf-config }}" --target "${{ inputs.api-base-url }}"
 
     # ---- optional Lighthouse CI (Core Web Vitals) — separate, lightweight ------
     - name: "Verity — Performance (Lighthouse CWV)"

@@ -529,6 +529,54 @@ export function buildArtilleryGenerationPrompt(p: ArtilleryGenerateParams): stri
   return blocks.join("\n\n");
 }
 
+/* ------------------------------------------------------------------ *
+ * Performance (k6) — the AI writes ONLY the scenario body; the load    *
+ * profiles + thresholds are assembled deterministically (see perf.ts). *
+ * ------------------------------------------------------------------ */
+
+export interface K6GenerateParams {
+  /** OpenAPI/Swagger text — reused from API testing. */
+  spec?: string;
+  /** Base URL of the API. */
+  baseUrl?: string;
+  /** Free-text guidance on which flows matter most under load. */
+  instructions?: string;
+}
+
+export const K6_GENERATION_SYSTEM = `You write the BODY of a single k6 scenario function, derived from an OpenAPI spec.
+Your code runs inside: export function scenario() { <YOUR CODE HERE> }
+
+Respond as STRICT JSON: {"plan": string[], "code": string}.
+- "plan": 3–6 plain-English steps describing the flow the load exercises.
+- "code": JavaScript statements for the function body ONLY. No imports, no
+  export, no options, no function wrapper, no markdown fences.
+
+Environment you can use (already imported for you — do NOT re-import):
+- http           → k6/http (http.get/post/put/del, with { headers, ... }).
+- check, sleep   → from k6.
+- BASE_URL       → the target base URL (a string). Build every URL as BASE_URL + "/path".
+- __ENV          → environment variables. Read secrets via __ENV.API_TOKEN — NEVER hardcode tokens.
+
+Rules:
+- Build a realistic flow from the OpenAPI paths (e.g. create → read). Capture ids
+  from a response (JSON.parse(res.body) or res.json()) and reuse them in later steps.
+- Wrap each request in a check(res, { "...": (r) => r.status < 400 }). Do NOT assert
+  exact latencies (thresholds handle that outside your code).
+- Add a small sleep(1) between logical steps to model think-time.
+- Only use endpoints present in the spec. If no spec is given, GET BASE_URL and check it.
+- Keep it under ~60 lines. It must be valid JavaScript.`;
+
+export function buildK6GenerationPrompt(p: K6GenerateParams): string {
+  const blocks: string[] = [
+    `Write the k6 scenario() body that exercises this API under load.`,
+  ];
+  if (p.baseUrl) blocks.push(`Base URL (available as BASE_URL): ${p.baseUrl}`);
+  if (p.instructions) blocks.push(`GUIDANCE:\n"""\n${p.instructions}\n"""`);
+  if (p.spec) blocks.push(`OPENAPI / SWAGGER SPEC (build the flow from these paths):\n"""\n${p.spec.slice(0, 20000)}\n"""`);
+  else blocks.push(`No spec provided — just GET BASE_URL and check the status.`);
+  return blocks.join("\n\n");
+}
+
 export interface HealParams {
   oldSelector: string;
   /** DOM snapshot around where the old selector used to point. */

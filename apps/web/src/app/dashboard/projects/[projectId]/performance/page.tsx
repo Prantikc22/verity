@@ -30,12 +30,16 @@ export default async function PerformancePage({ params }: { params: Promise<{ pr
     .order("created_at", { ascending: false })
     .limit(40);
 
-  const artillery = (reports ?? []).filter((r) => r.engine === "artillery");
+  // Load-test engines (k6 + legacy artillery) both feed the latency panel.
+  const loadRuns = (reports ?? []).filter((r) => r.engine === "k6" || r.engine === "artillery");
   const lighthouse = (reports ?? []).filter((r) => r.engine === "lighthouse");
-  const latest = artillery[0];
+  const latest = loadRuns[0];
   const agg = latest ? (latest.aggregate as unknown as PerfMetrics) : null;
+  const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+  const runLabel = (r: { profile: string | null; tier: string }) =>
+    r.profile ? `${cap(r.profile)} test` : r.tier === "fast" ? "Perf smoke check" : "Full load test";
   // p95 trend, oldest→newest
-  const p95Trend = [...artillery].reverse().map((r) => (r.aggregate as unknown as PerfMetrics).p95 ?? 0).filter((n) => n > 0);
+  const p95Trend = [...loadRuns].reverse().map((r) => (r.aggregate as unknown as PerfMetrics).p95 ?? 0).filter((n) => n > 0);
   const lhLatest = lighthouse[0]?.web_vitals as undefined | { performanceScore?: number; lcp?: number; cls?: number; tbt?: number };
 
   return (
@@ -58,10 +62,10 @@ export default async function PerformancePage({ params }: { params: Promise<{ pr
           {latest && agg && (
             <section className="border border-neutral-200 p-5 dark:border-neutral-800">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold">{latest.tier === "fast" ? "Perf smoke check" : "Full load test"} <span className="font-normal text-neutral-400">· latest</span></h3>
+                <h3 className="text-sm font-semibold">{runLabel(latest)} <span className="font-normal text-neutral-400">· latest</span></h3>
                 <span className="text-[11px] text-neutral-400">{new Date(latest.created_at).toLocaleString()}</span>
               </div>
-              {latest.tier === "fast" && <p className="mt-1 text-[11px] text-amber-600">Smoke check — a light sanity check, not a full load test.</p>}
+              {(latest.profile === "smoke" || (!latest.profile && latest.tier === "fast")) && <p className="mt-1 text-[11px] text-amber-600">Smoke check — a light sanity check, not a full load test.</p>}
               <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
                 {[
                   { l: "Requests", v: String(agg.requests) },
@@ -113,12 +117,12 @@ export default async function PerformancePage({ params }: { params: Promise<{ pr
                   <th className="px-3 py-2">When</th><th className="px-3 py-2">Type</th><th className="px-3 py-2 text-right">Requests</th><th className="px-3 py-2 text-right">Errors</th><th className="px-3 py-2 text-right">p95</th><th className="px-3 py-2 text-right">p99</th>
                 </tr></thead>
                 <tbody>
-                  {artillery.slice(0, 15).map((r) => {
+                  {loadRuns.slice(0, 15).map((r) => {
                     const a = r.aggregate as unknown as PerfMetrics;
                     return (
                       <tr key={r.id} className="border-t border-neutral-100 dark:border-neutral-800/60">
                         <td className="px-3 py-2 text-neutral-500">{new Date(r.created_at).toLocaleDateString()}</td>
-                        <td className="px-3 py-2">{r.tier === "fast" ? "Smoke" : "Load"}</td>
+                        <td className="px-3 py-2">{r.profile ? cap(r.profile) : r.tier === "fast" ? "Smoke" : "Load"}</td>
                         <td className="px-3 py-2 text-right">{a.requests}</td>
                         <td className={`px-3 py-2 text-right ${a.errorRate > 0.05 ? "text-red-600" : ""}`}>{(a.errorRate * 100).toFixed(1)}%</td>
                         <td className="px-3 py-2 text-right">{ms(a.p95)}</td>

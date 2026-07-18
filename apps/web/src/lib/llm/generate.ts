@@ -9,6 +9,11 @@ import {
   AGENT_PROPOSAL_SYSTEM,
   AGENT_GENERATION_SYSTEM,
   ARTILLERY_GENERATION_SYSTEM,
+  K6_GENERATION_SYSTEM,
+  buildK6GenerationPrompt,
+  buildK6Script,
+  type K6GenerateParams,
+  type K6Defaults,
   buildGenerationPrompt,
   buildHealingPrompt,
   buildProposalPrompt,
@@ -346,6 +351,37 @@ export async function generateArtilleryScenario(params: ArtilleryGenerateParams)
     code = raw;
   }
   const specContent = stripFences(code);
+  return { specContent, plan, model: llmConfig().model, assertionCount: 0, usedLiveContext: false };
+}
+
+/* ------------------------------------------------------------------ *
+ * Performance (k6) — one script, every profile. The AI writes only the *
+ * scenario body; buildK6Script wraps it with the deterministic load    *
+ * shapes + thresholds. Generated from the SAME OpenAPI spec.           *
+ * ------------------------------------------------------------------ */
+
+/** Generate a single k6 script (all profiles) from the OpenAPI spec. */
+export async function generateK6Script(
+  params: K6GenerateParams & { defaults?: K6Defaults },
+): Promise<GeneratedTest> {
+  let plan: string[] = [];
+  let scenarioBody = "";
+  try {
+    const raw = await complete({
+      system: K6_GENERATION_SYSTEM,
+      user: buildK6GenerationPrompt(params),
+      temperature: 0.2,
+      json: true,
+    });
+    const parsed = JSON.parse(raw) as { plan?: unknown; code?: unknown };
+    if (Array.isArray(parsed.plan)) plan = parsed.plan.map((s) => String(s));
+    if (typeof parsed.code === "string") scenarioBody = stripFences(parsed.code);
+  } catch {
+    // Fall back to the built-in default scenario (GET BASE_URL) if the LLM output
+    // can't be parsed — the script still runs every profile.
+    scenarioBody = "";
+  }
+  const specContent = buildK6Script({ baseUrl: params.baseUrl ?? "", scenarioBody, defaults: params.defaults });
   return { specContent, plan, model: llmConfig().model, assertionCount: 0, usedLiveContext: false };
 }
 

@@ -28,6 +28,30 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/* ------------------------------------------------------------------ *
+ * Readability. Two problems reported on the dark theme: the indigo
+ * accent (indigo-600 ≈ #4f46e5) is too dark to read on the near-black
+ * bg (#07070b, ~2.8:1 — fails WCAG AA), and a lot of copy sits at the
+ * faint end at very small sizes. Fixed centrally so every existing and
+ * future `text-indigo-*` link/accent stays legible without editing
+ * dozens of call sites. Backgrounds (`bg-indigo-600`) are untouched.
+ * ------------------------------------------------------------------ */
+
+/* Gentle global size lift — everything reads ~3% larger, proportionally. */
+html { font-size: 16.5px; }
+
+/* Lift the indigo accent to a light tint that clears AA on the dark bg. */
+.dark .text-indigo-600 { color: #818cf8; } /* indigo-400 — ~7:1 on #07070b */
+.dark .text-indigo-700 { color: #818cf8; }
+.dark .text-indigo-500 { color: #a5b4fc; } /* indigo-300 for smaller labels */
+
+/* Lift the faintest secondary copy so long explainer text isn't a strain. */
+.dark .text-neutral-500 { color: #9ca3af; }
+
+/* Nudge the two smallest utility sizes up — 9px/10px are below comfort. */
+.text-\[9px\]  { font-size: 10px; }
+.text-\[10px\] { font-size: 11px; }
+
 /* Indigo selection to match the brand accent. */
 ::selection {
   background: color-mix(in srgb, #6366f1 28%, transparent);

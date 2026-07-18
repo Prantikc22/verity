@@ -511,6 +511,7 @@ export type Database = {
           engine: string
           id: string
           org_id: string
+          profile: string | null
           project_id: string
           run_id: string
           scenarios: Json | null
@@ -523,6 +524,7 @@ export type Database = {
           engine: string
           id?: string
           org_id: string
+          profile?: string | null
           project_id: string
           run_id: string
           scenarios?: Json | null
@@ -535,6 +537,7 @@ export type Database = {
           engine?: string
           id?: string
           org_id?: string
+          profile?: string | null
           project_id?: string
           run_id?: string
           scenarios?: Json | null

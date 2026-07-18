@@ -28,11 +28,27 @@ export type Engine =
   | "playwright" // UI + API flow tests (existing)
   | "playwright-visual" // visual regression (Playwright toHaveScreenshot)
   | "llm-eval" // agent / AI-feature evals
-  | "artillery" // performance load
+  | "k6" // performance load (named-profile load/spike/soak/stress/breakpoint)
+  | "artillery" // performance load (legacy engine — still adapted for back-compat)
   | "lighthouse" // performance / Core Web Vitals
   | "zap" // security DAST
   | "semgrep" // security SAST
   | "schemathesis"; // API contract
+
+/**
+ * A performance test PROFILE — the *shape* of the load, independent of the
+ * fast/full honesty tier. Every PR runs the `smoke` profile (cheap, never
+ * blocks); on merge the customer picks a heavier profile. These mirror the
+ * standard load-testing playbook so the labels are ones perf engineers already
+ * know. NOTE: only the shape differs — the same scenario/flows are exercised.
+ */
+export type PerfProfile =
+  | "smoke" // 1–2 VUs, ~30s — "does it work under trivial load?" (the fast tier)
+  | "load" // ramp to expected peak, hold — "does it hold up at normal traffic?"
+  | "stress" // ramp well past peak — "where does it start to degrade?"
+  | "spike" // sudden burst then drop — "does it survive a flash crowd?"
+  | "soak" // moderate load, long duration — "does it leak/degrade over time?"
+  | "breakpoint"; // ramp with no cap — "what is the exact breaking point?"
 
 /**
  * Within API testing, which layer a result came from. Example-based flow tests
@@ -95,8 +111,14 @@ export interface PerfMetrics {
  * load test. Core Web Vitals (Lighthouse) ride along in `webVitals`.
  */
 export interface PerfReport {
-  engine: Extract<Engine, "artillery" | "lighthouse">;
+  engine: Extract<Engine, "k6" | "artillery" | "lighthouse">;
   tier: "fast" | "full";
+  /**
+   * The load PROFILE this run used (k6). Optional/additive so existing Artillery
+   * and Lighthouse reports keep working. Drives the dashboard label
+   * ("Load test", "Spike test", …) alongside the fast/full tier.
+   */
+  profile?: PerfProfile;
   /** Whole-run aggregate. */
   aggregate: PerfMetrics;
   /** Optional per-scenario / per-endpoint breakdown. */
