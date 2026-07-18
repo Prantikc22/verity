@@ -1,15 +1,22 @@
 {
   "name": "@qashifthq/verity",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Verity CLI — run your Playwright suite (fast/full tier), detect flakes via reruns, and report to Verity.",
   "license": "MIT",
   "type": "module",
   "bin": {
     "verity": "./bin/verity.mjs"
   },
-  "files": ["bin", "README.md"],
-  "publishConfig": { "access": "public" },
-  "engines": { "node": ">=20" },
+  "files": [
+    "bin",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "build": "node --check bin/verity.mjs"
   }
