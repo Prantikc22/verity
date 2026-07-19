@@ -32,8 +32,16 @@ export interface RateResult {
 export async function checkTestGenRate(ip: string): Promise<RateResult> {
   const l = getLimiter();
   if (!l) return { success: true, remaining: 999, reset: 0 };
-  const { success, remaining, reset } = await l.limit(ip);
-  return { success, remaining, reset };
+  try {
+    const { success, remaining, reset } = await l.limit(ip);
+    return { success, remaining, reset };
+  } catch {
+    // FAIL CLOSED: this guards the anonymous LLM entry point (a pure cost
+    // center). If the limiter store dies (e.g. an idle Upstash DB gets
+    // auto-deleted — it happened to Clearpath), unlimited free generation is
+    // worse than the endpoint pausing. Authed, capped generation is unaffected.
+    return { success: false, remaining: 0, reset: Date.now() + 600_000 };
+  }
 }
 
 /**
@@ -64,8 +72,14 @@ export async function checkRate(
 ): Promise<RateResult> {
   const l = namedLimiter(name, opts.max, opts.window);
   if (!l) return { success: true, remaining: 999, reset: 0 };
-  const { success, remaining, reset } = await l.limit(ip);
-  return { success, remaining, reset };
+  try {
+    const { success, remaining, reset } = await l.limit(ip);
+    return { success, remaining, reset };
+  } catch {
+    // Fail open: these guard cheap endpoints (status, member mutations) — a
+    // limiter outage must not take them down.
+    return { success: true, remaining: 1, reset: 0 };
+  }
 }
 
 /** Pull a best-effort client IP from a Next request's headers. */
