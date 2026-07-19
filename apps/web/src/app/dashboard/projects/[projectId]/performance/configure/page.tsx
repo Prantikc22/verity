@@ -25,26 +25,28 @@ export default async function PerformanceConfigurePage({ params }: { params: Pro
       <details className="border border-neutral-200 dark:border-neutral-800" open>
         <summary className="cursor-pointer px-5 py-3 text-sm font-semibold">What this measures &amp; how to configure it <span className="font-normal text-neutral-400">— read me first</span></summary>
         <div className="space-y-3 border-t border-neutral-200 p-5 text-xs leading-relaxed text-neutral-600 dark:border-neutral-800 dark:text-neutral-400">
-          <p><strong>This is a load test for your API</strong>, not a website crawler. It doesn&apos;t spider every page — it generates concurrent traffic against the <em>endpoints and flows you define</em> (Verity builds these from your OpenAPI spec) and measures how they hold up under load: latency percentiles (p50/p95/p99) and error rate. It does load, smoke, soak, and spike testing by shaping the <em>phases</em>; it is not a functional/correctness test (your Playwright API tests cover that).</p>
+          <p><strong>This is a load test for your API</strong>, not a website crawler. It doesn&apos;t spider every page — it generates concurrent traffic against the <em>endpoints and flows you define</em> (Verity builds these from your OpenAPI spec) and measures how they hold up under load: latency percentiles (p50/p95/p99) and error rate. It does smoke, load, stress, spike, soak, and breakpoint testing via the <em>profile</em> you pick; it is not a functional/correctness test (your Playwright API tests cover that).</p>
           <p><strong>Front-end vs back-end:</strong> the load test measures <em>server</em> performance. For <em>page-load</em> performance (the “whole page feels slow” problem), enable <strong>Core Web Vitals</strong> — that&apos;s the front-end half.</p>
           <div className="border border-neutral-100 bg-neutral-50 p-3 dark:border-neutral-800 dark:bg-neutral-900">
             <p className="font-medium text-neutral-700 dark:text-neutral-300">Key terms</p>
             <ul className="mt-1 list-disc space-y-1 pl-5">
-              <li><strong>VU (virtual user)</strong> — one simulated user running a scenario (e.g. “log in → list orders”). More VUs = more concurrency.</li>
-              <li><strong>arrivalRate</strong> — how many <em>new</em> VUs start <em>per second</em>. This is your load knob. arrivalRate 10 for 60s ≈ 600 sessions begun over the minute.</li>
-              <li><strong>duration</strong> — how long a phase runs (seconds).</li>
-              <li><strong>ramp (rampTo)</strong> — gradually increase arrivalRate from start→rampTo, so you find the breaking point instead of slamming cold.</li>
-              <li><strong>p95 / p99</strong> — 95%/99% of requests were faster than this. Watch p95 — it reflects the experience of your slowest real users far better than the average.</li>
+              <li><strong>VU (virtual user)</strong> — one simulated user running the scenario (e.g. “list products → open one”). <strong>Peak VUs</strong> is your load knob: more VUs = more concurrency.</li>
+              <li><strong>duration</strong> — how long the steady phase holds at peak (seconds).</li>
+              <li><strong>profile</strong> — the <em>shape</em> of the load. One generated script runs them all; pick at run time with <code>-e PROFILE=…</code>.</li>
+              <li><strong>p95 / p99</strong> — 95%/99% of requests were faster than this. Watch p95 — it reflects your slowest real users far better than the average.</li>
             </ul>
           </div>
           <div>
-            <p className="font-medium text-neutral-700 dark:text-neutral-300">How to set it optimally</p>
+            <p className="font-medium text-neutral-700 dark:text-neutral-300">The profiles — pick by the question you’re asking</p>
             <ul className="mt-1 list-disc space-y-1 pl-5">
-              <li><strong>Smoke (every PR):</strong> keep it tiny — arrivalRate 1–2, duration ~30s. It catches “this PR made the API 5× slower,” not capacity. Never read it as a load test.</li>
-              <li><strong>Full load (merge):</strong> start near your real peak traffic. Don&apos;t know it? Set arrivalRate to ~2× your average requests/sec and <em>ramp</em> over 1–2 min to find where p95 spikes or errors climb.</li>
-              <li><strong>Healthy targets:</strong> error rate &lt; 1%, and p95 stable as load rises. If p95 climbs steeply while arrivalRate is flat, you&apos;ve found a bottleneck.</li>
-              <li><strong>One CI runner caps out around a few hundred req/s.</strong> Need more? Turn on <em>distributed</em> mode — otherwise you&apos;re measuring the runner, not your API.</li>
+              <li><strong>smoke</strong> (every PR) — 1–2 VUs, ~30s. Catches “this PR made the API 5× slower,” not capacity. Never read it as a load test.</li>
+              <li><strong>load</strong> (merge) — ramp to your real peak and hold. Does it hold up at normal traffic? Set Peak VUs near your true peak concurrency.</li>
+              <li><strong>stress</strong> — push well past peak to find where p95/errors start climbing (the degradation point).</li>
+              <li><strong>spike</strong> — a sudden burst then drop; does it survive a flash crowd and recover?</li>
+              <li><strong>soak</strong> — moderate load held for a long run; surfaces leaks and slow drift.</li>
+              <li><strong>breakpoint</strong> — ramp with no cap until it breaks; finds the exact ceiling.</li>
             </ul>
+            <p className="mt-2"><strong>Healthy targets:</strong> error rate &lt; 1%, and p95 stable as load rises. If p95 climbs steeply while VUs are flat, you’ve found a bottleneck. One CI runner tops out around a few hundred req/s — past that you’re measuring the runner, not your API.</p>
           </div>
         </div>
       </details>
