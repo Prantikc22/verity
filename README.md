@@ -2,9 +2,9 @@
 
 AI-augmented **Playwright test generation & execution** for development teams — a [QAShift](https://www.qashifthq.com) product.
 
-Verity generates Playwright tests from a sentence or a URL, runs them in your **own CI**, uses an LLM to **self-heal** broken locators (surfaced as a suggested diff, never auto-merged), separates **flaky** from **broken**, and posts **predictions** about regression risk right inside your pull requests.
+Verity generates Playwright tests from a sentence or a URL, runs them in your **own CI**, uses an LLM to suggest fixes for broken locators (only when explicitly requested, surfaced as a diff, never auto-merged), separates **flaky** from **broken**, and posts **predictions** about regression risk right inside your pull requests.
 
-> Scope of this build: the **functional / UI testing** layer only. API testing (Schemathesis) and performance testing (Artillery/Locust) are separate future modules.
+> This repository includes functional/UI and API contract coverage, visual checks, agent evaluations, k6 performance profiles, Lighthouse audits, and ZAP/Semgrep security adapters. Each engine requires a real target and reports its actual evidence; no engine substitutes a fabricated pass.
 
 ## The two execution tiers (the core honesty)
 

@@ -102,6 +102,7 @@ export const options = {
   scenarios: { [PROFILE]: Object.assign({ exec: "scenario" }, PROFILES[PROFILE]) },
   summaryTrendStats: ["avg", "min", "med", "max", "p(90)", "p(95)", "p(99)"],
   thresholds: {
+    checks: ["rate==1"],
     http_req_failed: ["rate<${errRate}"],
     http_req_duration: ["p(95)<${p95}"],
   },
@@ -126,7 +127,7 @@ export function handleSummary(data) {
 function defaultScenarioBody(): string {
   return [
     'const res = http.get(BASE_URL);',
-    'check(res, { "status is 2xx/3xx": (r) => r.status < 400 });',
+    'check(res, { "status is 2xx/3xx": (r) => r.status >= 200 && r.status < 400 });',
     "sleep(1);",
   ].join("\n");
 }

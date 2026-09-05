@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
+import { randomUUID } from "node:crypto";
 import { createClient } from "@/lib/supabase/server";
 import { proposeAgentEvals, generateAgentEval } from "@/lib/llm/generate";
 import { llmConfig } from "@/lib/llm/provider";
@@ -18,7 +19,7 @@ const Body = z.object({
 
 function specPathFor(title: string): string {
   const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 50) || "eval";
-  return `tests/verity/agent/${slug}.spec.ts`;
+  return `tests/verity/agent/${slug}-${randomUUID().slice(0, 8)}.spec.ts`;
 }
 
 /**

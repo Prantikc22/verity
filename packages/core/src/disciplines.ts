@@ -33,7 +33,9 @@ export type Engine =
   | "lighthouse" // performance / Core Web Vitals
   | "zap" // security DAST
   | "semgrep" // security SAST
-  | "schemathesis"; // API contract
+  | "schemathesis" // API contract
+  | "http-smoke" // lightweight HTTP timing, not a k6 run
+  | "header-check"; // HTTP header checks, not a ZAP scan
 
 /**
  * A performance test PROFILE — the *shape* of the load, independent of the
@@ -67,7 +69,7 @@ export type Severity = "critical" | "high" | "medium" | "low" | "info";
  * `engine` is retained for internal grouping but is not shown to customers.
  */
 export interface Finding {
-  engine: Extract<Engine, "zap" | "semgrep">;
+  engine: Extract<Engine, "zap" | "semgrep" | "header-check">;
   /** Stable rule/alert identifier (Semgrep check_id, ZAP pluginid/alertRef). */
   ruleId: string;
   title: string;
@@ -111,7 +113,7 @@ export interface PerfMetrics {
  * load test. Core Web Vitals (Lighthouse) ride along in `webVitals`.
  */
 export interface PerfReport {
-  engine: Extract<Engine, "k6" | "artillery" | "lighthouse">;
+  engine: Extract<Engine, "k6" | "artillery" | "lighthouse" | "http-smoke">;
   tier: "fast" | "full";
   /**
    * The load PROFILE this run used (k6). Optional/additive so existing Artillery

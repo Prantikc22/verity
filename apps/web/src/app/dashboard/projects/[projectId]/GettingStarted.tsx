@@ -12,7 +12,8 @@ export function GettingStarted({ projectId, hasTests, hasRuns }: { projectId: st
   useEffect(() => {
     // Show until everything is done, unless the user dismissed it.
     const dismissed = localStorage.getItem(key) === "1";
-    setHidden(dismissed || (hasTests && hasRuns));
+    const timer = window.setTimeout(() => setHidden(dismissed || (hasTests && hasRuns)), 0);
+    return () => window.clearTimeout(timer);
   }, [key, hasTests, hasRuns]);
 
   if (hidden) return null;

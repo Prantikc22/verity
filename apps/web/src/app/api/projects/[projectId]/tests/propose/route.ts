@@ -14,6 +14,8 @@ const PROPOSAL_CEILING = 25;
 const Body = z.object({
   url: z.string().url().optional(),
   prd: z.string().max(8000).optional(),
+  username: z.string().max(200).optional(),
+  password: z.string().max(200).optional(),
 }).refine((b) => b.url || b.prd, { message: "Provide a url and/or a PRD." });
 
 /**
@@ -60,7 +62,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
   const max = Math.min(headroom, PROPOSAL_CEILING);
 
   try {
-    const { candidates, usedLiveContext } = await proposeTests({ ...parsed.data, max });
+    const { username, password, ...proposal } = parsed.data;
+    const credentials = username || password ? { username, password } : undefined;
+    const { candidates, usedLiveContext } = await proposeTests({ ...proposal, credentials, max });
     return NextResponse.json({
       ok: true,
       candidates,

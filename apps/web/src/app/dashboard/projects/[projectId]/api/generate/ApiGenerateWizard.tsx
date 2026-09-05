@@ -61,7 +61,7 @@ export function ApiGenerateWizard({ projectId }: { projectId: string }) {
     }
   }
 
-  function toggle(i: number) { setSelected((p) => { const n = new Set(p); n.has(i) ? n.delete(i) : n.add(i); return n; }); }
+  function toggle(i: number) { setSelected((p) => { const n = new Set(p); if (n.has(i)) n.delete(i); else n.add(i); return n; }); }
 
   async function saveAll() {
     if (selected.size === 0) return;

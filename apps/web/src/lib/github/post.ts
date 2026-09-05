@@ -228,6 +228,7 @@ export async function postDisciplineResults(
   prNumber: number | null,
   _opts: { gatingAllowed: boolean },
 ): Promise<string | null> {
+  void _opts;
   const repo = parseRepo(project.repo);
   if (!repo) return null;
   const installationId = await resolveInstallationId(project);

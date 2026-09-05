@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
 
   // Performance/security runs post metrics/findings instead of pass/fail
   // results[], so a non-empty results[] is only required when neither is present.
-  const hasFindings = Array.isArray(payload.findings) && payload.findings.length > 0;
+  const hasFindings = payload.discipline === "security" && Array.isArray(payload.findings);
   const hasPerf = payload.perf != null;
   if (
     !payload.commit_sha ||
@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
   }
   // Each result reports per-attempt booleans (pass/fail per rerun); it's required.
   const badResult = payload.results.find(
-    (r) => !r || typeof r.spec_path !== "string" || !Array.isArray(r.attempts) || r.attempts.length === 0,
+    (r) => !r || typeof r.spec_path !== "string" || !Array.isArray(r.attempts) || r.attempts.length === 0 || r.attempts.some(a => typeof a !== "boolean"),
   );
   if (badResult) {
     return NextResponse.json(

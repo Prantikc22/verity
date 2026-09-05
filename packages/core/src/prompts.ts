@@ -44,6 +44,10 @@ Rules for the code:
     or getByPlaceholder using the exact label/placeholder from PAGE CONTEXT; links
     → getByRole('link', { name }); headings → getByRole('heading', { name }).
   * Avoid CSS/XPath and test-id selectors unless PAGE CONTEXT shows nothing else.
+  * Input entries state their source explicitly: placeholder="X" means use
+    getByPlaceholder('X'); aria-label="X" or a matching Labels entry means use
+    getByLabel('X'). A name/id marked "no accessible label confirmed" is NOT
+    permission to invent getByLabel.
   * INPUTS: use getByLabel('<label>') ONLY when PAGE CONTEXT shows the field has an
     associated Label. Many forms (login boxes, search) have a PLACEHOLDER and no
     label — for those use getByPlaceholder('<exact placeholder>'). Never guess a
@@ -72,15 +76,10 @@ Rules for the code:
 - ROBUSTNESS — these prevent the most common false failures, follow them exactly:
   * NEVER use bare text locators like page.locator('text=...'). Use getByText('...')
     or a role locator instead.
-  * A piece of text often appears more than once on a page (e.g. an error shown in
-    both a banner and inline). When you assert on text, ALWAYS disambiguate with
-    .first() — e.g. await expect(page.getByText('Your username is invalid!').first()).toBeVisible().
-    The same applies to any getByRole(...) / getByText(...) that could match more
-    than one element.
-  * URL assertions must be protocol- and trailing-slash-agnostic. NEVER hardcode a
-    full URL string. Use a regex on a stable substring of the path, e.g.
-    await expect(page).toHaveURL(/logged-in-successfully/i) — NOT
-    toHaveURL('http://site.com/page').
+  * Scope ambiguous locators to the observed form or region. Never append .first()
+    merely to suppress strict-mode errors: that can select the wrong control.
+  * Assert the expected URL exactly, or use an anchored regex that preserves its
+    origin and complete path. Never replace the intended URL with a loose substring.
   * A clickable thing may be a link OR a button — match what PAGE CONTEXT actually
     shows. If the success signal could be either, assert with .or(), e.g.
     page.getByRole('button', { name: 'Log out' }).or(page.getByRole('link', { name: 'Log out' })).
@@ -96,7 +95,7 @@ Rules for the code:
         await expect(page.getByRole('heading', { name: /results/i })).toHaveCount(0),
         or the URL/path did not change to the success path;
       - the field's NATIVE invalid state for typed inputs — e.g.
-        await expect(input).toHaveJSProperty('validity.valid', false) for an
+        await expect.poll(() => input.evaluate(el => el.validity.valid)).toBe(false) for an
         <input type="url|email|number|tel|...">, or expect(input).toHaveAttribute('aria-invalid','true');
       - an exact error message ONLY if that text or an error container actually
         appears in PAGE CONTEXT. If you cannot ground any error, assert the ABSENCE
@@ -128,6 +127,13 @@ Rules for the code:
     section/heading becomes visible (getByRole('heading', { name })).
   * When unsure whether an element/outcome exists, assert the WEAKER, grounded signal
     (an element you can see in PAGE CONTEXT, or a URL change) — never a speculative one.
+- AUTHENTICATED CONTEXT: when PAGE CONTEXT contains separate ENTRY PAGE CONTEXT and
+  AUTHENTICATED PAGE CONTEXT sections, the Fly browser really signed in and captured
+  both states. Reproduce that transition in the test: fill the exact entry-page
+  username/password locators with the supplied credentials, submit with the exact
+  entry-page control, then wait for an exact authenticated-page heading/text before
+  using authenticated-page controls. If PAGE CONTEXT instead contains an
+  AUTHENTICATION NOTE saying sign-in failed, do not write a protected-page test.
     A conservative test that passes beats an ambitious test that always fails.
 - Credentials: if CREDENTIALS are provided, use those exact values. Else, if the
   PAGE CONTEXT's visible text shows test credentials (common on demo/practice
@@ -437,7 +443,8 @@ export interface AgentGenerateParams {
 
 export const AGENT_GENERATION_SYSTEM = `You write Playwright API tests that EVALUATE a customer's LLM/agent feature over
 its HTTP endpoint. They run with @playwright/test and assert a property of the
-model's reply — never an exact string, since model output varies.
+model's reply. Prefer stable properties for variable outputs, but preserve any
+exact response/schema requirement explicitly supplied by the customer.
 
 Respond as STRICT JSON: {"plan": string[], "code": string}.
 - "plan": 4–8 plain-English steps (input → property asserted).
@@ -447,9 +454,10 @@ Rules for the code:
 - import { test, expect } from '@playwright/test'.
 - Use the request fixture: test('...', async ({ request }) => { ... }). POST the
   prompt/messages to the endpoint, read the reply, assert a PROPERTY of it.
-- Assert ROBUSTLY, never on an exact sentence: check for the presence/absence of
+- Assert ROBUSTLY: unless the user requires an exact value, check the presence/absence of
   substrings or regexes, a refusal phrase, valid JSON.parse of the reply, a tool
   name in the response, a max length, or that a leaked secret/marker is NOT present.
+- Never weaken an explicit exact-match requirement into a substring check.
 - For injection tests, embed the adversarial instruction in the user/data payload
   and assert the model did NOT follow it (e.g. did not print the canary string).
 - Read secrets from process.env (e.g. process.env.API_TOKEN) — NEVER hardcode tokens.
@@ -643,7 +651,7 @@ Apply these fixes based on the error:
   (e.g. getByText('Invalid URL')) that is NOT in PAGE CONTEXT → the message was
   hallucinated; do NOT hunt for similar text. Replace it with a grounded negative
   assertion: the success signal is ABSENT (heading/result/URL did not appear), or the
-  input's native invalid state — expect(input).toHaveJSProperty('validity.valid', false)
+  input's native invalid state — expect.poll(() => input.evaluate(el => el.validity.valid)).toBe(false)
   / aria-invalid="true". Only keep an exact message if PAGE CONTEXT shows it.
 - a timed-out toggle/accordion/theme assertion → assert the control's STATE instead:
   aria-expanded on the control, or a class/attribute on <html>/<body> for theme,

@@ -29,7 +29,7 @@ export function RunTests({ projectId, tests, kind }: { projectId: string; tests:
     const cur = rowsRef.current.get(key) ?? { name: patch.name ?? key, spec_path: key, status: "pending" as Status, durationMs: 0, error: null, explanation: null, healed: false, healExplanation: null, screenshot_url: null, plan: [] };
     rowsRef.current.set(key, { ...cur, ...patch });
   }
-  function toggleExpand(key: string) { setExpanded((p) => { const n = new Set(p); n.has(key) ? n.delete(key) : n.add(key); return n; }); }
+  function toggleExpand(key: string) { setExpanded((p) => { const n = new Set(p); if (n.has(key)) n.delete(key); else n.add(key); return n; }); }
 
   async function run() {
     setPhase("executing"); setError(""); setSummary(null); setHealCount(0);
@@ -146,7 +146,7 @@ export function RunTests({ projectId, tests, kind }: { projectId: string; tests:
     const a = document.createElement("a"); a.href = url; a.download = "verity-report.html"; a.click(); URL.revokeObjectURL(url);
   }
 
-  function toggle(id: string) { setPicked((p) => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n; }); }
+  function toggle(id: string) { setPicked((p) => { const n = new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n; }); }
 
   const busy = phase === "executing" || phase === "healing";
   const dot = (s: Status) =>
@@ -162,9 +162,9 @@ export function RunTests({ projectId, tests, kind }: { projectId: string; tests:
     <div className="border border-neutral-200 p-5 dark:border-neutral-800">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium">Run tests in the cloud</h3>
-        <span className="border border-indigo-300 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-indigo-600 dark:border-indigo-800 dark:text-indigo-400">real execution · auto-heal</span>
+        <span className="border border-indigo-300 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-indigo-600 dark:border-indigo-800 dark:text-indigo-400">real execution · original assertions</span>
       </div>
-      <p className="mt-1 text-xs text-neutral-500">Executes your saved Playwright specs — <strong>real assertions</strong> — on our infra. Failures are <strong>auto-healed</strong> and re-run, and you get a plain-English report. Capped per plan; CI is unlimited.</p>
+      <p className="mt-1 text-xs text-neutral-500">Executes your saved Playwright specs with their original assertions in a cloud browser. Failures stay visible for review; verification does not rewrite tests to make them pass. Capped per plan; CI is unlimited.</p>
 
       {tests.length > 0 && (() => {
         const groups = new Map<string, TestOpt[]>();

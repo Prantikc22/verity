@@ -46,6 +46,12 @@ function stripFences(s: string): string {
     .trim();
 }
 
+function requireExecutableSpec(code: string, assertion: RegExp, label: string): void {
+  if (!/\btest\s*\(/.test(code) || !assertion.test(code)) {
+    throw new Error(`${label} generation returned no executable test with the required assertion. Nothing was saved.`);
+  }
+}
+
 export interface GeneratedTest {
   specContent: string;
   /** Plain-English test plan (mirrors the code steps). */
@@ -66,10 +72,11 @@ export async function generateTest(params: GenerateTestParams): Promise<Generate
   let pageContext = params.pageContext;
   const target = params.isUrl ? params.input : params.baseUrl;
   if (!pageContext && target && /^https?:\/\//i.test(target)) {
-    const ctx = await fetchPageContext(target);
+    const ctx = await fetchPageContext(target, params.credentials);
     if (ctx) pageContext = ctx.summary;
   }
 
+  if (!pageContext) throw new Error("A reachable target URL or captured browser context is required for functional test generation.");
   const raw = await complete({
     system: GENERATION_SYSTEM,
     user: buildGenerationPrompt({ ...params, pageContext }),
@@ -86,8 +93,9 @@ export async function generateTest(params: GenerateTestParams): Promise<Generate
   } catch {
     code = raw; // fall back to raw text if the model didn't return clean JSON
   }
-  const specContent = hardenSpec(stripFences(code));
+  const specContent = hardenSpec(stripFences(code), pageContext);
   const assertionCount = (specContent.match(/expect\s*\(/g) ?? []).length;
+  if (!assertionCount || !/\btest\s*\(/.test(specContent)) throw new Error("Generation returned no executable test with assertions. Nothing was saved.");
   return { specContent, plan, model: llmConfig().model, assertionCount, usedLiveContext: Boolean(pageContext) };
 }
 
@@ -148,21 +156,64 @@ export interface TestCandidate {
   plan: string[];
 }
 
+function normalizedEvidence(s: string): string {
+  return s.replace(/[“”]/g, '"').replace(/[‘’]/g, "'").replace(/\s+/g, " ").trim().toLowerCase();
+}
+
+/**
+ * Drop speculative proposal steps before the user sees them. Quoted UI text must
+ * be present in the captured page evidence, and absolute expected URLs must be a
+ * captured link target (or the entry URL). Action values such as credentials are
+ * allowed because the user/model may intentionally vary them for negative cases.
+ */
+function groundCandidate(candidate: TestCandidate, pageContext?: string): TestCandidate | null {
+  if (!pageContext) return candidate;
+  const evidence = normalizedEvidence(pageContext);
+  const actionValue = /\b(?:enter|type|fill|input|use|provide)\b/i;
+  const groundedPlan: string[] = [];
+
+  for (const step of candidate.plan) {
+    let grounded = true;
+    if (!actionValue.test(step)) {
+      for (const match of step.matchAll(/["“']([^"”']{3,160})["”']/g)) {
+        const quoted = normalizedEvidence(match[1]);
+        if (quoted && !evidence.includes(quoted)) { grounded = false; break; }
+      }
+    }
+    if (grounded) {
+      for (const match of step.matchAll(/https?:\/\/[^\s'"”]+/g)) {
+        const expectedUrl = normalizedEvidence(match[0].replace(/[).,;]+$/, ""));
+        if (!evidence.includes(expectedUrl)) { grounded = false; break; }
+      }
+    }
+    if (grounded) groundedPlan.push(step);
+  }
+
+  // A plan with most of its assertions removed is not trustworthy enough to
+  // offer; fewer than two grounded steps also cannot describe a useful test.
+  if (groundedPlan.length < 2 || groundedPlan.length < Math.ceil(candidate.plan.length * 0.6)) return null;
+  return { ...candidate, plan: groundedPlan };
+}
+
 /**
  * Explore a URL (+ optional PRD) and propose a set of tests worth writing.
  * Fetches the live page so proposals are grounded in real elements. Does not
  * generate code or save — the caller lets the user pick which to generate.
  */
 export async function proposeTests(
-  params: Omit<ProposeParams, "pageContext"> & { pageContext?: string },
+  params: Omit<ProposeParams, "pageContext"> & {
+    pageContext?: string;
+    credentials?: { username?: string; password?: string };
+  },
 ): Promise<{ candidates: TestCandidate[]; usedLiveContext: boolean }> {
   // If the caller already has context (e.g. the MCP fetched the user's localhost,
   // which our server can't reach), use it. Otherwise fetch server-side.
   let pageContext: string | undefined = params.pageContext;
   if (!pageContext && params.url && /^https?:\/\//i.test(params.url)) {
-    const ctx = await fetchPageContext(params.url);
+    const ctx = await fetchPageContext(params.url, params.credentials);
     if (ctx) pageContext = ctx.summary;
   }
+  if (!pageContext) throw new Error("A reachable target URL or captured browser context is required before proposing functional tests.");
   const raw = await complete({
     system: PROPOSAL_SYSTEM,
     user: buildProposalPrompt({ ...params, pageContext }),
@@ -173,12 +224,14 @@ export async function proposeTests(
   try {
     const parsed = JSON.parse(raw) as { candidates?: TestCandidate[] };
     if (Array.isArray(parsed.candidates)) {
-      candidates = parsed.candidates.slice(0, params.max).map((c) => ({
-        title: String(c.title ?? "Test"),
-        intent: String(c.intent ?? ""),
-        priority: (["high", "medium", "low"].includes(c.priority) ? c.priority : "medium") as TestCandidate["priority"],
-        plan: Array.isArray(c.plan) ? c.plan.map(String) : [],
-      }));
+      candidates = parsed.candidates.slice(0, params.max)
+        .map((c) => groundCandidate({
+          title: String(c.title ?? "Test"),
+          intent: String(c.intent ?? ""),
+          priority: (["high", "medium", "low"].includes(c.priority) ? c.priority : "medium") as TestCandidate["priority"],
+          plan: Array.isArray(c.plan) ? c.plan.map(String) : [],
+        }, pageContext))
+        .filter((c): c is TestCandidate => Boolean(c));
     }
   } catch {
     candidates = [];
@@ -244,6 +297,7 @@ export async function generateApiTest(params: ApiGenerateParams): Promise<Genera
   }
   const specContent = stripFences(code);
   const assertionCount = (specContent.match(/expect\s*\(/g) ?? []).length;
+  requireExecutableSpec(specContent, /expect\s*\(/, "API");
   return { specContent, plan, model: llmConfig().model, assertionCount, usedLiveContext: false };
 }
 
@@ -254,9 +308,16 @@ export async function generateApiTest(params: ApiGenerateParams): Promise<Genera
 
 /** Generate a Playwright visual-regression spec (snapshot of a stable UI state). */
 export async function generateVisualTest(params: VisualGenerateParams): Promise<GeneratedTest> {
+  let pageContext = params.pageContext;
+  const target = params.isUrl ? params.input : params.baseUrl;
+  if (!pageContext && target && /^https?:\/\//i.test(target)) {
+    const ctx = await fetchPageContext(target, params.credentials);
+    if (ctx) pageContext = ctx.summary;
+  }
+  if (!pageContext) throw new Error("Live browser context is required for visual test generation.");
   const raw = await complete({
     system: VISUAL_GENERATION_SYSTEM,
-    user: buildVisualGenerationPrompt(params),
+    user: buildVisualGenerationPrompt({ ...params, pageContext }),
     temperature: 0.2,
     json: true,
   });
@@ -269,10 +330,11 @@ export async function generateVisualTest(params: VisualGenerateParams): Promise<
   } catch {
     code = raw;
   }
-  const specContent = hardenSpec(stripFences(code));
+  const specContent = hardenSpec(stripFences(code), pageContext);
   // The screenshot comparison IS the assertion for a visual test.
   const assertionCount = (specContent.match(/toHaveScreenshot\s*\(/g) ?? []).length;
-  return { specContent, plan, model: llmConfig().model, assertionCount, usedLiveContext: Boolean(params.pageContext) };
+  requireExecutableSpec(specContent, /toHaveScreenshot\s*\(/, "Visual");
+  return { specContent, plan, model: llmConfig().model, assertionCount, usedLiveContext: Boolean(pageContext) };
 }
 
 /* ------------------------------------------------------------------ *
@@ -326,6 +388,7 @@ export async function generateAgentEval(params: AgentGenerateParams): Promise<Ge
   }
   const specContent = hardenSpec(stripFences(code));
   const assertionCount = (specContent.match(/expect\s*\(/g) ?? []).length;
+  requireExecutableSpec(specContent, /expect\s*\(/, "Agent");
   return { specContent, plan, model: llmConfig().model, assertionCount, usedLiveContext: false };
 }
 
@@ -377,10 +440,9 @@ export async function generateK6Script(
     if (Array.isArray(parsed.plan)) plan = parsed.plan.map((s) => String(s));
     if (typeof parsed.code === "string") scenarioBody = stripFences(parsed.code);
   } catch {
-    // Fall back to the built-in default scenario (GET BASE_URL) if the LLM output
-    // can't be parsed — the script still runs every profile.
-    scenarioBody = "";
+    throw new Error("Performance generation failed. No substitute scenario was saved.");
   }
+  if (!scenarioBody) throw new Error("Performance generation returned an empty scenario.");
   const specContent = buildK6Script({ baseUrl: params.baseUrl ?? "", scenarioBody, defaults: params.defaults });
   return { specContent, plan, model: llmConfig().model, assertionCount: 0, usedLiveContext: false };
 }

@@ -12,7 +12,11 @@ export function isPublicHttpUrl(raw: string): boolean {
   let u: URL;
   try { u = new URL(raw); } catch { return false; }
   if (u.protocol !== "http:" && u.protocol !== "https:") return false;
-  const host = u.hostname.toLowerCase();
+  if (u.username || u.password) return false;
+  const host = u.hostname.toLowerCase().replace(/^\[|\]$/g, "");
+  // IPv6 targets require full address classification; fail closed for this
+  // lightweight trial rather than accepting loopback/mapped-private addresses.
+  if (host.includes(":")) return false;
   if (host === "localhost" || host.endsWith(".local")) return false;
   // Block obvious private / loopback / metadata hosts.
   if (/^(127\.|10\.|192\.168\.|169\.254\.|0\.0\.0\.0)/.test(host)) return false;
@@ -28,13 +32,31 @@ function percentile(sorted: number[], p: number): number | null {
 }
 
 /**
+ * Fetch without allowing an unvalidated redirect to become an SSRF hop. Every
+ * Location target is checked before the next request; non-public redirects are
+ * rejected and a redirect loop cannot consume the serverless budget.
+ */
+async function fetchPublic(raw: string, timeoutMs: number): Promise<Response> {
+  let current = raw;
+  for (let hop = 0; hop < 5; hop++) {
+    if (!isPublicHttpUrl(current)) throw new Error("Target or redirect is not a public http(s) URL.");
+    const res = await fetch(current, { signal: AbortSignal.timeout(timeoutMs), redirect: "manual" });
+    if (![301, 302, 303, 307, 308].includes(res.status)) return res;
+    const location = res.headers.get("location");
+    if (!location) return res;
+    current = new URL(location, current).toString();
+  }
+  throw new Error("Target redirected too many times; no scan was completed.");
+}
+
+/**
  * Lightweight performance smoke: fire a small number of requests at the target
  * with limited concurrency and compute latency percentiles + error rate. This is
  * a *taste* of the load test — never represented as a full load test.
  */
 export async function runPerfTrial(url: string, opts?: { total?: number; concurrency?: number }): Promise<PerfReport> {
-  const total = Math.min(opts?.total ?? 30, 40);
-  const concurrency = Math.min(opts?.concurrency ?? 5, 8);
+  const total = Math.max(1, Math.min(Math.trunc(opts?.total ?? 30), 40));
+  const concurrency = Math.max(1, Math.min(Math.trunc(opts?.concurrency ?? 5), 8));
   const latencies: number[] = [];
   let errors = 0;
 
@@ -44,7 +66,8 @@ export async function runPerfTrial(url: string, opts?: { total?: number; concurr
       i++;
       const start = performance.now();
       try {
-        const res = await fetch(url, { signal: AbortSignal.timeout(8000), redirect: "follow" });
+        const res = await fetchPublic(url, 8000);
+        await res.arrayBuffer();
         const ms = performance.now() - start;
         if (res.status >= 400) errors++; else latencies.push(ms);
       } catch {
@@ -65,7 +88,7 @@ export async function runPerfTrial(url: string, opts?: { total?: number; concurr
     min: sorted.length ? Math.round(sorted[0]) : null,
     max: sorted.length ? Math.round(sorted[sorted.length - 1]) : null,
   };
-  return { engine: "k6", tier: "fast", profile: "smoke", aggregate };
+  return { engine: "http-smoke", tier: "fast", profile: "smoke", aggregate };
 }
 
 interface HeaderCheck { header: string; title: string; severity: Severity; advice: string }
@@ -86,25 +109,24 @@ export async function runSecurityTrial(url: string): Promise<Finding[]> {
   const findings: Finding[] = [];
   let res: Response;
   try {
-    res = await fetch(url, { signal: AbortSignal.timeout(10000), redirect: "follow" });
+    res = await fetchPublic(url, 10000);
   } catch {
-    return [{ engine: "zap", ruleId: "unreachable", title: "Target unreachable", severity: "info", message: "Could not connect to the URL within 10s.", url }];
+    throw new Error("Security header check could not reach the target. No scan was completed.");
   }
+  if (!res.ok) throw new Error(`Security header check received HTTP ${res.status}; target inspection did not complete.`);
   const finalUrl = res.url || url;
   if (finalUrl.startsWith("http://")) {
-    findings.push({ engine: "zap", ruleId: "no-https", title: "Served over plaintext HTTP", severity: "high", message: "Traffic is not encrypted; serve over HTTPS.", url: finalUrl, cwe: "CWE-319" });
+    findings.push({ engine: "header-check", ruleId: "no-https", title: "Served over plaintext HTTP", severity: "high", message: "Traffic is not encrypted; serve over HTTPS.", url: finalUrl, cwe: "CWE-319" });
   }
   for (const c of HEADER_CHECKS) {
+    if (c.header === "x-frame-options" && /(?:^|;)\s*frame-ancestors\s/i.test(res.headers.get("content-security-policy") ?? "")) continue;
     if (!res.headers.get(c.header)) {
-      findings.push({ engine: "zap", ruleId: c.header, title: c.title, severity: c.severity, message: c.advice, url: finalUrl });
+      findings.push({ engine: "header-check", ruleId: c.header, title: c.title, severity: c.severity, message: c.advice, url: finalUrl });
     }
   }
   const server = res.headers.get("server");
   if (server && /\d/.test(server)) {
-    findings.push({ engine: "zap", ruleId: "server-banner", title: "Server version disclosed", severity: "low", message: `The Server header reveals "${server}" — consider hiding the version.`, url: finalUrl, cwe: "CWE-200" });
-  }
-  if (findings.length === 0) {
-    findings.push({ engine: "zap", ruleId: "clean", title: "No baseline header issues found", severity: "info", message: "Common security headers are present. Run the full scan in CI for deeper coverage.", url: finalUrl });
+    findings.push({ engine: "header-check", ruleId: "server-banner", title: "Server version disclosed", severity: "low", message: `The Server header reveals "${server}" — consider hiding the version.`, url: finalUrl, cwe: "CWE-200" });
   }
   return findings;
 }

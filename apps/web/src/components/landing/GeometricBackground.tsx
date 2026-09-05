@@ -3,52 +3,42 @@
 import { motion } from "framer-motion";
 
 /**
- * Animated geometric backdrop — grid, drifting squares, rotating outlines.
- * Sharp shapes only, to match the angular brand. Purely decorative.
+ * Atmospheric hero treatment. Deliberately avoids grids and repeated patterns:
+ * the depth comes from light, soft orbital lines, and slow-moving colour fields.
  */
 export function GeometricBackground() {
   return (
-    <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-      <svg className="absolute inset-0 h-full w-full opacity-[0.06] dark:opacity-[0.12]" aria-hidden>
-        <defs>
-          <pattern id="grid" width="44" height="44" patternUnits="userSpaceOnUse">
-            <path d="M44 0H0V44" fill="none" stroke="currentColor" strokeWidth="1" />
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#grid)" />
-      </svg>
-
-      <div className="absolute left-1/2 top-[-12%] h-[460px] w-[820px] -translate-x-1/2 bg-gradient-to-br from-indigo-300/30 via-violet-300/20 to-transparent blur-3xl dark:from-indigo-500/10 dark:via-violet-500/10" />
+    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+      <div className="absolute inset-0 bg-[#070810]" />
+      <div
+        className="absolute inset-0 opacity-90"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle at 14% 18%, rgba(99,102,241,.30), transparent 32%), radial-gradient(circle at 82% 32%, rgba(139,92,246,.24), transparent 30%), radial-gradient(circle at 58% 106%, rgba(14,165,233,.13), transparent 36%)",
+        }}
+      />
 
       <motion.div
-        className="absolute left-[8%] top-[22%] h-16 w-16 border-2 border-indigo-400/40"
-        animate={{ y: [0, -18, 0], rotate: [0, 45, 0] }}
-        transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute -left-28 top-24 h-80 w-80 rounded-full bg-indigo-500/20 blur-[90px]"
+        animate={{ x: [0, 54, 0], y: [0, -28, 0], scale: [1, 1.14, 1] }}
+        transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
-        className="absolute right-[10%] top-[30%] h-10 w-10 bg-violet-400/20"
-        animate={{ y: [0, 20, 0], rotate: [0, -30, 0] }}
-        transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute -right-16 top-8 h-96 w-96 rounded-full bg-violet-500/15 blur-[100px]"
+        animate={{ x: [0, -40, 0], y: [0, 42, 0], scale: [1.08, 0.94, 1.08] }}
+        transition={{ duration: 19, repeat: Infinity, ease: "easeInOut" }}
       />
+
+      <div className="absolute left-[47%] top-1/2 h-[720px] w-[720px] -translate-y-1/2 rounded-full border border-white/[0.055]" />
+      <div className="absolute left-[53%] top-1/2 h-[500px] w-[500px] -translate-y-1/2 rounded-full border border-indigo-300/[0.07]" />
+      <div className="absolute left-[62%] top-1/2 h-[280px] w-[280px] -translate-y-1/2 rounded-full border border-violet-300/[0.08]" />
+
       <motion.div
-        className="absolute right-[20%] top-[12%] h-24 w-24 border-2 border-neutral-300/40 dark:border-neutral-700/60"
-        animate={{ rotate: [0, 90, 0] }}
-        transition={{ duration: 16, repeat: Infinity, ease: "linear" }}
+        className="absolute left-[48%] top-[12%] h-px w-[68%] origin-left rotate-[22deg] bg-gradient-to-r from-transparent via-indigo-300/20 to-transparent blur-[1px]"
+        animate={{ opacity: [0.35, 0.8, 0.35], scaleX: [0.85, 1.05, 0.85] }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
       />
-      <motion.div
-        className="absolute left-[18%] top-[8%] h-6 w-6 bg-indigo-400/30"
-        animate={{ y: [0, 14, 0] }}
-        transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.svg
-        className="absolute left-[42%] top-[6%] h-12 w-12 text-violet-400/40"
-        viewBox="0 0 100 100"
-        animate={{ rotate: [0, 120, 240, 360] }}
-        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-        aria-hidden
-      >
-        <polygon points="50,5 95,90 5,90" fill="none" stroke="currentColor" strokeWidth="4" />
-      </motion.svg>
+      <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-[#070810] to-transparent" />
     </div>
   );
 }

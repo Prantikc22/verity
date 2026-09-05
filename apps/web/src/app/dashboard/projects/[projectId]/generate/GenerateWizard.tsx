@@ -43,7 +43,6 @@ export function GenerateWizard({ projectId }: { projectId: string }) {
   const exTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   useEffect(() => {
     if (phase === "exploring") {
-      setExStep(0);
       exTimer.current = setInterval(() => setExStep((s) => Math.min(s + 1, EXPLORE_STEPS.length - 1)), 1400);
     }
     return () => { if (exTimer.current) clearInterval(exTimer.current); };
@@ -51,11 +50,16 @@ export function GenerateWizard({ projectId }: { projectId: string }) {
 
   async function explore() {
     if (!url.trim() && prd.trim().length < 5) { setError("Enter a URL and/or a PRD."); return; }
-    setError(""); setPhase("exploring"); setCandidates([]); setAdded(0);
+    setError(""); setExStep(0); setPhase("exploring"); setCandidates([]); setAdded(0);
     try {
       const res = await fetch(`/api/projects/${projectId}/tests/propose`, {
         method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ url: url.trim() || undefined, prd: prd.trim() || undefined }),
+        body: JSON.stringify({
+          url: url.trim() || undefined,
+          prd: prd.trim() || undefined,
+          username: username.trim() || undefined,
+          password: password.trim() || undefined,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Couldn't propose tests.");
@@ -72,7 +76,7 @@ export function GenerateWizard({ projectId }: { projectId: string }) {
   }
 
   function toggle(i: number) {
-    setSelected((prev) => { const n = new Set(prev); n.has(i) ? n.delete(i) : n.add(i); return n; });
+    setSelected((prev) => { const n = new Set(prev); if (n.has(i)) n.delete(i); else n.add(i); return n; });
   }
 
   async function saveToPlan() {
@@ -324,7 +328,7 @@ function Review(props: {
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-2xl dark:bg-emerald-950">✓</div>
         <h3 className="mt-3 text-base font-semibold">Saved {added} test{added === 1 ? "" : "s"} to your test plan</h3>
         {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
-        <p className="mt-1 text-xs text-neutral-500">They&apos;re active and ready to run in the cloud or your CI.</p>
+        <p className="mt-1 text-xs text-neutral-500">They&apos;re saved as unverified drafts. Run verification in a real browser before treating them as trustworthy.</p>
         <div className="mt-4 flex justify-center gap-2">
           <Link href={`/dashboard/projects/${projectId}/tests`} className="bg-indigo-600 px-4 py-2 text-sm font-medium text-white">View test plan →</Link>
           <Link href={`/dashboard/projects/${projectId}/cloud`} className="border border-neutral-300 px-4 py-2 text-sm dark:border-neutral-700">Run in cloud</Link>

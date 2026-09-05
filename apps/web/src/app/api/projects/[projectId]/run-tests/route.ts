@@ -15,7 +15,7 @@ export const maxDuration = 300;
 const Body = z.object({
   testIds: z.array(z.string().uuid()).optional(), // omit = run all active of this kind
   baseURL: z.string().url().optional(),
-  heal: z.boolean().optional(), // default true — auto-heal failures
+  heal: z.boolean().optional(), // default false — opt-in authoring healing
   kind: z.enum(["ui", "api"]).optional(), // restrict to UI or API tests
 });
 
@@ -26,7 +26,8 @@ interface RunnerResult {
 interface TestRow { id: string; name: string; spec_path: string; spec_content: string; source_url: string | null; plan: unknown }
 
 /**
- * Cloud test run — streams NDJSON progress to the client and auto-heals failures.
+ * Cloud test run — streams NDJSON progress to the client. Optional authoring
+ * healing runs only when the caller explicitly sends `heal: true`.
  * Pipeline: run real specs on the Fly runner → for every failure, re-fetch the
  * live page and have the LLM rewrite the spec (self-healing) → rerun the healed
  * specs → persist fixes that now pass → record the run. Each phase is streamed so
@@ -50,7 +51,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
 
   const parsed = Body.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) return NextResponse.json({ error: "Bad request." }, { status: 400 });
-  const healEnabled = parsed.data.heal !== false && llmConfig().configured;
+  // Healing is an explicit authoring action, not a way to turn regressions green.
+  const healEnabled = parsed.data.heal === true && llmConfig().configured;
 
   const admin = createAdminClient();
 
@@ -67,14 +69,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
 
   // Which tests to run.
   let q = supabase.from("tests").select("id, name, spec_path, spec_content, source_url, plan").eq("project_id", projectId).neq("status", "archived");
-  if (parsed.data.kind) q = q.eq("kind", parsed.data.kind);
+  q = q.eq("kind", parsed.data.kind ?? "ui");
   if (parsed.data.testIds?.length) q = q.in("id", parsed.data.testIds);
   const { data: tests } = await q;
   if (!tests || tests.length === 0) return NextResponse.json({ error: "No tests to run." }, { status: 400 });
 
-  // Deterministic hardening pre-pass: fix the brittle patterns (bare text=
-  // locators, strict-mode-prone getByText/getByRole, hardcoded URL assertions)
-  // before they even run. Safe + idempotent, so persist the cleanup once.
+  // Deterministic hardening pre-pass: repair only grounded locator semantics
+  // (for example placeholder-vs-label, role, and split-span heading locators)
+  // before they run. It never broadens URL assertions or chooses an arbitrary
+  // match, and is safe/idempotent to persist once.
   await Promise.all(tests.map(async (t) => {
     const hardened = hardenSpec(t.spec_content);
     if (hardened !== t.spec_content) {
@@ -119,14 +122,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
         finalAttempts: boolean[]; plan: string[];
       }
       const asPlan = (p: unknown): string[] => (Array.isArray(p) ? p.map(String) : []);
-      // Match by basename — the runner returns `tests/<file>` and drops any
-      // subdir (e.g. tests/api/), so a basename key is the only stable join.
-      const base = (p: string) => p.split("/").pop() ?? p;
+      // Match by the exact relative spec path returned by the runner. Keeping
+      // subdirectories is important: two suites may legitimately share a file
+      // basename (for example tests/ui/same.spec.ts and tests/api/same.spec.ts).
+      const base = (p: string) => p;
       const bySpec = new Map<string, TestRow>(tests.map((t) => [base(t.spec_path), t as TestRow]));
       const oneSpec = (t: TestRow) => ({ name: t.name, spec_path: t.spec_path, spec_content: t.spec_content });
       const loadFailure = (t: TestRow): RunnerResult => ({
         name: t.name, spec_path: t.spec_path, status: "failed", attempts: [false], durationMs: 0,
-        error: "Test file failed to load — top-level code threw (e.g. reading a missing file). It will be auto-healed.",
+        error: "Test file failed to load — top-level code threw (e.g. reading a missing file).",
         screenshotBase64: null,
       });
 
@@ -136,7 +140,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
         // 1) Initial run. If the batch returns fewer results than specs sent, one
         // bad file likely aborted collection — fall back to running the missing
         // ones individually so a single broken spec can't zero out the run.
-        let first = await callRunner(tests.map(oneSpec));
+        const first = await callRunner(tests.map(oneSpec));
         const got = new Set(first.map((r) => base(r.spec_path)));
         const missing = tests.filter((t) => !got.has(base(t.spec_path)));
         if (missing.length) {

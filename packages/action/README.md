@@ -84,19 +84,18 @@ Runs AI-generated **Playwright API evals** (in `tests/verity/agent/`) against th
 
 > **Mobile app testing** is available as a **human-run (non-AI) service** through QAShift — the Verity AI agent does not author mobile flows, because it cannot reach a device/emulator the way it reaches a URL or an API. Talk to us if you need native mobile coverage.
 
-### ⚡ Performance (Artillery)
+### ⚡ Performance (k6 + Lighthouse)
 
-AI-generated Artillery scenarios are built from the **same OpenAPI spec** you already use for API tests — no second upload. Two tiers mirror Quick check / Full regression:
+AI-generated k6 scripts can exercise the **same API base URL** used by your API tests — no second upload. Two tiers mirror Quick check / Full regression:
 
 - **fast** → a lightweight **Perf smoke check** on every PR (few endpoints, ~30s, small VU count). Always labeled "Perf smoke check" — never implied to be a full load test.
 - **full** → the complete, customer-configured load test on merge/schedule.
 
-For load beyond what a single runner can generate, set `perf-distributed: true` to use Artillery's native distributed/serverless mode (requires your cloud creds per Artillery docs). Optionally set `lighthouse-url` for a separate, lightweight Core Web Vitals check.
+For distributed load, run the generated k6 script in your own k6/Grafana execution environment. Optionally set `lighthouse-url` for a separate, lightweight Core Web Vitals check.
 
 | Input | Default | Description |
 |---|---|---|
-| `perf-config` | `tests/verity/perf/smoke.yml` | Artillery config to run. |
-| `perf-distributed` | `false` | Use Artillery distributed/serverless mode. |
+| `perf-config` | `tests/verity/perf/verity.k6.js` | k6 script to run. |
 | `lighthouse-url` | — | If set, also run Lighthouse CI for Core Web Vitals. |
 
 ### 🔐 Security (ZAP DAST + Semgrep SAST)
@@ -141,7 +140,7 @@ All bundled engines are invoked as external CLIs/Docker images or as separate np
 | Engine | License | Notes |
 |---|---|---|
 | Playwright (UI + visual) | Apache-2.0 | Clean. Visual = built-in `toHaveScreenshot`; no extra dep. |
-| Artillery | MPL-2.0 | Clean (file-level copyleft; we don't modify its source). |
+| k6 | AGPL-3.0 | Invoked as an external CLI; not linked into Verity. |
 | OWASP ZAP | Apache-2.0 | Clean. Run via Docker. |
 | Semgrep CE | LGPL-2.1 | Clean under **subprocess/Docker-only** use — never imported or linked. |
 | Schemathesis | **MIT** | Verified in its repo. Most permissive; Docker subprocess invocation. |

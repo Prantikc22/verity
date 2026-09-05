@@ -18,8 +18,9 @@
  *
  * Env: VERITY_API_URL, VERITY_INGEST_TOKEN, VERITY_PR_NUMBER
  */
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { readFileSync, existsSync } from "node:fs";
+import { randomUUID } from "node:crypto";
 
 /* --------------------------- arg parsing --------------------------- */
 const engine = process.argv[2];
@@ -36,9 +37,9 @@ const apiUrl = (process.env.VERITY_API_URL ?? "https://verity.qashift.com").repl
 // run and just adapt that file (back-compat).
 const target = arg("target", process.env.VERITY_TARGET_URL ?? "");
 const spec = arg("spec", process.env.VERITY_OPENAPI_SPEC ?? "");
-const config = arg("config", "");
-const snapshotsDir = arg("snapshots-dir", "tests/verity/visual");
-const evalsDir = arg("evals-dir", "tests/verity/agent");
+const config = arg("config", process.env.VERITY_PERF_CONFIG ?? "");
+const snapshotsDir = arg("snapshots-dir", process.env.VERITY_VISUAL_SNAPSHOTS_DIR ?? "tests/verity/visual");
+const evalsDir = arg("evals-dir", process.env.VERITY_AGENT_EVALS_DIR ?? "tests/verity/agent");
 const endpoint = arg("endpoint", process.env.AGENT_ENDPOINT ?? "");
 const base = arg("base", "origin/main");
 // k6 load profile. Defaults from the tier: fast ⇒ smoke, full ⇒ load.
@@ -58,13 +59,13 @@ if (!token) {
 
 function git(args) {
   try {
-    return execSync(`git ${args}`, { encoding: "utf8" }).trim();
+    return execFileSync("git", args, { encoding: "utf8" }).trim();
   } catch {
     return "";
   }
 }
-const commitSha = git("rev-parse HEAD") || "unknown";
-const branch = git("rev-parse --abbrev-ref HEAD") || "unknown";
+const commitSha = git(["rev-parse", "HEAD"]) || "unknown";
+const branch = git(["rev-parse", "--abbrev-ref", "HEAD"]) || "unknown";
 
 function readReport() {
   if (!reportPath || !existsSync(reportPath)) {
@@ -75,9 +76,10 @@ function readReport() {
 }
 
 const tmp = process.env.RUNNER_TEMP || process.env.TMPDIR || "/tmp";
-function sh(cmd) {
+const reportId = randomUUID();
+function sh(file, args, env = {}) {
   // Tools may exit non-zero when they find issues; we still want their report.
-  try { execSync(cmd, { stdio: "inherit", shell: "/bin/bash" }); } catch { /* keep going */ }
+  try { execFileSync(file, args, { stdio: "inherit", env: { ...process.env, ...env } }); } catch { /* keep going */ }
 }
 
 /**
@@ -91,59 +93,59 @@ function runEngine() {
     case "visual": {
       // Visual specs are ordinary Playwright tests whose assertion is
       // toHaveScreenshot; run them and emit JUnit for the adapter.
-      const out = `${tmp}/verity-visual.xml`;
-      sh(`PLAYWRIGHT_JUNIT_OUTPUT_NAME="${out}" npx --yes playwright test "${snapshotsDir}" --reporter=junit`);
+      const out = `${tmp}/verity-visual-${reportId}.xml`;
+      sh("npx", ["--yes", "playwright", "test", snapshotsDir, "--reporter=junit"], { PLAYWRIGHT_JUNIT_OUTPUT_NAME: out });
       return out;
     }
     case "agent": {
       // Agent evals are Playwright API tests that assert a property of the AI
       // endpoint's reply; the endpoint is passed through to them via env.
-      const out = `${tmp}/verity-agent.xml`;
-      const endpointEnv = endpoint ? `AGENT_ENDPOINT="${endpoint}" ` : "";
-      sh(`${endpointEnv}PLAYWRIGHT_JUNIT_OUTPUT_NAME="${out}" npx --yes playwright test "${evalsDir}" --reporter=junit`);
+      const out = `${tmp}/verity-agent-${reportId}.xml`;
+      sh("npx", ["--yes", "playwright", "test", evalsDir, "--reporter=junit"], { AGENT_ENDPOINT: endpoint, PLAYWRIGHT_JUNIT_OUTPUT_NAME: out });
       return out;
     }
     case "perf": {
-      const out = `${tmp}/verity-perf.json`;
+      const out = `${tmp}/verity-perf-${reportId}.json`;
       const cfg = config || `tests/verity/perf/${tier === "fast" ? "smoke" : "load"}.yml`;
-      sh(`npx --yes artillery@latest run --output "${out}" "${cfg}"`);
+      sh("npx", ["--yes", "artillery@latest", "run", "--output", out, cfg]);
       return out;
     }
     case "k6": {
       // One script, every profile. The script's handleSummary writes the JSON
       // summary to K6_SUMMARY; we point it at our temp file and adapt that.
-      const out = `${tmp}/verity-k6.json`;
+      const out = `${tmp}/verity-k6-${reportId}.json`;
       const cfg = config || `tests/verity/perf/verity.k6.js`;
       if (!PERF_PROFILES.includes(profile)) { console.error(`✗ Unknown --profile '${profile}'. One of: ${PERF_PROFILES.join(", ")}`); process.exit(1); }
-      const targetEnv = target ? `-e BASE_URL="${target}" ` : "";
-      sh(`k6 run -e PROFILE="${profile}" -e K6_SUMMARY="${out}" ${targetEnv}"${cfg}"`);
+      const args = ["run", "-e", `PROFILE=${profile}`, "-e", `K6_SUMMARY=${out}`];
+      if (target) args.push("-e", `BASE_URL=${target}`);
+      args.push(cfg);
+      sh("k6", args);
       return out;
     }
     case "cwv":
     case "lighthouse": {
-      const out = `${tmp}/verity-cwv.json`;
-      sh(`npx --yes lighthouse "${target}" --quiet --chrome-flags="--headless --no-sandbox" --only-categories=performance --output=json --output-path="${out}"`);
+      const out = `${tmp}/verity-cwv-${reportId}.json`;
+      sh("npx", ["--yes", "lighthouse", target, "--quiet", "--chrome-flags=--headless --no-sandbox", "--only-categories=performance", "--output=json", `--output-path=${out}`]);
       return out;
     }
     case "security-sast": {
-      const out = `${tmp}/verity-sast.json`;
       let targets = ".";
       if (tier === "fast") {
-        const changed = git(`diff --name-only ${base}...HEAD`).split("\n").filter(Boolean).join(" ");
-        targets = changed || ".";
+        const changed = git(["diff", "--name-only", `${base}...HEAD`]).split("\n").filter(Boolean);
+        targets = changed.length ? changed : ["."];
       }
-      sh(`docker run --rm -v "$PWD:/src" -w /src semgrep/semgrep:latest semgrep scan --config=auto --json --output=/src/.verity-sast.json ${targets}`);
-      return existsSync(`${process.cwd()}/.verity-sast.json`) ? `${process.cwd()}/.verity-sast.json` : out;
+      sh("docker", ["run", "--rm", "-v", `${process.cwd()}:/src`, "-w", "/src", "semgrep/semgrep:latest", "semgrep", "scan", "--config=auto", "--json", `--output=/src/.verity-sast-${reportId}.json`, ...targets]);
+      return `${process.cwd()}/.verity-sast-${reportId}.json`;
     }
     case "security-dast": {
-      const out = `${process.cwd()}/.verity-dast.json`;
+      const out = `${process.cwd()}/.verity-dast-${reportId}.json`;
       const script = tier === "fast" ? "zap-baseline.py" : "zap-full-scan.py";
-      sh(`docker run --rm -v "$PWD:/zap/wrk:rw" -t ghcr.io/zaproxy/zaproxy:stable ${script} -t "${target}" -J .verity-dast.json`);
+      sh("docker", ["run", "--rm", "-v", `${process.cwd()}:/zap/wrk:rw`, "ghcr.io/zaproxy/zaproxy:stable", script, "-t", target, "-J", `.verity-dast-${reportId}.json`]);
       return out;
     }
     case "contract": {
-      const out = `${process.cwd()}/.verity-contract.xml`;
-      sh(`docker run --rm -v "$PWD:/src" -w /src schemathesis/schemathesis:stable run "${spec}" --url "${target}" --report junit --report-junit-path /src/.verity-contract.xml`);
+      const out = `${process.cwd()}/.verity-contract-${reportId}.xml`;
+      sh("docker", ["run", "--rm", "-v", `${process.cwd()}:/src`, "-w", "/src", "schemathesis/schemathesis:stable", "run", spec, "--url", target, "--report", "junit", "--report-junit-path", `/src/.verity-contract-${reportId}.xml`]);
       return out;
     }
     default:
@@ -311,6 +313,21 @@ function adaptLighthouse(lhr, t) {
 /* ----------------------- build + post payload ---------------------- */
 // Run the underlying tool (unless a --report was supplied), then adapt.
 reportPath = runEngine();
+
+// A missing/empty/error report is an execution failure, never a clean scan.
+const evidence = readReport();
+if (["visual", "agent", "contract"].includes(engine)) {
+  if (!parseJUnit(evidence).some(c => !c.skipped)) throw new Error("No executed test cases in engine report.");
+} else {
+  const report = JSON.parse(evidence);
+  if (["k6", "perf"].includes(engine)) {
+    const metrics = engine === "k6" ? k6Metrics(report.metrics) : artilleryMetrics(report.aggregate ?? {});
+    if (!(metrics.requests > 0)) throw new Error("No requests executed by performance engine.");
+  }
+  if (["cwv", "lighthouse"].includes(engine) && (report.runtimeError || typeof report.categories?.performance?.score !== "number")) throw new Error("Lighthouse did not complete a performance measurement.");
+  if (engine === "security-sast" && (!Array.isArray(report.results) || report.errors?.length || !report.paths?.scanned?.length)) throw new Error("Static scan failed or scanned no files.");
+  if (engine === "security-dast" && (!Array.isArray(report.site) || !report.site.length)) throw new Error("Dynamic scan inspected no sites.");
+}
 
 const basePayload = {
   tier,

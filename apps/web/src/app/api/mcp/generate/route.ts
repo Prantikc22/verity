@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
+import { randomUUID } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generateTest } from "@/lib/llm/generate";
 import { extractPageContext } from "@/lib/llm/page-context";
@@ -25,7 +26,7 @@ const Body = z.object({
 
 function specPathFor(name: string): string {
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 50) || "flow";
-  return `tests/${slug}.spec.ts`;
+  return `tests/${slug}-${randomUUID().slice(0, 8)}.spec.ts`;
 }
 
 /**

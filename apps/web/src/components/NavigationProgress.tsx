@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 
 /**
@@ -13,22 +13,22 @@ export function NavigationProgress() {
   const [visible, setVisible] = useState(false);
   const tick = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  function start() {
+  const start = useCallback(() => {
     if (visible) return;
     setVisible(true);
     setWidth(8);
-    tick.current && clearInterval(tick.current);
+    if (tick.current) clearInterval(tick.current);
     tick.current = setInterval(() => setWidth((w) => (w < 90 ? w + (90 - w) * 0.12 : w)), 180);
-  }
+  }, [visible]);
 
-  function finish() {
-    tick.current && clearInterval(tick.current);
+  const finish = useCallback(() => {
+    if (tick.current) clearInterval(tick.current);
     setWidth(100);
     window.setTimeout(() => {
       setVisible(false);
       setWidth(0);
     }, 280);
-  }
+  }, []);
 
   useEffect(() => {
     function onClick(e: MouseEvent) {
@@ -47,13 +47,12 @@ export function NavigationProgress() {
     }
     document.addEventListener("click", onClick, true);
     return () => document.removeEventListener("click", onClick, true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible]);
+  }, [start]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps -- completes the progress bar on route change
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- completes the progress bar on route change
     if (visible) finish();
-  }, [pathname]);
+  }, [pathname, visible, finish]);
 
   if (!visible) return null;
   return (

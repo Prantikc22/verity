@@ -98,7 +98,7 @@ const TIERS: Tier[] = [
   },
 ];
 
-export function VeritySelfServeCards({ inIndia }: { inIndia: boolean }) {
+export function VeritySelfServeCards({}: { inIndia: boolean }) {
   // USD is the default for everyone (global-standard for dev tools); INR stays a
   // one-click toggle for teams who prefer to pay in rupees.
   const [currency, setCurrency] = useState<"USD" | "INR">("USD");
@@ -115,7 +115,7 @@ export function VeritySelfServeCards({ inIndia }: { inIndia: boolean }) {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const c = new URLSearchParams(window.location.search).get("checkout");
-    if (c && CHECKOUT_TIERS.includes(c as CheckoutTier)) { setDeepLink(c); startCheckout(c as CheckoutTier); }
+    if (c && CHECKOUT_TIERS.includes(c as CheckoutTier)) startCheckout(c as CheckoutTier);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

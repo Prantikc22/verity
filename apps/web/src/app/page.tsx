@@ -2,306 +2,234 @@ import Link from "next/link";
 import { Navbar } from "@/components/landing/Navbar";
 import { Hero } from "@/components/landing/Hero";
 import { Reveal } from "@/components/Reveal";
-import { Logo } from "@/components/Logo";
-import { Pipeline } from "@/components/landing/Pipeline";
-import { PlatformStages } from "@/components/landing/PlatformStages";
-import { AskAI } from "@/components/landing/AskAI";
-import { Comparison } from "@/components/landing/Comparison";
-import { VeritySelfServeCards } from "@/components/landing/VeritySelfServeCards";
-import { PredictionsShowcase } from "@/components/landing/PredictionsShowcase";
-import { SecuritySection } from "@/components/landing/SecuritySection";
-import { isIndia } from "@/lib/geo";
+import { VerificationShowcase } from "@/components/landing/VerificationShowcase";
+import { SiteFooter } from "@/components/landing/SiteFooter";
 
-const STACK = ["GitHub", "GitHub Actions", "GitLab CI", "Vercel", "Netlify", "CircleCI", "Playwright"];
+const RISKS = [
+  {
+    number: "01",
+    pain: "The flow nobody tested",
+    answer: "Verity opens the live product and turns real user journeys into runnable Playwright tests.",
+    signal: "UNTESTED",
+    signalClass: "border-red-500/20 bg-red-500/10 text-red-600 dark:text-red-300",
+    glowClass: "bg-red-500",
+  },
+  {
+    number: "02",
+    pain: "The test that passed for the wrong reason",
+    answer: "Every generated spec is grounded in the DOM and executed before Verity calls it ready.",
+    signal: "FALSE GREEN",
+    signalClass: "border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300",
+    glowClass: "bg-amber-500",
+  },
+  {
+    number: "03",
+    pain: "The selector that broke after launch",
+    answer: "Verity finds the new element from the live page and proposes a reviewable repair.",
+    signal: "DOM DRIFT",
+    signalClass: "border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-300",
+    glowClass: "bg-violet-500",
+  },
+] as const;
 
-const PILLARS = [
-  { n: "Generate", accent: "indigo", d: "Describe a flow or drop a URL. Verity writes a runnable Playwright spec in TypeScript — role-based locators, real assertions, ready to run.", icon: "M12 2v20M2 12h20" },
-  { n: "Maintain", accent: "violet", d: "When a selector breaks, Verity proposes the fix from the live DOM. Flaky tests are re-run and separated from real failures, so noise never blocks a merge.", icon: "M4 4v6h6M20 20v-6h-6M20 4l-7 7M4 20l7-7" },
-  { n: "Verify", accent: "amber", d: "A forward-deployed engineer turns disposable AI scripts into a maintained Page Object Model suite they own — the part automation alone never gives you.", icon: "M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z" },
-  { n: "Predict", accent: "emerald", d: "Regression-prone files, flake-vs-real calls, and a deploy confidence score — posted right inside the pull request, before you ship.", icon: "M3 17l6-6 4 4 8-8" },
-];
+const STEPS = [
+  ["01", "Point", "Give Verity a URL and the journey that matters."],
+  ["02", "Ground", "It observes the live UI, roles, states, requests and assertions."],
+  ["03", "Prove", "It writes Playwright, runs it, and returns code plus evidence."],
+] as const;
 
-const FEATURES = [
-  { t: "AI test generation", d: "From a sentence or a URL to a runnable spec. Zero setup to your first test." },
-  { t: "Self-healing locators", d: "Broken selector → AI-proposed fix from the live DOM, surfaced as a diff you approve. Never silently merged." },
-  { t: "Two-tier execution", d: "A fast diff-aware Quick check on every commit, and a Full regression suite on merge — honestly labeled, never conflated." },
-  { t: "Flake detection & quarantine", d: "Suspect failures re-run N times; flaky is split from broken; per-test flake rate tracked over time." },
-  { t: "Confidence scoring", d: "Not just pass/fail — does a green test meaningfully cover a critical path, or is it technically-green theatre?" },
-  { t: "Managed POM conversion", d: "Our FDEs restructure flat AI scripts into a maintainable Page Object Model — the moat that makes tests an owned asset." },
-];
+const COVERAGE = [
+  ["UI", "Real browser journeys"],
+  ["API", "Contracts and responses"],
+  ["Visual", "Unexpected UI changes"],
+  ["Agent", "AI behavior and tools"],
+  ["Performance", "Slow pages and regressions"],
+  ["Security", "Common release risks"],
+] as const;
 
-const accentClass: Record<string, string> = {
-  indigo: "border-indigo-500 text-indigo-600 dark:text-indigo-400",
-  violet: "border-violet-500 text-violet-600 dark:text-violet-400",
-  amber: "border-amber-500 text-amber-600 dark:text-amber-400",
-  emerald: "border-emerald-500 text-emerald-600 dark:text-emerald-400",
-};
-
-export default async function Home() {
-  const inIndia = await isIndia();
-
+export default function Home() {
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
       <Hero />
 
       <main className="w-full">
-        {/* Stack strip */}
-        <div className="border-b border-neutral-200 dark:border-neutral-900">
-          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-10 gap-y-3 px-6 py-7 opacity-70">
-            <span className="text-xs uppercase tracking-widest text-neutral-400">Slots into your stack</span>
-            {STACK.map((s) => <span key={s} className="text-sm font-semibold tracking-tight text-neutral-500 dark:text-neutral-400">{s}</span>)}
-          </div>
-        </div>
-
-        {/* Four pillars */}
-        <section className="mx-auto max-w-6xl px-6 py-24">
-          <Reveal>
-            <p className="text-sm font-medium text-indigo-600">The whole loop, not a recorder</p>
-            <h2 className="mt-2 max-w-3xl text-3xl font-semibold tracking-tight sm:text-4xl">
-              Four jobs most tools leave to you. Verity does all four.
-            </h2>
-          </Reveal>
-          <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {PILLARS.map((p, i) => (
-              <Reveal key={p.n} delay={i * 0.07}>
-                <div className={`group relative h-full border-t-2 ${accentClass[p.accent]} bg-neutral-50 p-6 transition hover:-translate-y-1 dark:bg-neutral-900/40`}>
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="square" strokeLinejoin="miter" className={accentClass[p.accent].split(" ").slice(1).join(" ")}><path d={p.icon} /></svg>
-                  <h3 className="mt-4 text-lg font-semibold">{p.n}</h3>
-                  <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">{p.d}</p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </section>
-
-        {/* One platform, every stage — capability map */}
-        <PlatformStages />
-
-        {/* How it works — pipeline */}
-        <section id="how" className="scroll-mt-24 border-y border-neutral-200 bg-neutral-50/60 py-24 dark:border-neutral-900 dark:bg-neutral-950/40">
-          <div className="mx-auto max-w-6xl px-6">
+        <section id="product" className="scroll-mt-24 border-b border-neutral-200 dark:border-neutral-900">
+          <div className="mx-auto grid max-w-6xl gap-14 px-6 py-24 lg:grid-cols-[.82fr_1.18fr] lg:py-28">
             <Reveal>
-              <p className="text-sm font-medium text-indigo-600">How it works</p>
-              <h2 className="mt-2 max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">One pipeline. From commit to confidence.</h2>
-            </Reveal>
-            <div className="mt-12"><Pipeline /></div>
-            <Reveal delay={0.1}>
-              <div className="mt-10 overflow-x-auto border border-neutral-800 bg-neutral-950 p-5 text-sm shadow-lg">
-                <pre className="font-mono leading-relaxed text-neutral-300">
-{`# .github/workflows/verity.yml
-- name: Verity — Quick check (every PR commit)
-  uses: qashift/verity-action@v1
-  with: { tier: fast, token: \${{ secrets.VERITY_INGEST_TOKEN }} }
-
-- name: Verity — Full regression (on merge to main)
-  if: github.ref == 'refs/heads/main'
-  uses: qashift/verity-action@v1
-  with: { tier: full, token: \${{ secrets.VERITY_INGEST_TOKEN }} }`}
-                </pre>
+              <div className="lg:sticky lg:top-28">
+                <p className="text-sm font-medium text-indigo-600 dark:text-indigo-400">The release gap</p>
+                <h2 className="mt-3 text-balance text-4xl font-semibold tracking-[-0.04em] sm:text-5xl">
+                  Code got faster. Proof didn&apos;t.
+                </h2>
+                <p className="mt-5 max-w-lg text-lg leading-relaxed text-neutral-600 dark:text-neutral-300">
+                  AI can ship a feature in an afternoon. Your team still has to guess what it broke, write the tests, and keep them alive. That gap becomes a production incident.
+                </p>
               </div>
             </Reveal>
-          </div>
-        </section>
 
-        {/* Two-tier honesty */}
-        <section className="mx-auto max-w-6xl px-6 py-24">
-          <Reveal>
-            <p className="text-sm font-medium text-indigo-600">We label it honestly</p>
-            <h2 className="mt-2 max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">A fast check is not a safety net. We never pretend otherwise.</h2>
-          </Reveal>
-          <div className="mt-10 grid gap-5 md:grid-cols-2">
-            <Reveal>
-              <div className="h-full border border-amber-300 p-7 dark:border-amber-900/60">
-                <span className="inline-block bg-amber-500 px-2 py-0.5 text-xs font-semibold text-white">Quick check</span>
-                <h3 className="mt-4 text-xl font-semibold">Speed, on every commit</h3>
-                <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">Runs only the tests mapped to your changed files. Fast feedback in the PR — a sanity check, explicitly <em>not</em> full coverage. It can never block a merge.</p>
-              </div>
-            </Reveal>
-            <Reveal delay={0.08}>
-              <div className="h-full border border-indigo-400 p-7 dark:border-indigo-800">
-                <span className="inline-block bg-indigo-600 px-2 py-0.5 text-xs font-semibold text-white">Full regression</span>
-                <h3 className="mt-4 text-xl font-semibold">The real safety net</h3>
-                <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">The entire suite on merge, schedule, or pre-deploy. No diff-aware shortcuts, ever. This is the only tier allowed to block a merge.</p>
-              </div>
-            </Reveal>
-          </div>
-        </section>
-
-        {/* Features */}
-        <section id="features" className="scroll-mt-24 border-y border-neutral-200 py-24 dark:border-neutral-900">
-          <div className="mx-auto max-w-6xl px-6">
-            <Reveal><h2 className="max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">Everything the suite needs to stay alive.</h2></Reveal>
-            <div className="mt-12 grid gap-px overflow-hidden border border-neutral-200 bg-neutral-200 sm:grid-cols-2 lg:grid-cols-3 dark:border-neutral-800 dark:bg-neutral-800">
-              {FEATURES.map((f, i) => (
-                <Reveal key={f.t} delay={(i % 3) * 0.05}>
-                  <div className="h-full bg-background p-7 transition hover:bg-neutral-50 dark:hover:bg-neutral-900/50">
-                    <div className="flex h-9 w-9 items-center justify-center bg-indigo-600 text-white">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="square"><path d="M20 6L9 17l-5-5" /></svg>
+            <div className="space-y-3">
+              {RISKS.map((risk, index) => (
+                <Reveal key={risk.number} delay={index * 0.06}>
+                  <article className="group relative overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-50 p-6 transition hover:-translate-y-0.5 hover:border-neutral-300 hover:shadow-lg dark:border-neutral-800 dark:bg-neutral-950 dark:hover:border-neutral-700">
+                    <div aria-hidden className={`absolute -right-12 -top-12 h-28 w-28 rounded-full ${risk.glowClass} opacity-[0.08] blur-2xl transition group-hover:opacity-[0.14]`} />
+                    <div className="relative grid gap-4 sm:grid-cols-[3rem_1fr_auto] sm:items-start">
+                      <span className="font-mono text-xs text-indigo-500">{risk.number}</span>
+                      <div>
+                        <h3 className="text-xl font-semibold tracking-tight">{risk.pain}</h3>
+                        <p className="mt-2 leading-relaxed text-neutral-600 dark:text-neutral-300">{risk.answer}</p>
+                      </div>
+                      <span className={`w-fit rounded-full border px-2.5 py-1 text-[9px] font-semibold tracking-[0.12em] ${risk.signalClass}`}>{risk.signal}</span>
                     </div>
-                    <h3 className="mt-4 font-semibold">{f.t}</h3>
-                    <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">{f.d}</p>
-                  </div>
+                    <div className="relative mt-5 flex items-center gap-3 border-t border-neutral-200 pt-4 text-[10px] text-neutral-400 dark:border-neutral-800">
+                      <span className={`h-1.5 w-1.5 rounded-full ${risk.glowClass}`} />
+                      <span>Live product signal</span>
+                      <span className="text-neutral-300 dark:text-neutral-700">→</span>
+                      <span className="font-medium text-neutral-600 dark:text-neutral-300">Verity evidence</span>
+                    </div>
+                  </article>
                 </Reveal>
               ))}
             </div>
           </div>
         </section>
 
-        {/* Predictions — the intelligence layer */}
-        <PredictionsShowcase />
-
-        {/* FDE — the moat */}
-        <section id="fde" className="scroll-mt-24 bg-neutral-950 py-24 text-white">
+        <section id="how" className="scroll-mt-24 bg-[#080910] py-24 text-white lg:py-28">
           <div className="mx-auto max-w-6xl px-6">
-            <div className="grid items-center gap-12 lg:grid-cols-2">
-              <Reveal>
-                <span className="inline-block border border-amber-500/60 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-300">The moat · human + AI</span>
-                <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">AI writes. Engineers verify. <span className="text-amber-400">Neither works without the other.</span></h2>
-                <p className="mt-4 max-w-xl text-neutral-300">
-                  Generated tests are disposable until someone owns them. On <strong className="text-white">every paid plan — from Starter</strong>, a
-                  forward-deployed engineer joins your team: they convert AI scripts into a maintainable Page Object Model, keep the suite green as your
-                  product changes, triage every failure, and tune the predictions to your codebase. You get the output of a QA team without building one.
-                </p>
-                <Link href="/pricing" className="mt-7 inline-block bg-amber-500 px-6 py-3 text-sm font-semibold text-neutral-950 transition hover:bg-amber-400">See plans with an engineer →</Link>
-              </Reveal>
-              <Reveal delay={0.1}>
-                <div className="space-y-3">
-                  {[
-                    { k: "AI", t: "Generates the first draft", d: "Specs from flows/URLs in seconds." },
-                    { k: "Platform", t: "Keeps it alive", d: "Self-heals locators, quarantines flakes, predicts risk." },
-                    { k: "FDE", t: "Owns the outcome", d: "POM architecture, maintenance, triage — a human accountable for green." },
-                  ].map((row) => (
-                    <div key={row.k} className="flex items-start gap-4 border border-neutral-800 bg-neutral-900/60 p-5">
-                      <span className="w-20 shrink-0 border-r border-neutral-700 pr-4 text-xs font-semibold uppercase tracking-wide text-amber-400">{row.k}</span>
-                      <div>
-                        <div className="font-medium">{row.t}</div>
-                        <div className="text-sm text-neutral-400">{row.d}</div>
-                      </div>
-                    </div>
-                  ))}
+            <Reveal>
+              <div className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
+                <div>
+                  <p className="text-sm font-medium text-indigo-300">One verification loop</p>
+                  <h2 className="mt-3 max-w-2xl text-balance text-4xl font-semibold tracking-[-0.04em] sm:text-5xl">
+                    From URL to verified test. No theatre in between.
+                  </h2>
                 </div>
-              </Reveal>
+                <p className="max-w-sm text-sm leading-relaxed text-neutral-400">
+                  If the generated code cannot run against the real product, it is not presented as a finished test.
+                </p>
+              </div>
+            </Reveal>
+
+            <div className="mt-12 grid border border-white/10 md:grid-cols-3">
+              {STEPS.map(([number, title, description], index) => (
+                <Reveal key={number} delay={index * 0.08}>
+                  <article className="h-full border-b border-white/10 p-7 last:border-b-0 md:border-b-0 md:border-r md:last:border-r-0">
+                    <span className="font-mono text-xs text-indigo-300">{number}</span>
+                    <h3 className="mt-8 text-2xl font-semibold">{title}</h3>
+                    <p className="mt-3 text-sm leading-relaxed text-neutral-400">{description}</p>
+                  </article>
+                </Reveal>
+              ))}
+            </div>
+
+            <Reveal delay={0.1}>
+              <VerificationShowcase />
+            </Reveal>
+
+            <Reveal delay={0.12}>
+              <div id="coverage" className="scroll-mt-24 mt-12 border-t border-white/10 pt-7">
+                <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                  <p className="max-w-xs text-sm font-medium text-neutral-300">One place to verify the surfaces your release can break.</p>
+                  <div className="grid flex-1 grid-cols-2 gap-px overflow-hidden bg-white/10 sm:grid-cols-3 lg:max-w-3xl lg:grid-cols-6">
+                    {COVERAGE.map(([type, detail]) => (
+                      <div key={type} className="bg-[#0d0f19] p-4">
+                        <div className="text-sm font-semibold text-white">{type}</div>
+                        <div className="mt-1 text-[11px] leading-snug text-neutral-500">{detail}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </Reveal>
+          </div>
+        </section>
+
+        <section id="fde" className="scroll-mt-24 border-b border-neutral-200 dark:border-neutral-900">
+          <div className="mx-auto grid max-w-6xl gap-12 px-6 py-24 lg:grid-cols-2 lg:items-center lg:py-28">
+            <Reveal>
+              <p className="text-sm font-medium text-amber-600 dark:text-amber-400">AI speed. Human ownership.</p>
+              <h2 className="mt-3 text-balance text-4xl font-semibold tracking-[-0.04em] sm:text-5xl">
+                A generated test is useful. A maintained suite is the product.
+              </h2>
+              <p className="mt-5 max-w-xl text-lg leading-relaxed text-neutral-600 dark:text-neutral-300">
+                Verity keeps locators healthy, separates flakes from failures, and can add a forward-deployed engineer who owns the suite with your team.
+              </p>
+              <Link href="/pricing" className="mt-7 inline-flex items-center gap-2 text-sm font-semibold text-neutral-950 underline decoration-indigo-400 decoration-2 underline-offset-4 transition hover:text-indigo-600 dark:text-white dark:hover:text-indigo-300">
+                See self-serve and managed plans <span aria-hidden>→</span>
+              </Link>
+            </Reveal>
+
+            <Reveal delay={0.08}>
+              <div className="relative overflow-hidden rounded-[24px] border border-neutral-800 bg-[#0b0d15] p-5 text-white shadow-2xl sm:p-6">
+                <div aria-hidden className="absolute -right-20 -top-20 h-52 w-52 rounded-full bg-violet-600/20 blur-3xl" />
+                <div className="relative flex items-center justify-between border-b border-white/[0.08] pb-4">
+                  <div>
+                    <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-violet-300">Repair proposal</div>
+                    <div className="mt-1 text-sm font-medium">checkout.spec.ts</div>
+                  </div>
+                  <span className="rounded-full border border-amber-300/20 bg-amber-300/10 px-2.5 py-1 text-[9px] font-semibold text-amber-300">REVIEW REQUIRED</span>
+                </div>
+
+                <div className="relative mt-5 overflow-hidden rounded-xl border border-white/[0.08] bg-black/20 font-mono text-[10px] leading-6 sm:text-[11px]">
+                  <div className="border-b border-red-400/10 bg-red-400/[0.06] px-4 py-2 text-red-300">
+                    <span className="mr-3 text-red-500">−</span>page.locator(<span className="text-red-200">&apos;#submit-order&apos;</span>)
+                  </div>
+                  <div className="bg-emerald-400/[0.07] px-4 py-2 text-emerald-300">
+                    <span className="mr-3 text-emerald-500">+</span>page.getByRole(<span className="text-emerald-200">&apos;button&apos;</span>, &#123; name: <span className="text-emerald-200">&apos;Place order&apos;</span> &#125;)
+                  </div>
+                </div>
+
+                <div className="relative mt-5 grid grid-cols-2 gap-3">
+                  <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-3">
+                    <div className="text-[9px] text-neutral-500">MATCH CONFIDENCE</div>
+                    <div className="mt-2 flex items-end gap-2"><span className="text-2xl font-semibold">96%</span><span className="pb-1 text-[9px] text-emerald-300">live DOM</span></div>
+                  </div>
+                  <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-3">
+                    <div className="text-[9px] text-neutral-500">RERUN</div>
+                    <div className="mt-2 flex items-center gap-2 text-sm font-semibold text-emerald-300"><span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-400/10">✓</span>Passed</div>
+                  </div>
+                </div>
+
+                <div className="relative mt-4 flex items-center justify-between rounded-xl bg-indigo-500 px-4 py-3 text-xs font-semibold shadow-lg shadow-indigo-950/30">
+                  <span>Approve repair</span>
+                  <span aria-hidden>→</span>
+                </div>
+              </div>
+            </Reveal>
+          </div>
+
+          <div id="security" className="scroll-mt-24 border-t border-neutral-200 dark:border-neutral-900">
+            <div className="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-6 text-sm sm:flex-row sm:items-center sm:justify-between">
+              <span className="font-semibold">Built to fit your engineering system.</span>
+              <div className="flex flex-wrap gap-x-6 gap-y-2 text-neutral-500 dark:text-neutral-400">
+                <span>Your code stays yours</span>
+                <span>Runs in your CI</span>
+                <span>GitHub + GitLab</span>
+                <span>Playwright-native</span>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* Cloud vs CI vs FDE */}
-        <section className="mx-auto max-w-6xl px-6 py-24">
-          <Reveal>
-            <h2 className="max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">Try it in the cloud. Live in your CI. Hand it to an FDE.</h2>
-            <p className="mt-3 max-w-2xl text-neutral-600 dark:text-neutral-300">Cloud is for the first feel — it&apos;s capped on purpose. The product is built to run in your pipeline, where it&apos;s unlimited.</p>
-          </Reveal>
-          <div className="mt-10 grid gap-5 md:grid-cols-3">
-            {[
-              { tag: "Cloud", sub: "Get the feel", d: "Generate a spec and run a few times on our infra — no setup. Capped, because this is the demo, not the product.", cls: "border-neutral-300 dark:border-neutral-700", strong: "Minutes to first test" },
-              { tag: "CI", sub: "The engine", d: "Wire one workflow in. Unlimited Quick checks and Full regressions in your own pipeline — we never host your browsers.", cls: "border-indigo-500", strong: "Unlimited runs, flat price" },
-              { tag: "FDE", sub: "Done for you", d: "A forward-deployed engineer builds, owns and maintains the suite end-to-end. AI + platform + a human accountable for it.", cls: "border-amber-500", strong: "A QA team, without hiring one" },
-            ].map((c, i) => (
-              <Reveal key={c.tag} delay={i * 0.07}>
-                <div className={`h-full border-t-2 ${c.cls} p-6`}>
-                  <div className="flex items-baseline justify-between">
-                    <span className="text-lg font-semibold">{c.tag}</span>
-                    <span className="text-xs uppercase tracking-wide text-neutral-400">{c.sub}</span>
-                  </div>
-                  <p className="mt-3 text-sm text-neutral-600 dark:text-neutral-300">{c.d}</p>
-                  <p className="mt-4 text-sm font-medium">{c.strong}</p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </section>
-
-        {/* Comparison */}
-        <section id="compare" className="scroll-mt-24 border-y border-neutral-200 bg-neutral-50/60 py-24 dark:border-neutral-900 dark:bg-neutral-950/40">
-          <div className="mx-auto max-w-6xl px-6">
-            <Reveal>
-              <p className="text-sm font-medium text-indigo-600">Why Verity</p>
-              <h2 className="mt-2 max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">The only one that does generation, maintenance, prediction — and a human.</h2>
-            </Reveal>
-            <div className="mt-10"><Comparison /></div>
-          </div>
-        </section>
-
-        {/* Security */}
-        <SecuritySection />
-
-        {/* Pricing */}
-        <section id="pricing" className="scroll-mt-24 mx-auto max-w-6xl px-6 py-24">
-          <Reveal>
-            <p className="text-sm font-medium text-indigo-600">Pricing</p>
-            <h2 className="mt-2 max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">Start free. Self-serve at $49. Add an engineer when ready.</h2>
-            <p className="mt-3 max-w-2xl text-neutral-600 dark:text-neutral-300">Verity&apos;s self-serve tiers below. The forward-deployed-engineer tiers (Starter and up) — with visual, agent (AI) testing, performance, security, and predictions — share one canonical price across the QAShift platform.</p>
-          </Reveal>
-          <Reveal delay={0.1}><div className="mt-10"><VeritySelfServeCards inIndia={inIndia} /></div></Reveal>
-        </section>
-
-        {/* CTA */}
         <Reveal>
-          <section className="relative mx-auto my-16 max-w-6xl overflow-hidden bg-neutral-950 px-8 py-20 text-center text-white">
-            {/* Layered aurora glow */}
-            <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background:
-              "radial-gradient(60% 80% at 12% 8%, rgba(99,102,241,0.55), transparent 60%)," +
-              "radial-gradient(55% 75% at 88% 22%, rgba(139,92,246,0.5), transparent 60%)," +
-              "radial-gradient(75% 95% at 50% 118%, rgba(56,189,248,0.28), transparent 60%)" }} />
-            {/* Grid texture, faded at the edges */}
-            <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.14]" style={{
-              backgroundImage: "linear-gradient(rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.4) 1px, transparent 1px)",
-              backgroundSize: "46px 46px",
-              WebkitMaskImage: "radial-gradient(ellipse 70% 70% at center, black 35%, transparent 78%)",
-              maskImage: "radial-gradient(ellipse 70% 70% at center, black 35%, transparent 78%)",
-            }} />
-            <div className="relative">
-              <span className="inline-block border border-white/20 bg-white/5 px-3 py-1 text-xs font-medium tracking-wide text-indigo-200 backdrop-blur">AI writes · an engineer verifies · runs in your CI</span>
-              <h2 className="mx-auto mt-5 max-w-3xl text-4xl font-semibold tracking-tight sm:text-5xl">
-                Stop babysitting<br /><span className="bg-gradient-to-r from-indigo-300 to-violet-300 bg-clip-text text-transparent">your test suite.</span>
-              </h2>
-              <p className="mx-auto mt-5 max-w-2xl text-lg text-neutral-300">
-                Verity writes the tests, heals the flaky ones, and flags real regressions before they ship — with a forward-deployed engineer accountable for green. Start free; live in your CI this afternoon.
-              </p>
-              <div className="mt-8 flex flex-wrap justify-center gap-3">
-                <Link href="/login?next=/dashboard" className="bg-white px-7 py-3 text-sm font-semibold text-neutral-950 transition hover:bg-indigo-50">Start free — no card</Link>
-                <Link href="/pricing" className="border border-white/30 px-7 py-3 text-sm font-semibold text-white transition hover:bg-white/10">See pricing</Link>
+          <section className="mx-auto my-16 max-w-6xl px-6">
+            <div className="relative overflow-hidden bg-indigo-600 px-7 py-16 text-center text-white sm:px-12 sm:py-20">
+              <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_15%_0%,rgba(255,255,255,.2),transparent_38%),radial-gradient(circle_at_90%_100%,rgba(139,92,246,.8),transparent_42%)]" />
+              <div className="relative">
+                <p className="text-sm font-medium text-indigo-100">Your next release needs evidence, not confidence theatre.</p>
+                <h2 className="mx-auto mt-4 max-w-3xl text-balance text-4xl font-semibold tracking-[-0.04em] sm:text-5xl">Show Verity the product. Get the test and the proof.</h2>
+                <div className="mt-8 flex flex-wrap justify-center gap-3">
+                  <Link href="/login?next=/dashboard" className="bg-white px-7 py-3 text-sm font-semibold text-neutral-950 transition hover:bg-indigo-50">Start free</Link>
+                  <Link href="/pricing" className="border border-white/35 px-7 py-3 text-sm font-semibold text-white transition hover:bg-white/10">See pricing</Link>
+                </div>
+                <p className="mt-5 text-xs text-indigo-100/80">No card · You own the generated code · First test in minutes</p>
               </div>
-              <p className="mt-6 text-xs text-neutral-400">Unlimited runs in your own CI · You own the code · No per-test meter</p>
             </div>
           </section>
         </Reveal>
       </main>
 
-      <footer className="border-t border-neutral-200 dark:border-neutral-800">
-        <div className="mx-auto flex w-full max-w-6xl flex-col items-start justify-between gap-6 px-6 py-12 sm:flex-row sm:items-center">
-          <div>
-            <Logo />
-            <p className="mt-2 max-w-sm text-sm text-neutral-500">
-              Verity is part of the QAShift testing platform —{" "}
-              <a href="https://www.qashifthq.com" target="_blank" rel="noreferrer" className="font-medium text-neutral-700 underline underline-offset-2 hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-white">Explore QAShift →</a>
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-x-8 gap-y-2 text-sm text-neutral-500">
-            <Link href="/docs" className="hover:text-neutral-900 dark:hover:text-white">Docs</Link>
-            <a href="#fde" className="hover:text-neutral-900 dark:hover:text-white">FDE</a>
-            <Link href="/pricing" className="hover:text-neutral-900 dark:hover:text-white">Pricing</Link>
-            <Link href="/login" className="hover:text-neutral-900 dark:hover:text-white">Sign in</Link>
-          </div>
-        </div>
-        <div className="border-t border-neutral-100 dark:border-neutral-900">
-          <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-3 px-6 py-5 text-xs text-neutral-400 sm:flex-row">
-            <span>© {new Date().getFullYear()} Verity — part of the QAShift testing platform. AI writes, engineers verify.</span>
-            <span className="flex items-center gap-3">
-              <span className="uppercase tracking-widest text-[0.62rem] text-neutral-400">Platform</span>
-              <a href="https://www.qashifthq.com" target="_blank" rel="noreferrer" className="hover:text-neutral-900 dark:hover:text-white">QAShift</a>
-              <span className="text-neutral-300 dark:text-neutral-700">·</span>
-              <span className="font-medium text-neutral-700 dark:text-neutral-200">Verity</span>
-              <span className="text-neutral-300 dark:text-neutral-700">·</span>
-              <a href="https://clearpath.qashifthq.com" target="_blank" rel="noreferrer" className="hover:text-neutral-900 dark:hover:text-white">Clearpath</a>
-            </span>
-          </div>
-        </div>
-      </footer>
-
-      {/* Floating "Summarize with AI" — pure links, no backend/cost */}
-      <AskAI />
+      <SiteFooter />
     </div>
   );
 }

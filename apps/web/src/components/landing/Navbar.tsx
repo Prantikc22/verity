@@ -16,8 +16,8 @@ const NAV: NavItem[] = [
     label: "Product",
     children: [
       { href: "/#how", label: "How it works" },
-      { href: "/#predictions", label: "Predictions" },
-      { href: "/#fde", label: "Forward-deployed engineer" },
+      { href: "/#coverage", label: "What Verity tests" },
+      { href: "/#fde", label: "Human ownership" },
       { href: "/#security", label: "Security" },
     ],
   },

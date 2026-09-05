@@ -21,7 +21,16 @@ export const metadata: Metadata = {
   },
   description:
     "Verity generates Playwright tests from a sentence or URL, runs them in your CI, self-heals broken locators, and tells you what's a real regression vs. just flaky — in your pull requests. A QAShift product.",
-  openGraph: { siteName: "Verity", type: "website", url: appUrl },
+  openGraph: {
+    siteName: "Verity",
+    type: "website",
+    url: appUrl,
+    images: [{ url: `${appUrl}/og.png`, width: 1200, height: 630, alt: "Verity — Ship with proof. Not hope." }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: [`${appUrl}/og.png`],
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

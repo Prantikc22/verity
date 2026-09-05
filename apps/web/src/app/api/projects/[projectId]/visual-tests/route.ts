@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
+import { randomUUID } from "node:crypto";
 import { createClient } from "@/lib/supabase/server";
 import { generateVisualTest } from "@/lib/llm/generate";
 import { llmConfig } from "@/lib/llm/provider";
@@ -17,7 +18,7 @@ const Body = z.object({
 
 function specPathFor(name: string): string {
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 50) || "screen";
-  return `tests/verity/visual/${slug}.spec.ts`;
+  return `tests/verity/visual/${slug}-${randomUUID().slice(0, 8)}.spec.ts`;
 }
 
 /** Authed: AI-generate a Playwright visual (toHaveScreenshot) spec and persist as kind='visual'. */

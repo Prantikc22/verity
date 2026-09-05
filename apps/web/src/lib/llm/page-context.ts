@@ -3,10 +3,8 @@
  * page's interactive elements, so the LLM generates locators from what's ACTUALLY
  * on the page (roles, names, labels) instead of guessing from the URL string.
  *
- * This is a server-side HTTP fetch + HTML parse — fast and cheap, and good for
- * server-rendered pages. For heavily client-rendered SPAs the static HTML can be
- * sparse; we detect that and tell the model so it falls back to robust, generic
- * role-based locators rather than inventing brittle ones.
+ * The runner opens the page in a real browser before HTML extraction. Failed
+ * browser capture is a blocking error, not permission to invent locators.
  */
 
 export interface PageContext {
@@ -16,6 +14,19 @@ export interface PageContext {
   summary: string;
   /** True when the static HTML had almost no interactive elements (likely an SPA). */
   likelyClientRendered: boolean;
+}
+
+export interface PageCredentials {
+  username?: string;
+  password?: string;
+}
+
+interface RenderedPage {
+  context: PageContext;
+  entryContext?: PageContext;
+  finalUrl: string;
+  authAttempted: boolean;
+  authSucceeded: boolean;
 }
 
 function decode(s: string): string {
@@ -35,67 +46,73 @@ function uniq(arr: string[], cap: number): string[] {
   return [...new Set(arr.filter(Boolean))].slice(0, cap);
 }
 
-/** Static HTTP fetch + extract. Fast + cheap; sees only server-rendered HTML. */
-async function fetchStaticContext(url: string): Promise<PageContext | null> {
-  let html: string;
-  try {
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 8000);
-    const res = await fetch(url, {
-      signal: ctrl.signal,
-      redirect: "follow",
-      headers: { "user-agent": "VerityBot/1.0 (+https://verity.qashift.com)", accept: "text/html" },
-    });
-    clearTimeout(t);
-    if (!res.ok) return null;
-    const ct = res.headers.get("content-type") ?? "";
-    if (!ct.includes("html")) return null;
-    html = (await res.text()).slice(0, 600_000);
-  } catch {
-    return null;
-  }
-  return extractPageContext(html, url);
-}
-
 /**
  * Render the page in a REAL browser on the Fly runner and extract from the
  * post-JS DOM — this is the only way to see client-rendered (SPA) content.
  * Returns null when the runner isn't configured or the render fails.
  */
-async function fetchRenderedContext(url: string): Promise<PageContext | null> {
+async function fetchRenderedContext(url: string, credentials?: PageCredentials): Promise<RenderedPage | null> {
   const runnerUrl = process.env.RUNNER_SERVICE_URL;
   const runnerToken = process.env.RUNNER_SERVICE_TOKEN;
   if (!runnerUrl || !runnerToken) return null;
   try {
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 30000);
     const res = await fetch(`${runnerUrl.replace(/\/$/, "")}/context`, {
       method: "POST",
-      signal: ctrl.signal,
+      signal: AbortSignal.timeout(45000),
       headers: { "content-type": "application/json", authorization: `Bearer ${runnerToken}` },
-      body: JSON.stringify({ url }),
+      body: JSON.stringify({ url, credentials }),
     });
-    clearTimeout(t);
     if (!res.ok) return null;
-    const data = (await res.json()) as { ok?: boolean; html?: string };
+    const data = (await res.json()) as {
+      ok?: boolean;
+      html?: string;
+      entryHtml?: string;
+      finalUrl?: string;
+      authAttempted?: boolean;
+      authSucceeded?: boolean;
+    };
     if (!data?.ok || !data.html) return null;
-    return extractPageContext(data.html, url);
+    const finalUrl = data.finalUrl || url;
+    const context = extractPageContext(data.html, finalUrl);
+    if (!context) return null;
+    const entryContext = data.entryHtml ? extractPageContext(data.entryHtml, url) ?? undefined : undefined;
+    return {
+      context,
+      entryContext,
+      finalUrl,
+      authAttempted: Boolean(data.authAttempted),
+      authSucceeded: Boolean(data.authSucceeded),
+    };
   } catch {
     return null;
   }
 }
 
 /**
- * Fetch + extract page context. Static-first (fast, cheap, and now href-aware);
- * only falls back to a real browser render when the static HTML is SPARSE (a
- * likely SPA) or the fetch failed — so server-rendered pages pay nothing and
- * only client-rendered apps incur the browser cost. Never throws.
+ * Capture the rendered target in a real browser. Fail closed if inspection or
+ * supplied authentication fails; never substitute static HTML for live evidence.
  */
-export async function fetchPageContext(url: string): Promise<PageContext | null> {
-  const staticCtx = await fetchStaticContext(url);
-  if (staticCtx && !staticCtx.likelyClientRendered) return staticCtx;
-  const rendered = await fetchRenderedContext(url);
-  return rendered ?? staticCtx;
+export async function fetchPageContext(url: string, credentials?: PageCredentials): Promise<PageContext | null> {
+  const rendered = await fetchRenderedContext(url, credentials);
+  if (!rendered) throw new Error("Live browser inspection failed. No tests were generated from guessed or static page content. Check the cloud runner and retry.");
+
+  const hasCredentials = Boolean(credentials?.username || credentials?.password);
+  if (!hasCredentials) return rendered.context;
+
+  if (rendered.authSucceeded) {
+    const entry = rendered.entryContext?.summary ?? `URL: ${url}`;
+    return {
+      ...rendered.context,
+      url,
+      summary:
+        `ENTRY PAGE CONTEXT (before sign-in):\n${entry}\n\n` +
+        `AUTHENTICATED PAGE CONTEXT (the Fly browser signed in successfully; final URL: ${rendered.finalUrl}):\n` +
+        rendered.context.summary,
+      likelyClientRendered: false,
+    };
+  }
+
+  throw new Error("The browser could not confirm sign-in with the supplied credentials. Verify the login URL and credentials before generating protected flows.");
 }
 
 /**
@@ -155,8 +172,15 @@ export function extractPageContext(rawHtml: string, url: string): PageContext | 
     [...cleaned.matchAll(/<(input|textarea|select)[^>]*>/gi)].map((m) => {
       const tag = m[0];
       const type = attr(tag, "type") ?? (m[1].toLowerCase() === "input" ? "text" : m[1].toLowerCase());
-      const name = attr(tag, "aria-label") || attr(tag, "placeholder") || attr(tag, "name") || attr(tag, "id");
-      return name ? `${name} (${type})` : "";
+      const aria = attr(tag, "aria-label");
+      const placeholder = attr(tag, "placeholder");
+      const name = attr(tag, "name");
+      const id = attr(tag, "id");
+      if (aria) return `aria-label=${JSON.stringify(aria)} (${type})`;
+      if (placeholder) return `placeholder=${JSON.stringify(placeholder)} (${type})`;
+      if (name) return `name=${JSON.stringify(name)} (${type}; no accessible label confirmed)`;
+      if (id) return `id=${JSON.stringify(id)} (${type}; no accessible label confirmed)`;
+      return "";
     }),
     20,
   );
@@ -174,7 +198,10 @@ export function extractPageContext(rawHtml: string, url: string): PageContext | 
     cleaned
       .replace(/<(nav|header|footer|svg|noscript)[\s\S]*?<\/\1>/gi, " ")
       .replace(/<[^>]+>/g, " "),
-  ).slice(0, 1200);
+  // Keep enough product copy to capture validation/error examples and demo test
+  // instructions. 1,200 chars routinely cut off the second/third negative case,
+  // which invited the model to guess a sibling error message.
+  ).slice(0, 5000);
 
   const interactiveCount = buttons.length + inputs.length + links.length;
   const likelyClientRendered = interactiveCount < 3;
@@ -188,8 +215,8 @@ export function extractPageContext(rawHtml: string, url: string): PageContext | 
   if (visibleText.length > 40) parts.push(`Visible text (may include test credentials/instructions): ${visibleText}`);
   if (likelyClientRendered) {
     parts.push(
-      "NOTE: the static HTML exposed few interactive elements — this page is likely client-rendered (SPA). " +
-        "Use robust role/text locators based on the described flow; do not invent selectors you cannot justify.",
+      "NOTE: this capture exposed few interactive elements. Only use elements present in the evidence. " +
+        "Do not infer controls or flows from the description alone.",
     );
   }
 

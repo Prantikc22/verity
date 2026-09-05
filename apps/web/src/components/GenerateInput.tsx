@@ -10,7 +10,7 @@ import posthog from "posthog-js";
  * plain-English plan and the Playwright code. Output is real (the backend opens
  * the URL for locators); we never show fabricated example specs.
  */
-export function GenerateInput() {
+export function GenerateInput({ tone = "default" }: { tone?: "default" | "hero" }) {
   const [input, setInput] = useState("");
   const [plan, setPlan] = useState<string[] | null>(null);
   const [spec, setSpec] = useState<string | null>(null);
@@ -46,6 +46,8 @@ export function GenerateInput() {
     }
   }
 
+  const hero = tone === "hero";
+
   return (
     <div className="w-full max-w-2xl">
       <form onSubmit={run} className="flex flex-col gap-2 sm:flex-row">
@@ -53,9 +55,9 @@ export function GenerateInput() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Paste a URL, or describe a flow — e.g. “log in, add to cart, check out”"
-          className="flex-1 border border-neutral-300 bg-white/70 px-5 py-4 text-base outline-none backdrop-blur focus:border-indigo-500 dark:border-neutral-700 dark:bg-neutral-900/70 dark:focus:border-indigo-400"
+          className={`min-w-0 flex-1 px-5 py-4 text-base outline-none backdrop-blur transition focus:border-indigo-400 ${hero ? "rounded-xl border border-white/15 bg-white/[0.08] text-white placeholder:text-neutral-500" : "border border-neutral-300 bg-white/70 dark:border-neutral-700 dark:bg-neutral-900/70"}`}
         />
-        <button type="submit" disabled={busy} className="border-0 bg-indigo-600 px-7 py-4 text-base font-semibold text-white transition hover:bg-indigo-500 disabled:opacity-50">
+        <button type="submit" disabled={busy} className={`border-0 bg-indigo-600 px-7 py-4 text-base font-semibold text-white shadow-[0_12px_36px_-12px_rgba(99,102,241,.8)] transition hover:bg-indigo-500 disabled:opacity-50 ${hero ? "rounded-xl" : ""}`}>
           {busy ? "Opening page…" : "Generate test →"}
         </button>
       </form>
@@ -63,11 +65,11 @@ export function GenerateInput() {
       {/* Coverage chips + trust line */}
       <div className="mt-3 flex flex-wrap items-center gap-2">
         {["UI", "API", "Accessibility", "Performance", "Security"].map((d) => (
-          <span key={d} className="border border-neutral-300 px-2.5 py-1 text-xs text-neutral-500 dark:border-neutral-700 dark:text-neutral-400">{d}</span>
+          <span key={d} className={`px-2.5 py-1 text-xs ${hero ? "rounded-full border border-white/10 bg-white/[0.04] text-neutral-400" : "border border-neutral-300 text-neutral-500 dark:border-neutral-700 dark:text-neutral-400"}`}>{d}</span>
         ))}
       </div>
       {!spec && !error && (
-        <p className="mt-3 text-left text-xs text-neutral-500">Free, no install — your first test in ~2 min. No card.</p>
+        <p className={`mt-3 text-left text-xs ${hero ? "text-neutral-400" : "text-neutral-500"}`}>Free, no install — your first test in ~2 min. No card.</p>
       )}
 
       {error && <p className="mt-3 text-left text-sm text-red-600">{error}</p>}

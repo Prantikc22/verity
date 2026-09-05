@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Navbar } from "@/components/landing/Navbar";
 import { VeritySelfServeCards } from "@/components/landing/VeritySelfServeCards";
 import { Comparison } from "@/components/landing/Comparison";
 import { SecuritySection } from "@/components/landing/SecuritySection";
-import { AskAI } from "@/components/landing/AskAI";
+import { SiteFooter } from "@/components/landing/SiteFooter";
 import { Reveal } from "@/components/Reveal";
 import { isIndia } from "@/lib/geo";
 
@@ -62,15 +61,31 @@ export default async function PricingPage() {
         <SecuritySection />
 
         <Reveal>
-          <div className="mx-auto mb-16 mt-8 flex max-w-6xl flex-col items-center gap-4 border border-amber-300 bg-amber-50/50 px-6 py-10 text-center dark:border-amber-900/60 dark:bg-amber-950/20">
-            <h2 className="text-2xl font-semibold tracking-tight">Need unlimited coverage or self-hosting?</h2>
-            <p className="max-w-xl text-sm text-neutral-600 dark:text-neutral-300">Enterprise adds multiple engineers, SSO/SAML, RBAC, SOC 2 / GDPR support, and a self-hosted runner. Part of the QAShift managed-QA platform.</p>
-            <a href="mailto:hello@qashifthq.com?subject=Verity%20Enterprise" className="bg-amber-500 px-6 py-3 text-sm font-semibold text-neutral-950 transition hover:bg-amber-400">Talk to us about Enterprise</a>
-            <Link href="/docs" className="text-xs text-neutral-500 underline">or read the docs first</Link>
-          </div>
+          <section className="mx-auto my-16 max-w-6xl px-6">
+            <div className="relative overflow-hidden rounded-[28px] bg-[#0b0d16] px-7 py-14 text-white sm:px-10 lg:px-14 lg:py-16">
+              <div aria-hidden className="absolute -right-24 -top-32 h-96 w-96 rounded-full bg-violet-600/25 blur-[100px]" />
+              <div aria-hidden className="absolute -bottom-40 left-1/4 h-80 w-80 rounded-full bg-indigo-600/20 blur-[100px]" />
+              <div className="relative grid gap-10 lg:grid-cols-[1fr_auto] lg:items-center">
+                <div>
+                  <p className="text-sm font-medium text-indigo-300">Need more than self-serve?</p>
+                  <h2 className="mt-3 max-w-3xl text-balance text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">Get the testing function—not another tool to manage.</h2>
+                  <p className="mt-4 max-w-2xl leading-relaxed text-neutral-400">Add a forward-deployed engineer, enterprise controls, and a self-hosted runner. Verity becomes an owned QA system inside your team.</p>
+                  <div className="mt-6 flex flex-wrap gap-2 text-[11px] text-neutral-300">
+                    {['Dedicated engineer', 'SSO + RBAC', 'Self-hosted runner', 'SOC 2 / GDPR support'].map((item) => (
+                      <span key={item} className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5">{item}</span>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex min-w-56 flex-col gap-3">
+                  <a href="mailto:hello@qashifthq.com?subject=Verity%20Enterprise" className="rounded-xl bg-white px-6 py-3.5 text-center text-sm font-semibold text-neutral-950 transition hover:bg-indigo-50">Talk to us</a>
+                  <a href="https://qashifthq.com/pricing" target="_blank" rel="noopener noreferrer" className="rounded-xl border border-white/20 px-6 py-3.5 text-center text-sm font-semibold text-white transition hover:bg-white/[0.06]">View managed plans</a>
+                </div>
+              </div>
+            </div>
+          </section>
         </Reveal>
       </main>
-      <AskAI />
+      <SiteFooter />
     </div>
   );
 }

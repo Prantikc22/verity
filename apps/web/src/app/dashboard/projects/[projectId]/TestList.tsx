@@ -55,10 +55,10 @@ export function TestList({ projectId, rows, repoLinked, verifiable = false }: { 
   for (const t of rows) { const k = t.suite || "Ungrouped"; (groups.get(k) ?? groups.set(k, []).get(k)!).push(t); }
   const ordered = [...groups.entries()].sort((a, b) => (a[0] === "Ungrouped" ? 1 : b[0] === "Ungrouped" ? -1 : 0));
 
-  const toggle = (id: string) => setSel((p) => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const toggle = (id: string) => setSel((p) => { const n = new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   const toggleGroup = (gr: TestRow[]) => setSel((p) => {
     const n = new Set(p); const all = gr.every((t) => n.has(t.id));
-    gr.forEach((t) => (all ? n.delete(t.id) : n.add(t.id))); return n;
+    gr.forEach((t) => { if (all) n.delete(t.id); else n.add(t.id); }); return n;
   });
 
   async function bulk(action: string, suite?: string | null) {
@@ -130,7 +130,7 @@ export function TestList({ projectId, rows, repoLinked, verifiable = false }: { 
                         // "Verified ✓" is only honest where the verify pipeline runs
                         // (browser-verifiable UI specs); elsewhere active = enabled.
                         t.status === "active" ? <span className="text-emerald-600 dark:text-emerald-400">{verifiable ? "Verified ✓" : "Active"}</span>
-                        : t.status === "quarantined" ? <span className="text-amber-600 dark:text-amber-400" title="Failed in a real browser after healing — review the code/plan">Needs review</span>
+                        : t.status === "quarantined" ? <span className="text-amber-600 dark:text-amber-400" title="Failed in a real browser — review the code/plan">Needs review</span>
                         : t.status === "draft" ? <span className="text-neutral-400" title={verifiable ? "Generated but not yet run in a browser" : "Generated — review, then Activate"}>{verifiable ? "Unverified" : "Draft"}</span>
                         : <span className="text-neutral-500">{t.status}</span>
                       }</td>

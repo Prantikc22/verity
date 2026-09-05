@@ -191,7 +191,6 @@ ${githubWith(c, "full")}
 /* ------------------------------- GitLab CI ------------------------------ */
 function runnerCmds(c: CiConfig, tier: "fast" | "full", indent: string): string[] {
   const out: string[] = [];
-  const eng = enginesCsv(c);
   out.push(`${indent}export VERITY_API_URL="${c.apiUrl}"`);
   out.push(`${indent}curl -Ls ${RAW}/verity.mjs -o verity.mjs`);
   out.push(`${indent}curl -Ls ${RAW}/verity-engines.mjs -o verity-engines.mjs`);

@@ -1,5 +1,5 @@
 name: "Verity"
-description: "AI-augmented testing: UI/API + Visual (Playwright), Agent/LLM evals, Performance (Artillery), Security (ZAP+Semgrep), API contract (Schemathesis). Runs in YOUR CI; reports to Verity."
+description: "AI-augmented testing: UI/API + Visual (Playwright), Agent/LLM evals, Performance (k6 + Lighthouse), Security (ZAP+Semgrep), API contract (Schemathesis). Runs in YOUR CI; reports to Verity."
 author: "QAShift"
 branding:
   icon: "check-circle"
@@ -54,7 +54,7 @@ inputs:
     required: false
     default: ""
   lighthouse-url:
-    description: "If set, run Lighthouse CI against this URL for Core Web Vitals (optional, separate from Artillery)."
+    description: "If set, run Lighthouse CI against this URL for Core Web Vitals (optional, separate from k6)."
     required: false
     default: ""
   # ---- security (ZAP DAST + Semgrep SAST) ----
@@ -64,7 +64,7 @@ inputs:
     default: ""
   # ---- shared API inputs (reused by contract + perf; NO second upload) ----
   openapi-spec:
-    description: "Path or URL to the OpenAPI spec (reused for Schemathesis + Artillery)."
+    description: "Path or URL to the OpenAPI spec (reused for Schemathesis and API-driven load setup)."
     required: false
     default: ""
   api-base-url:
@@ -95,9 +95,10 @@ runs:
         VERITY_INGEST_TOKEN: ${{ inputs.token }}
         VERITY_API_URL: ${{ inputs.api-url }}
         VERITY_PR_NUMBER: ${{ github.event.pull_request.number }}
+        VERITY_VISUAL_SNAPSHOTS_DIR: ${{ inputs.visual-snapshots-dir }}
       run: |
         set -e
-        node "${{ github.action_path }}/verity-engines.mjs" visual --tier "${{ inputs.tier }}" --snapshots-dir "${{ inputs.visual-snapshots-dir }}"
+        node "${{ github.action_path }}/verity-engines.mjs" visual --tier "${{ inputs.tier }}"
 
     # ============================ AGENT (LLM / AI-feature evals) =================
     # Playwright API evals that assert a property of your AI endpoint's reply.
@@ -110,9 +111,10 @@ runs:
         VERITY_PR_NUMBER: ${{ github.event.pull_request.number }}
         AGENT_ENDPOINT: ${{ inputs.agent-endpoint }}
         AI_API_TOKEN: ${{ inputs.agent-token }}
+        VERITY_AGENT_EVALS_DIR: tests/verity/agent
       run: |
         set -e
-        node "${{ github.action_path }}/verity-engines.mjs" agent --tier "${{ inputs.tier }}" --endpoint "${{ inputs.agent-endpoint }}"
+        node "${{ github.action_path }}/verity-engines.mjs" agent --tier "${{ inputs.tier }}"
 
     # ============================ PERFORMANCE (k6 profiles) =====================
     # fast ⇒ smoke profile on every PR; full ⇒ your chosen profile on merge.
@@ -127,6 +129,7 @@ runs:
         VERITY_PR_NUMBER: ${{ github.event.pull_request.number }}
         VERITY_TARGET_URL: ${{ inputs.api-base-url }}
         VERITY_PERF_PROFILE: ${{ inputs.perf-profile }}
+        VERITY_PERF_CONFIG: ${{ inputs.perf-config }}
       run: |
         set -e
         # Install k6 if the runner doesn't have it (self-contained, no external action).
@@ -135,7 +138,7 @@ runs:
           curl -fsSL "https://github.com/grafana/k6/releases/download/${K6_VER}/k6-${K6_VER}-linux-amd64.tar.gz" | tar xz
           sudo mv k6-*/k6 /usr/local/bin/ 2>/dev/null || mv k6-*/k6 /usr/local/bin/
         fi
-        node "${{ github.action_path }}/verity-engines.mjs" k6 --tier "${{ inputs.tier }}" --config "${{ inputs.perf-config }}" --target "${{ inputs.api-base-url }}"
+        node "${{ github.action_path }}/verity-engines.mjs" k6 --tier "${{ inputs.tier }}"
 
     # ---- optional Lighthouse CI (Core Web Vitals) — separate, lightweight ------
     - name: "Verity — Performance (Lighthouse CWV)"
@@ -145,11 +148,10 @@ runs:
         VERITY_INGEST_TOKEN: ${{ inputs.token }}
         VERITY_API_URL: ${{ inputs.api-url }}
         VERITY_PR_NUMBER: ${{ github.event.pull_request.number }}
+        VERITY_TARGET_URL: ${{ inputs.lighthouse-url }}
       run: |
         set -e
-        npx --yes lighthouse "${{ inputs.lighthouse-url }}" --quiet --chrome-flags="--headless --no-sandbox" \
-          --only-categories=performance --output=json --output-path="$RUNNER_TEMP/lhr.json" || true
-        node "${{ github.action_path }}/verity-engines.mjs" lighthouse --tier "${{ inputs.tier }}" --report "$RUNNER_TEMP/lhr.json"
+        node "${{ github.action_path }}/verity-engines.mjs" lighthouse --tier "${{ inputs.tier }}"
 
     # ============================ SECURITY (Docker: Python runtime) =============
     # SAST — Semgrep CE via the official Docker image (CLI subprocess only; never
@@ -161,18 +163,10 @@ runs:
         VERITY_INGEST_TOKEN: ${{ inputs.token }}
         VERITY_API_URL: ${{ inputs.api-url }}
         VERITY_PR_NUMBER: ${{ github.event.pull_request.number }}
+        VERITY_BASE_REF: ${{ inputs.base }}
       run: |
         set -e
-        if [ "${{ inputs.tier }}" = "fast" ]; then
-          git diff --name-only "${{ inputs.base }}...HEAD" > "$RUNNER_TEMP/changed.txt" || true
-          TARGETS=$(grep -vE '^$' "$RUNNER_TEMP/changed.txt" | tr '\n' ' ')
-          [ -z "$TARGETS" ] && TARGETS="."
-        else
-          TARGETS="."
-        fi
-        docker run --rm -v "$GITHUB_WORKSPACE:/src" -w /src semgrep/semgrep:latest \
-          semgrep scan --config=auto --json --output=/src/semgrep.json $TARGETS || true
-        node "${{ github.action_path }}/verity-engines.mjs" security-sast --tier "${{ inputs.tier }}" --report "$GITHUB_WORKSPACE/semgrep.json"
+        node "${{ github.action_path }}/verity-engines.mjs" security-sast --tier "${{ inputs.tier }}" --base "$VERITY_BASE_REF"
 
     # DAST — OWASP ZAP via Docker. Baseline scan on PR, full active scan on merge.
     - name: "Verity — Security DAST (ZAP)"
@@ -182,12 +176,10 @@ runs:
         VERITY_INGEST_TOKEN: ${{ inputs.token }}
         VERITY_API_URL: ${{ inputs.api-url }}
         VERITY_PR_NUMBER: ${{ github.event.pull_request.number }}
+        VERITY_TARGET_URL: ${{ inputs.security-target-url }}
       run: |
         set -e
-        if [ "${{ inputs.tier }}" = "fast" ]; then ZAP_SCRIPT="zap-baseline.py"; else ZAP_SCRIPT="zap-full-scan.py"; fi
-        docker run --rm -v "$GITHUB_WORKSPACE:/zap/wrk:rw" -t ghcr.io/zaproxy/zaproxy:stable \
-          "$ZAP_SCRIPT" -t "${{ inputs.security-target-url }}" -J zap.json || true
-        node "${{ github.action_path }}/verity-engines.mjs" security-dast --tier "${{ inputs.tier }}" --report "$GITHUB_WORKSPACE/zap.json"
+        node "${{ github.action_path }}/verity-engines.mjs" security-dast --tier "${{ inputs.tier }}"
 
     # ============================ API CONTRACT (Docker: Schemathesis) ===========
     # Property-based contract testing, parallel to the existing Playwright flow
@@ -199,9 +191,8 @@ runs:
         VERITY_INGEST_TOKEN: ${{ inputs.token }}
         VERITY_API_URL: ${{ inputs.api-url }}
         VERITY_PR_NUMBER: ${{ github.event.pull_request.number }}
+        VERITY_OPENAPI_SPEC: ${{ inputs.openapi-spec }}
+        VERITY_TARGET_URL: ${{ inputs.api-base-url }}
       run: |
         set -e
-        docker run --rm -v "$GITHUB_WORKSPACE:/src" -w /src schemathesis/schemathesis:stable \
-          run "${{ inputs.openapi-spec }}" --url "${{ inputs.api-base-url }}" \
-          --report junit --report-junit-path /src/schemathesis.xml || true
-        node "${{ github.action_path }}/verity-engines.mjs" contract --tier "${{ inputs.tier }}" --report "$GITHUB_WORKSPACE/schemathesis.xml"
+        node "${{ github.action_path }}/verity-engines.mjs" contract --tier "${{ inputs.tier }}"

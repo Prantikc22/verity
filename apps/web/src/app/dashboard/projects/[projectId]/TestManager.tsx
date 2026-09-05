@@ -142,11 +142,11 @@ export function TestManager({ projectId, rows, repoLinked }: { projectId: string
   // A group renders open when the user expanded it, OR filters are active (so
   // matches are never hidden), OR there's only one group to show.
   const isGroupOpen = (label: string) => group === "none" || filtersActive || expanded.has(label) || grouped.length === 1;
-  const toggleExpand = (label: string) => setExpanded((p) => { const n = new Set(p); n.has(label) ? n.delete(label) : n.add(label); return n; });
+  const toggleExpand = (label: string) => setExpanded((p) => { const n = new Set(p); if (n.has(label)) n.delete(label); else n.add(label); return n; });
   const allOpen = grouped.every(([l]) => isGroupOpen(l));
   const setAll = (openAll: boolean) => setExpanded(openAll ? new Set(grouped.map(([l]) => l)) : new Set());
 
-  const toggle = (id: string) => setSel((p) => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const toggle = (id: string) => setSel((p) => { const n = new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n; });
 
   async function bulk(action: string, suite?: string | null) {
     if (sel.size === 0) return;

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 /**
- * Verify draft UI tests in a real browser (run + self-heal on the Fly runner),
+ * Verify draft UI tests in a real browser on the Fly runner,
  * then mark each Verified (active) or Needs review (quarantined). This is what
  * makes generated tests trustworthy instead of guessed.
  */
@@ -35,7 +35,7 @@ export function VerifyDrafts({ projectId, draftCount }: { projectId: string; dra
       <button
         onClick={verify}
         disabled={busy || draftCount === 0}
-        title={draftCount === 0 ? "No draft UI tests to verify" : "Run the drafts in a real browser and self-heal failures"}
+        title={draftCount === 0 ? "No draft UI tests to verify" : "Run the drafts in a real browser"}
         className="border border-emerald-300 px-3 py-1.5 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50 dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-950/30"
       >
         {busy ? "Verifying in a real browser…" : `✓ Verify ${draftCount} draft${draftCount === 1 ? "" : "s"}`}
