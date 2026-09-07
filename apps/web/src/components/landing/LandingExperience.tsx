@@ -103,22 +103,28 @@ const X_QUOTES = [
 
 const NAV_MENUS = {
   Product: [
-    ["Verification engine", "Observe the product, author the suite, prove the release.", "#system"],
-    ["Coverage", "UI, API, visual, agent, performance and security.", "#coverage"],
-    ["Always On", "Merge gates, schedules and a complete run history.", "#always-on"],
-    ["Self-healing", "Repair selector drift without hiding product failures.", "#healing"],
+    ["Verity Self-Serve", "Generate, run and maintain product verification yourself.", "/#system"],
+    ["FDE Managed Testing", "A forward-deployed engineer who owns the testing function with you.", "https://qashifthq.com/managed-testing"],
+    ["Verity Cloud", "Managed browsers, parallel runs and retained release evidence.", "/#runtime"],
+    ["MCP Server", "Put live product verification inside your coding agent.", "/mcp"],
   ],
   Solutions: [
-    ["Agentic coding", "Give every AI-authored change an independent verifier.", "#gap"],
-    ["Release teams", "Turn release confidence into inspectable evidence.", "#proof"],
-    ["Platform engineering", "Standardize verification without locking up the code.", "#stack"],
-    ["API quality", "Catch contract breaks across services before production.", "#coverage"],
+    ["Agentic coding", "Give every AI-authored change an independent verifier.", "/#gap"],
+    ["Always On", "Merge gates, schedules and a complete run history.", "/#always-on"],
+    ["Coverage", "UI, API, visual, agent, performance and security.", "/#coverage"],
+    ["Self-healing", "Repair selector drift without hiding product failures.", "/#healing"],
   ],
   Developers: [
     ["Documentation", "Set up Verity and run your first verification.", "/docs"],
     ["MCP server", "Put product verification inside your coding agent.", "/mcp"],
     ["GitHub App", "Run, review and gate from the pull request.", "/github"],
-    ["Execution options", "Run without limits on CI or use Verity Cloud.", "#runtime"],
+    ["Execution options", "Run without limits on CI or use Verity Cloud.", "/#runtime"],
+  ],
+  About: [
+    ["About QAShift", "The company building AI-native quality infrastructure.", "https://qashifthq.com/about"],
+    ["Security", "Architecture, data handling and enterprise controls.", "https://qashifthq.com/security"],
+    ["Careers", "Join the team rebuilding how software gets verified.", "https://qashifthq.com/about#careers"],
+    ["Insights", "Read field notes on building dependable software.", "https://qashifthq.com/insights"],
   ],
 } as const;
 
@@ -221,7 +227,7 @@ function ReleaseConsole() {
   );
 }
 
-function LandingNav() {
+export function LandingNav() {
   const [authed, setAuthed] = useState(false);
   const [openMenu, setOpenMenu] = useState<keyof typeof NAV_MENUS | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -247,7 +253,6 @@ function LandingNav() {
             </button>
           ))}
           <Link href="/pricing" onMouseEnter={() => setOpenMenu(null)}>Pricing</Link>
-          <a href="https://qashifthq.com/about" onMouseEnter={() => setOpenMenu(null)}>About</a>
         </nav>
         <div className={styles.navActions}>
           {!authed && <Link href="/login" className={styles.signIn}>Sign in</Link>}
@@ -265,7 +270,7 @@ function LandingNav() {
             <div className={styles.megaInner}>
               <div className={styles.megaIntro}>
                 <span>{openMenu}</span>
-                <strong>{openMenu === "Product" ? "Verification that produces evidence, not another dashboard." : openMenu === "Solutions" ? "Built for teams whose shipping speed outgrew manual QA." : "Own the tests. Run them wherever your team works."}</strong>
+                <strong>{openMenu === "Product" ? "Software and expert ownership for every testing maturity." : openMenu === "Solutions" ? "Built for teams whose shipping speed outgrew manual QA." : openMenu === "Developers" ? "Own the tests. Run them wherever your team works." : "Verity is built by QAShift in Bengaluru."}</strong>
               </div>
               <div className={styles.megaLinks}>
                 {NAV_MENUS[openMenu].map(([title, copy, href]) => (
@@ -281,9 +286,9 @@ function LandingNav() {
       <AnimatePresence>
         {mobileOpen && (
           <motion.div className={styles.mobileMenu} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
-            <a href="#system" onClick={() => setMobileOpen(false)}>Product</a>
-            <a href="#gap" onClick={() => setMobileOpen(false)}>Solutions</a>
-            <a href="#stack" onClick={() => setMobileOpen(false)}>Developers</a>
+            <Link href="/#system" onClick={() => setMobileOpen(false)}>Product</Link>
+            <Link href="/#gap" onClick={() => setMobileOpen(false)}>Solutions</Link>
+            <Link href="/#stack" onClick={() => setMobileOpen(false)}>Developers</Link>
             <Link href="/pricing" onClick={() => setMobileOpen(false)}>Pricing</Link>
             <a href="https://qashifthq.com/about">About</a>
           </motion.div>
@@ -689,16 +694,25 @@ function FinalCta() {
   );
 }
 
-function LandingFooter() {
+export function LandingFooter() {
   return (
     <footer id="footer" className={styles.footer}>
       <div className={styles.sectionShell}>
         <div className={styles.footerTop}>
-          <div><Logo /><p>Product verification you can run, inspect, and own. A QAShift product.</p></div>
+          <div>
+            <Logo />
+            <p>Product verification you can run, inspect, and own. A QAShift product.</p>
+            <div className={styles.footerSecurity}>
+              <strong>Security is part of the architecture.</strong>
+              <span>Your code and secrets stay in your infrastructure when you run Verity on CI.</span>
+              <a href="https://qashifthq.com/security">Read the security overview <Arrow /></a>
+            </div>
+          </div>
           <div className={styles.footerLinks}>
-            <div><span>PRODUCT</span><a href="#system">How it works</a><a href="#coverage">Coverage</a><Link href="/pricing">Pricing</Link></div>
-            <div><span>DEVELOPERS</span><Link href="/docs">Documentation</Link><Link href="/mcp">MCP server</Link><Link href="/github">GitHub App</Link></div>
-            <div><span>COMPANY</span><a href="https://qashifthq.com/about">About</a><a href="https://qashifthq.com/contact">Contact</a><a href="https://qashifthq.com/security">Security</a></div>
+            <div><span>PRODUCTS</span><Link href="/#system">Verity Self-Serve</Link><a href="https://qashifthq.com/managed-testing">FDE Managed Testing</a><Link href="/#runtime">Verity Cloud</Link><Link href="/pricing">Pricing</Link></div>
+            <div><span>SOLUTIONS</span><Link href="/#always-on">Always On</Link><Link href="/#coverage">Coverage</Link><Link href="/#gap">Agentic coding</Link><Link href="/#healing">Self-healing</Link></div>
+            <div><span>DEVELOPERS</span><Link href="/docs">Documentation</Link><Link href="/mcp">MCP server</Link><Link href="/github">GitHub App</Link><Link href="/#stack">Integrations</Link></div>
+            <div><span>QASHIFT</span><a href="https://qashifthq.com/about">About</a><a href="https://qashifthq.com/about#careers">Careers</a><a href="https://qashifthq.com/contact">Contact</a><a href="https://qashifthq.com/security">Security</a><a href="https://qashifthq.com/insights">Insights</a></div>
           </div>
         </div>
         <div className={styles.footerWordmark} aria-hidden>Verity</div>
@@ -738,7 +752,7 @@ export function LandingExperience() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
-              Verity opens the real product, writes the Playwright suite, runs every critical path, and returns evidence your team can act on. No test theatre. No proprietary lock-in.
+              Verity verifies the whole product—UI journeys, APIs, visual states, AI agents, performance, and security—then returns evidence your team can act on. Playwright you own. No proprietary lock-in.
             </motion.p>
             <motion.div
               className={styles.heroActions}
@@ -755,7 +769,7 @@ export function LandingExperience() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.55, duration: 0.6 }}
             >
-              <span>NO CARD</span><span>FIRST TEST IN MINUTES</span><span>PLAYWRIGHT YOU OWN</span>
+              <span>UI · API · VISUAL</span><span>AGENT · PERFORMANCE · SECURITY</span><span>PLAYWRIGHT YOU OWN</span>
             </motion.div>
           </motion.div>
 

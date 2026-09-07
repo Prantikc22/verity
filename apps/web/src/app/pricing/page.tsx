@@ -1,91 +1,113 @@
 import type { Metadata } from "next";
-import { Navbar } from "@/components/landing/Navbar";
-import { VeritySelfServeCards } from "@/components/landing/VeritySelfServeCards";
+import Link from "next/link";
 import { Comparison } from "@/components/landing/Comparison";
-import { SecuritySection } from "@/components/landing/SecuritySection";
-import { SiteFooter } from "@/components/landing/SiteFooter";
-import { Reveal } from "@/components/Reveal";
+import { LandingFooter, LandingNav } from "@/components/landing/LandingExperience";
+import { VeritySelfServeCards } from "@/components/landing/VeritySelfServeCards";
 import { isIndia } from "@/lib/geo";
+import styles from "./PricingPage.module.css";
 
 export const metadata: Metadata = {
   title: "Pricing",
-  description: "Start free, go self-serve at $49/mo, or add a forward-deployed engineer on the QAShift platform. Unlimited CI runs, no per-test meter.",
+  description: "Start Verity free, run without limits in your CI, or add a forward-deployed engineer to own product verification with your team.",
 };
 
 const FAQ = [
-  { q: "Is an engineer really included from Starter?", a: "Yes. Every paid plan includes a forward-deployed QA engineer who owns your suite — converts AI scripts into a maintainable Page Object Model, keeps it green, and triages failures. AI writes, the engineer verifies." },
-  { q: "What does the test cap mean?", a: "It's the number of maintained tests in your suite (60 / 200 / 500), not a limit on runs. Runs are always unlimited in your CI — you never pay per execution." },
-  { q: "Why is cloud capped but CI unlimited?", a: "Running browsers on our infra costs us money; running them in your CI doesn't. Cloud exists so you can get the feel in minutes — the product is built to live in your pipeline." },
-  { q: "USD or INR?", a: "Prices are in USD by default. Teams in India can switch to INR with the toggle above the plans. Annual billing saves 15%." },
-  { q: "Do I own the tests?", a: "Yes. The specs and the Page Object Model structure are yours, and the core runner (@qashift/verity-core) is MIT-licensed. No lock-in." },
-  { q: "How is this different from per-test AI tools?", a: "They meter you and rarely heal, triage flakes, or predict risk — and there's no human accountable. Verity is flat-priced, self-heals, separates flaky from broken, predicts regressions, and puts an engineer on it." },
+  { q: "Does every plan include an engineer?", a: "No. Cloud Sandbox, Self-Serve Pro, and Team are software-only. QAShift managed plans add a forward-deployed engineer who builds, maintains, and triages the suite with your team." },
+  { q: "What does the test allowance mean?", a: "It is the number of AI-authored UI and API tests generated in Verity Cloud each month. It is not a limit on executions: run your maintained suite as often as you want in your own CI." },
+  { q: "Why are CI runs unlimited?", a: "Your CI provides the compute, so Verity does not meter every execution. Cloud runs use managed browser infrastructure and are included according to your plan." },
+  { q: "Do we own the tests?", a: "Yes. Verity produces readable Playwright specs that live in your repository. Your team can inspect, edit, and run them without a proprietary test format." },
+  { q: "When should we choose FDE Managed Testing?", a: "Choose it when you want the outcome owned, not another tool to operate. An FDE takes responsibility for strategy, coverage, maintenance, failure triage, and release reporting." },
+  { q: "What about security and private code?", a: "Verity can execute inside your CI so code and secrets stay in your infrastructure. QAShift also documents its data handling and enterprise security controls publicly." },
 ];
+
+const OWNERSHIP = [
+  ["01", "Test strategy", "OWNED WITH YOU"],
+  ["02", "Suite architecture", "BUILT + MAINTAINED"],
+  ["03", "Failure triage", "EVERY RUN"],
+  ["04", "Release reporting", "SHIPPED TO THE TEAM"],
+] as const;
 
 export default async function PricingPage() {
   const inIndia = await isIndia();
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <Navbar />
-      <main className="w-full">
-        <div className="mx-auto max-w-6xl px-6 py-16">
-          <Reveal>
-            <span className="inline-block border border-indigo-300 bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700 dark:border-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300">Same pricing across the QAShift platform</span>
-            <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">Start free. Go self-serve at $49. Add an engineer when you&apos;re ready.</h1>
-            <p className="mt-4 max-w-2xl text-lg text-neutral-600 dark:text-neutral-300">
-              Verity&apos;s self-serve tiers are below. The forward-deployed-engineer tiers (Starter and up) — with visual, agent (AI) testing, performance, security, and predictions — live on the
-              {" "}<a href="https://qashifthq.com/pricing" target="_blank" rel="noopener noreferrer" className="text-indigo-600 underline">canonical QAShift pricing page</a>.
-            </p>
-          </Reveal>
-
-          <Reveal delay={0.1}><div className="mt-12"><VeritySelfServeCards inIndia={inIndia} /></div></Reveal>
-
-          <section className="mt-24">
-            <Reveal><h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">How we stack up</h2></Reveal>
-            <Reveal delay={0.08}><div className="mt-8"><Comparison /></div></Reveal>
-          </section>
-
-          <section className="mt-24">
-            <Reveal><h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Questions, answered.</h2></Reveal>
-            <div className="mt-8 grid gap-px overflow-hidden border border-neutral-200 bg-neutral-200 sm:grid-cols-2 dark:border-neutral-800 dark:bg-neutral-800">
-              {FAQ.map((f) => (
-                <div key={f.q} className="bg-background p-6">
-                  <h3 className="font-medium">{f.q}</h3>
-                  <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">{f.a}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-        </div>
-
-        <SecuritySection />
-
-        <Reveal>
-          <section className="mx-auto my-16 max-w-6xl px-6">
-            <div className="relative overflow-hidden rounded-[28px] bg-[#0b0d16] px-7 py-14 text-white sm:px-10 lg:px-14 lg:py-16">
-              <div aria-hidden className="absolute -right-24 -top-32 h-96 w-96 rounded-full bg-violet-600/25 blur-[100px]" />
-              <div aria-hidden className="absolute -bottom-40 left-1/4 h-80 w-80 rounded-full bg-indigo-600/20 blur-[100px]" />
-              <div className="relative grid gap-10 lg:grid-cols-[1fr_auto] lg:items-center">
-                <div>
-                  <p className="text-sm font-medium text-indigo-300">Need more than self-serve?</p>
-                  <h2 className="mt-3 max-w-3xl text-balance text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">Get the testing function—not another tool to manage.</h2>
-                  <p className="mt-4 max-w-2xl leading-relaxed text-neutral-400">Add a forward-deployed engineer, enterprise controls, and a self-hosted runner. Verity becomes an owned QA system inside your team.</p>
-                  <div className="mt-6 flex flex-wrap gap-2 text-[11px] text-neutral-300">
-                    {['Dedicated engineer', 'SSO + RBAC', 'Self-hosted runner', 'SOC 2 / GDPR support'].map((item) => (
-                      <span key={item} className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5">{item}</span>
-                    ))}
-                  </div>
-                </div>
-                <div className="flex min-w-56 flex-col gap-3">
-                  <a href="mailto:hello@qashifthq.com?subject=Verity%20Enterprise" className="rounded-xl bg-white px-6 py-3.5 text-center text-sm font-semibold text-neutral-950 transition hover:bg-indigo-50">Talk to us</a>
-                  <a href="https://qashifthq.com/pricing" target="_blank" rel="noopener noreferrer" className="rounded-xl border border-white/20 px-6 py-3.5 text-center text-sm font-semibold text-white transition hover:bg-white/[0.06]">View managed plans</a>
-                </div>
+    <div className={styles.page}>
+      <LandingNav />
+      <main>
+        <section className={styles.hero}>
+          <div className={`${styles.shell} ${styles.heroInner}`}>
+            <h1>Pay for the system.<span>Choose the ownership.</span></h1>
+            <div className={styles.heroCopy}>
+              <p>Start with one verification engine for UI, API, visual, agent/AI, performance, and security. Run it without limits in your CI. Add a forward-deployed engineer when the function needs an owner.</p>
+              <div className={styles.heroActions}>
+                <Link href="/login?next=/dashboard" className={styles.primary}>Start free →</Link>
+                <a href="https://qashifthq.com/managed-testing" className={styles.secondary}>Explore managed testing</a>
               </div>
             </div>
-          </section>
-        </Reveal>
+          </div>
+        </section>
+
+        <div className={`${styles.shell} ${styles.terms}`}>
+          <div><strong>Unlimited CI runs</strong><span>No per-execution meter on your infrastructure.</span></div>
+          <div><strong>Metered cloud runs</strong><span>Managed browsers when you do not want runner upkeep.</span></div>
+          <div><strong>Playwright you own</strong><span>Readable, portable and reviewable in your repository.</span></div>
+        </div>
+
+        <section className={styles.plans}>
+          <div className={styles.shell}>
+            <header className={styles.sectionHeading}>
+              <h2>Start self-serve.<br /><span>Scale with proof.</span></h2>
+              <p>One engine, three software plans. Cloud allowances cover AI authoring and managed execution; the tests can keep running in your own pipeline.</p>
+            </header>
+            <VeritySelfServeCards inIndia={inIndia} />
+          </div>
+        </section>
+
+        <section className={styles.managed}>
+          <div className={`${styles.shell} ${styles.managedGrid}`}>
+            <div className={styles.managedCopy}>
+              <h2>Software when you want control.<span>An FDE when you want ownership.</span></h2>
+              <p>Managed Testing pairs Verity with a forward-deployed engineer who works inside your release rhythm. They do not hand you reports; they keep the verification system useful.</p>
+              <a href="https://qashifthq.com/managed-testing" className={styles.primary}>Explore FDE Managed Testing →</a>
+            </div>
+            <div className={styles.ownershipList}>
+              {OWNERSHIP.map(([number, title, state]) => (
+                <div key={number}><span>{number}</span><strong>{title}</strong><small>{state}</small></div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className={styles.comparisonSection}>
+          <div className={styles.shell}>
+            <h2>Know what you are buying.</h2>
+            <div className={styles.comparison}><Comparison /></div>
+          </div>
+        </section>
+
+        <section className={styles.securityNote}>
+          <div className={`${styles.shell} ${styles.securityGrid}`}>
+            <div className={styles.shield} aria-hidden>◇</div>
+            <div>
+              <h2>Your code and secrets can stay in your CI.</h2>
+              <p>Self-hosted execution keeps sensitive application access within your infrastructure, while Verity returns the verdict and retained evidence your team needs.</p>
+            </div>
+            <a href="https://qashifthq.com/security">Read security architecture →</a>
+          </div>
+        </section>
+
+        <section className={styles.faq}>
+          <div className={styles.shell}>
+            <h2>Questions, answered.</h2>
+            <div className={styles.faqGrid}>
+              {FAQ.map((item) => (
+                <article key={item.q}><h3>{item.q}</h3><p>{item.a}</p></article>
+              ))}
+            </div>
+          </div>
+        </section>
       </main>
-      <SiteFooter />
+      <LandingFooter />
     </div>
   );
 }
