@@ -101,6 +101,47 @@ const X_QUOTES = [
   },
 ] as const;
 
+const NAV_MENUS = {
+  Product: [
+    ["Verification engine", "Observe the product, author the suite, prove the release.", "#system"],
+    ["Coverage", "UI, API, visual, agent, performance and security.", "#coverage"],
+    ["Always On", "Merge gates, schedules and a complete run history.", "#always-on"],
+    ["Self-healing", "Repair selector drift without hiding product failures.", "#healing"],
+  ],
+  Solutions: [
+    ["Agentic coding", "Give every AI-authored change an independent verifier.", "#gap"],
+    ["Release teams", "Turn release confidence into inspectable evidence.", "#proof"],
+    ["Platform engineering", "Standardize verification without locking up the code.", "#stack"],
+    ["API quality", "Catch contract breaks across services before production.", "#coverage"],
+  ],
+  Developers: [
+    ["Documentation", "Set up Verity and run your first verification.", "/docs"],
+    ["MCP server", "Put product verification inside your coding agent.", "/mcp"],
+    ["GitHub App", "Run, review and gate from the pull request.", "/github"],
+    ["Execution options", "Run without limits on CI or use Verity Cloud.", "#runtime"],
+  ],
+} as const;
+
+const APP_LOGOS: Record<string, string> = {
+  "VS Code": "M23.15 2.587 18.21.21a1.494 1.494 0 0 0-1.705.29l-9.46 8.63-4.12-3.128a.999.999 0 0 0-1.276.057L.327 7.261A1 1 0 0 0 .326 8.74L3.899 12 .326 15.26a1 1 0 0 0 .001 1.479L1.65 17.94a.999.999 0 0 0 1.276.057l4.12-3.128 9.46 8.63a1.492 1.492 0 0 0 1.704.29l4.942-2.377A1.5 1.5 0 0 0 24 20.06V3.939a1.5 1.5 0 0 0-.85-1.352zm-5.146 14.861L10.826 12l7.178-5.448v10.896z",
+  Cursor: "M11.503.131 1.891 5.678a.84.84 0 0 0-.42.726v11.188c0 .3.162.575.42.724l9.609 5.55a1 1 0 0 0 .998 0l9.61-5.55a.84.84 0 0 0 .42-.724V6.404a.84.84 0 0 0-.42-.726L12.497.131a1.01 1.01 0 0 0-.996 0M2.657 6.338h18.55c.263 0 .43.287.297.515L12.23 22.918c-.062.107-.229.064-.229-.06V12.335a.59.59 0 0 0-.295-.51l-9.11-5.257c-.109-.063-.064-.23.061-.23",
+  GitHub: "M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12",
+  GitLab: "m23.6004 9.5927-.0337-.0862L20.3.9814a.851.851 0 0 0-.3362-.405.8748.8748 0 0 0-.9997.0539.8748.8748 0 0 0-.29.4399l-2.2055 6.748H7.5375l-2.2057-6.748a.8573.8573 0 0 0-.29-.4412.8748.8748 0 0 0-.9997-.0537.8585.8585 0 0 0-.3362.4049L.4332 9.5015l-.0325.0862a6.0657 6.0657 0 0 0 2.0119 7.0105l.0113.0087.03.0213 4.976 3.7264 2.462 1.8633 1.4995 1.1321a1.0085 1.0085 0 0 0 1.2197 0l1.4995-1.1321 2.4619-1.8633 5.006-3.7489.0125-.01a6.0682 6.0682 0 0 0 2.0094-7.003z",
+  Slack: "M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z",
+  Jira: "M11.571 11.513H0a5.218 5.218 0 0 0 5.232 5.215h2.13v2.057A5.215 5.215 0 0 0 12.575 24V12.518a1.005 1.005 0 0 0-1.005-1.005zm5.723-5.756H5.736a5.215 5.215 0 0 0 5.215 5.214h2.129v2.058a5.218 5.218 0 0 0 5.215 5.214V6.758a1.001 1.001 0 0 0-1.001-1.001zM23.013 0H11.455a5.215 5.215 0 0 0 5.215 5.215h2.129v2.057A5.215 5.215 0 0 0 24 12.483V1.005A1.001 1.001 0 0 0 23.013 0Z",
+  Playwright: "M23.996 7.462c-.056.837-.257 2.135-.716 3.85-.995 3.715-4.27 10.874-10.42 9.227-6.15-1.65-5.407-9.487-4.412-13.201.46-1.716.934-2.94 1.305-3.694.42-.853.846-.289 1.815.523.684.573 2.41 1.791 5.011 2.488 2.601.697 4.706.506 5.583.352 1.245-.219 1.897-.494 1.834.455Zm-9.807 3.863s-.127-1.819-1.773-2.286c-1.644-.467-2.613 1.04-2.613 1.04Zm4.058 4.539-7.769-2.172s.446 2.306 3.338 3.153c2.862.836 4.43-.98 4.43-.981Zm2.701-2.51s-.13-1.818-1.773-2.286c-1.644-.469-2.612 1.038-2.612 1.038ZM8.57 18.23c-4.749 1.279-7.261-4.224-8.021-7.08C.197 9.831.044 8.832.003 8.188c-.047-.73.455-.52 1.415-.354.677.118 2.3.261 4.308-.28a11.28 11.28 0 0 0 2.41-.956c-.058.197-.114.4-.17.61-.433 1.618-.827 4.055-.632 6.426-1.976.732-2.267 2.423-2.267 2.423l2.524-.715c.227 1.002.6 1.987 1.15 2.838a5.914 5.914 0 0 1-.171.049Zm-4.188-6.298c1.265-.333 1.363-1.631 1.363-1.631l-3.374.888s.745 1.076 2.01.743Z",
+  "Any MCP client": "M13.85 0a4.16 4.16 0 0 0-2.95 1.217L1.456 10.66a.835.835 0 0 0 0 1.18.835.835 0 0 0 1.18 0l9.442-9.442a2.49 2.49 0 0 1 3.541 0 2.49 2.49 0 0 1 0 3.541L8.59 12.97l-.1.1a.835.835 0 0 0 0 1.18.835.835 0 0 0 1.18 0l.1-.098 7.03-7.034a2.49 2.49 0 0 1 3.542 0l.049.05a2.49 2.49 0 0 1 0 3.54l-8.54 8.54a1.96 1.96 0 0 0 0 2.755l1.753 1.753a.835.835 0 0 0 1.18 0 .835.835 0 0 0 0-1.18l-1.753-1.753a.266.266 0 0 1 0-.394l8.54-8.54a4.185 4.185 0 0 0 0-5.9l-.05-.05a4.16 4.16 0 0 0-2.95-1.218c-.2 0-.401.02-.6.048a4.17 4.17 0 0 0-1.17-3.552A4.16 4.16 0 0 0 13.85 0m0 3.333a.84.84 0 0 0-.59.245L6.275 10.56a4.186 4.186 0 0 0 0 5.902 4.186 4.186 0 0 0 5.902 0L19.16 9.48a.835.835 0 0 0 0-1.18.835.835 0 0 0-1.18 0l-6.985 6.984a2.49 2.49 0 0 1-3.54 0 2.49 2.49 0 0 1 0-3.54l6.983-6.985a.835.835 0 0 0 0-1.18.84.84 0 0 0-.59-.245",
+};
+
+const APP_COLORS: Record<string, string> = {
+  "VS Code": "#23a8f2", Cursor: "#f5f5f0", GitHub: "#f5f5f0", GitLab: "#fc6d26",
+  Slack: "#e01e5a", Jira: "#2684ff", Playwright: "#45ba63", "Any MCP client": "#f5f5f0",
+};
+
+function AppLogo({ name }: { name: string }) {
+  return <div className={styles.appLogo} style={{ color: APP_COLORS[name] }}><svg viewBox="0 0 24 24" role="img" aria-label={`${name} logo`}><path d={APP_LOGOS[name]} /></svg></div>;
+}
+
 function Arrow({ down = false }: { down?: boolean }) {
   return (
     <svg viewBox="0 0 20 20" aria-hidden className={down ? styles.arrowDown : styles.arrow}>
@@ -181,33 +222,73 @@ function ReleaseConsole() {
 }
 
 function LandingNav() {
-  const [scrolled, setScrolled] = useState(false);
   const [authed, setAuthed] = useState(false);
-  const { scrollY } = useScroll();
+  const [openMenu, setOpenMenu] = useState<keyof typeof NAV_MENUS | null>(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  useMotionValueEvent(scrollY, "change", (value) => setScrolled(value > 32));
   useEffect(() => {
     createClient().auth.getUser().then(({ data }) => setAuthed(Boolean(data.user)));
   }, []);
 
   return (
-    <header className={`${styles.nav} ${scrolled ? styles.navScrolled : ""}`}>
+    <header className={styles.nav}>
       <div className={styles.navInner}>
         <Link href="/" className={styles.navLogo} aria-label="Verity home"><Logo /></Link>
         <nav aria-label="Primary navigation">
-          <a href="#system">System</a>
-          <a href="#coverage">Coverage</a>
-          <a href="#proof">Proof</a>
-          <Link href="/docs">Docs</Link>
-          <Link href="/pricing">Pricing</Link>
+          {(Object.keys(NAV_MENUS) as Array<keyof typeof NAV_MENUS>).map((label) => (
+            <button
+              type="button"
+              key={label}
+              aria-expanded={openMenu === label}
+              onMouseEnter={() => setOpenMenu(label)}
+              onClick={() => setOpenMenu(openMenu === label ? null : label)}
+            >
+              {label}<span>⌄</span>
+            </button>
+          ))}
+          <Link href="/pricing" onMouseEnter={() => setOpenMenu(null)}>Pricing</Link>
+          <a href="https://qashifthq.com/about" onMouseEnter={() => setOpenMenu(null)}>About</a>
         </nav>
         <div className={styles.navActions}>
           {!authed && <Link href="/login" className={styles.signIn}>Sign in</Link>}
           <Link href={authed ? "/dashboard" : "/login?next=/dashboard"} className={styles.navCta}>
             {authed ? "Open dashboard" : "Start free"}<Arrow />
           </Link>
+          <button className={styles.mobileToggle} type="button" aria-label="Toggle navigation" aria-expanded={mobileOpen} onClick={() => setMobileOpen(!mobileOpen)}>
+            <i /><i />
+          </button>
         </div>
       </div>
+      <AnimatePresence>
+        {openMenu && (
+          <motion.div className={styles.megaMenu} onMouseLeave={() => setOpenMenu(null)} initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: .18 }}>
+            <div className={styles.megaInner}>
+              <div className={styles.megaIntro}>
+                <span>{openMenu}</span>
+                <strong>{openMenu === "Product" ? "Verification that produces evidence, not another dashboard." : openMenu === "Solutions" ? "Built for teams whose shipping speed outgrew manual QA." : "Own the tests. Run them wherever your team works."}</strong>
+              </div>
+              <div className={styles.megaLinks}>
+                {NAV_MENUS[openMenu].map(([title, copy, href]) => (
+                  <Link key={title} href={href} onClick={() => setOpenMenu(null)}>
+                    <strong>{title}</strong><span>{copy}</span><Arrow />
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div className={styles.mobileMenu} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
+            <a href="#system" onClick={() => setMobileOpen(false)}>Product</a>
+            <a href="#gap" onClick={() => setMobileOpen(false)}>Solutions</a>
+            <a href="#stack" onClick={() => setMobileOpen(false)}>Developers</a>
+            <Link href="/pricing" onClick={() => setMobileOpen(false)}>Pricing</Link>
+            <a href="https://qashifthq.com/about">About</a>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 }
@@ -229,7 +310,7 @@ function RevealBlock({ children, className = "", delay = 0 }: { children: React.
 function CustomerRail() {
   return (
     <section className={styles.customerRail} aria-label="Teams using Verity and QAShift">
-      <div className={styles.railLabel}><span>LIVE CUSTOMER NETWORK</span><b>08 COMPANIES SHOWN</b></div>
+      <div className={styles.railLabel}><span>Trusted in production by teams at</span></div>
       <div className={styles.logoViewport}>
         <div className={styles.logoTrack}>
           {[...CUSTOMERS, ...CUSTOMERS].map(([name, src], index) => (
@@ -246,38 +327,45 @@ function CustomerRail() {
 }
 
 function GapSection() {
-  const alerts = [
-    ["PR #842", "Coding agent marked checkout complete", "UNVERIFIED"],
+  const signals = [
+    ["AGENT", "Checkout marked complete without a browser run", "UNVERIFIED"],
+    ["RELEASE", "One change broke fourteen passing journeys", "REGRESSION"],
     ["STAGING", "Payment confirmation returned a blank state", "REAL BUG"],
-    ["TEST RUN", "Selector drifted after navigation redesign", "REPAIRED"],
-    ["RELEASE", "One change touched fourteen critical journeys", "MAPPED"],
+    ["PR #842", "The tests passed. The product never opened.", "FALSE DONE"],
+    ["SELECTOR", "Navigation refactor moved the submit action", "DRIFT"],
+  ] as const;
+
+  const costs = [
+    ["01", "The tests that would catch it do not exist.", "End-to-end coverage is the work that loses to the next feature. The code ships faster; confidence falls further behind."],
+    ["02", "“Done” is not evidence.", "A closed ticket, a green unit suite, or an agent summary cannot prove that a real customer journey still works."],
+    ["03", "One change breaks what worked yesterday.", "Verity replays the running product so regressions surface in the release—not in a customer support queue."],
   ] as const;
 
   return (
-    <section className={styles.gapSection}>
+    <section id="gap" className={styles.gapSection}>
       <div className={styles.sectionShell}>
         <RevealBlock className={styles.gapHeading}>
-          <div className={styles.sectionCode}>02 / THE VERIFICATION GAP</div>
-          <h2>Your coding agent says <em>done.</em><br />Verity asks for evidence.</h2>
+          <h2>Code ships in hours.<br /><em>Proof still arrives late.</em></h2>
+          <p>AI removed the bottleneck from writing code. It did not remove the need to open the product, follow the journey, and prove the outcome.</p>
         </RevealBlock>
-        <div className={styles.alertStack}>
-          {alerts.map(([source, message, verdict], index) => (
-            <motion.div
-              key={source}
-              className={styles.alertRow}
-              initial={{ opacity: 0, x: index % 2 ? 55 : -55 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, amount: .55 }}
-              transition={{ duration: .62, delay: index * .08 }}
-            >
+      </div>
+      <div className={styles.gapTicker}>
+        <div className={styles.gapTickerTrack}>
+          {[...signals, ...signals].map(([source, message, verdict], index) => (
+            <div className={styles.gapSignal} key={`${source}-${index}`} aria-hidden={index >= signals.length}>
               <span>{source}</span><strong>{message}</strong><b>{verdict}</b>
-            </motion.div>
+            </div>
           ))}
         </div>
-        <RevealBlock className={styles.gapStatement}>
-          <span>THE COST OF A FALSE “DONE”</span>
-          <p>AI can produce a feature in an afternoon. If nobody drives the running product afterward, speed just moves the regression closer to your customer.</p>
-        </RevealBlock>
+      </div>
+      <div className={styles.sectionShell}>
+        <div className={styles.gapCards}>
+          {costs.map(([number, title, copy], index) => (
+            <motion.article key={number} initial={{ opacity: 0, y: 28 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: .45 }} transition={{ delay: index * .08 }}>
+              <span>{number}</span><div className={styles.gapIcon}>{index === 0 ? "⌁" : index === 1 ? "×" : "↘"}</div><h3>{title}</h3><p>{copy}</p>
+            </motion.article>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -285,12 +373,11 @@ function GapSection() {
 
 function StatsSection() {
   return (
-    <section className={styles.statsSection}>
+    <section id="numbers" className={styles.statsSection}>
       <div className={styles.sectionShell}>
         <RevealBlock className={styles.statsHeader}>
           <div>
-            <div className={styles.sectionCode}>03 / BY THE NUMBERS</div>
-            <h2>Weeks of test authoring.<br /><span>Minutes to evidence.</span></h2>
+            <h2>Three weeks,<br /><span>or ten minutes.</span></h2>
           </div>
           <p>Verification should move at the speed of the team writing the code. Verity turns live behavior into a suite, then keeps that suite moving with every release.</p>
         </RevealBlock>
@@ -299,8 +386,8 @@ function StatsSection() {
             <motion.div
               key={value}
               className={styles.stat}
-              initial={{ opacity: 0, clipPath: "inset(0 100% 0 0)" }}
-              whileInView={{ opacity: 1, clipPath: "inset(0 0% 0 0)" }}
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: .5 }}
               transition={{ duration: .75, delay: index * .09 }}
             >
@@ -366,7 +453,6 @@ function SystemStory() {
     <section ref={sectionRef} id="system" className={styles.systemSection}>
       <div className={styles.sectionShell}>
         <RevealBlock className={styles.systemHeading}>
-          <div className={styles.sectionCode}>04 / ONE VERIFICATION LOOP</div>
           <h2>From live behavior<br />to owned evidence.</h2>
         </RevealBlock>
         <div className={styles.systemGrid}>
@@ -392,7 +478,6 @@ function CoverageSection() {
       <div className={styles.sectionShell}>
         <RevealBlock className={styles.coverageHeading}>
           <div>
-            <div className={styles.sectionCode}>05 / COVER THE RELEASE SURFACE</div>
             <h2>One system for every<br />layer that can break.</h2>
           </div>
           <p>No stitched-together vendor stack. Every discipline maps into one run history, one risk model, and one verdict your team can understand.</p>
@@ -411,11 +496,10 @@ function CoverageSection() {
 
 function OwnershipSection() {
   return (
-    <section className={styles.ownershipSection}>
+    <section id="healing" className={styles.ownershipSection}>
       <div className={styles.sectionShell}>
         <div className={styles.ownershipGrid}>
           <RevealBlock className={styles.ownershipCopy}>
-            <div className={styles.sectionCode}>06 / THE SUITE STAYS ALIVE</div>
             <h2>Self-healing without hiding the bug.</h2>
             <p>When the interface moves, Verity proposes the smallest grounded repair, reruns it, and keeps a human in control. Product failures stay failures.</p>
             <ul>
@@ -438,12 +522,120 @@ function OwnershipSection() {
   );
 }
 
+function AlwaysOnSection() {
+  const modes = [
+    {
+      title: "Every merge",
+      headline: "A gate, not a report.",
+      copy: "Every pull request is checked against the journeys it can affect. The verdict lands where the review already happens.",
+      visual: <div className={styles.mergeVisual}><span>PR #1284 · checkout-refactor</span><strong><i /> Verity verified 42 journeys</strong><small>Required check · ready to merge</small></div>,
+    },
+    {
+      title: "Every night",
+      headline: "Re-verified on your cadence.",
+      copy: "Run hourly, nightly, weekly, or before a release. Quiet breakage surfaces on its own instead of during the demo.",
+      visual: <div className={styles.cadenceVisual}>{["M", "T", "W", "T", "F", "S", "S"].map((day, index) => <span className={index < 5 ? styles.dayActive : ""} key={`${day}-${index}`}>{day}</span>)}<b>02:00 / nightly</b></div>,
+    },
+    {
+      title: "Every run kept",
+      headline: "History that does not disappear.",
+      copy: "Verdict, replay and trigger are retained together, so you can see exactly when a journey changed and why.",
+      visual: <div className={styles.historyVisual}><span><i /> Release 1284 <b>VERIFIED</b></span><span><i /> Nightly 06 Sep <b>VERIFIED</b></span><span><i /> PR #1278 <b>REPAIRED</b></span></div>,
+    },
+  ];
+
+  return (
+    <section id="always-on" className={styles.alwaysSection}>
+      <div className={styles.sectionShell}>
+        <RevealBlock className={styles.alwaysHeading}>
+          <h2>It keeps running<br /><span>after you close the tab.</span></h2>
+          <p>A verifier that runs only when someone remembers protects nothing. Give Verity a schedule and a merge gate.</p>
+        </RevealBlock>
+        <div className={styles.alwaysGrid}>
+          {modes.map((mode, index) => (
+            <motion.article key={mode.title} initial={{ opacity: 0, y: 28 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: .35 }} transition={{ delay: index * .08 }}>
+              <span>{mode.title}</span><h3>{mode.headline}</h3><p>{mode.copy}</p>{mode.visual}
+            </motion.article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function StackSection() {
+  const integrations = ["VS Code", "Cursor", "GitHub", "GitLab", "Slack", "Jira", "Playwright", "Any MCP client"];
+
+  return (
+    <section id="stack" className={styles.stackSection}>
+      <div className={styles.sectionShell}>
+        <RevealBlock className={styles.stackHeading}>
+          <h2>Bring Verity into<br />the stack you already use.</h2>
+          <p>Call the verifier from your agent, terminal, pull request, or delivery pipeline. The same suite and evidence follow the release everywhere.</p>
+        </RevealBlock>
+        <div className={styles.stackGrid}>
+          <RevealBlock className={styles.mcpConsole}>
+            <div className={styles.mcpTabs}><b>MCP server</b><span>CLI</span><span>CI/CD</span><span>IDEs</span></div>
+            <div className={styles.mcpFile}><span>mcp.json</span><b>CONNECTED</b></div>
+            <pre><code>{`{
+  "mcpServers": {
+    "verity": {
+      "command": "npx",
+      "args": ["-y", "@verity/mcp"],
+      "env": { "VERITY_API_KEY": "your_key" }
+    }
+  }
+}`}</code></pre>
+            <div className={styles.mcpPrompt}><span>›</span><p>Verify checkout against the current branch and return release evidence.</p><b>RUNNING</b></div>
+          </RevealBlock>
+          <RevealBlock className={styles.integrationPanel} delay={.1}>
+            <div className={styles.integrationTop}><span>Works where your team works</span><b>08 CONNECTORS</b></div>
+            <div className={styles.integrationGrid}>
+              {integrations.map((name, index) => <div key={name}><AppLogo name={name} /><strong>{name}</strong><span>{index < 4 ? "AUTHOR" : "REPORT"}</span></div>)}
+            </div>
+          </RevealBlock>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function RuntimeSection() {
+  return (
+    <section id="runtime" className={styles.runtimeSection}>
+      <div className={styles.sectionShell}>
+        <RevealBlock className={styles.runtimeHeading}>
+          <h2>Your tests. Your choice of where they run.</h2>
+          <p>Keep execution on your infrastructure, or let Verity Cloud handle it. Move between both without rewriting the suite.</p>
+        </RevealBlock>
+        <div className={styles.runtimeGrid}>
+          <RevealBlock className={styles.runtimeCard}>
+            <div className={styles.runtimeSymbol}>∞</div>
+            <span>YOUR INFRASTRUCTURE</span>
+            <h3>Unlimited on your CI.</h3>
+            <p>Run as many tests as your own runners can handle. Ideal for active development, merge gates and private environments.</p>
+            <ul><li>Playwright stays in your repository</li><li>No per-run Verity limit</li><li>Works with existing CI secrets and networks</li></ul>
+            <Link href="/docs">View CI setup <Arrow /></Link>
+          </RevealBlock>
+          <RevealBlock className={`${styles.runtimeCard} ${styles.runtimeCloud}`} delay={.1}>
+            <div className={styles.runtimeSymbol}>◌</div>
+            <span>VERITY INFRASTRUCTURE</span>
+            <h3>Metered on Verity Cloud.</h3>
+            <p>Use managed browsers when you want zero runner maintenance. Included runs get you started; scale when the team is ready.</p>
+            <ul><li>Managed browsers and evidence storage</li><li>Parallel execution without runner setup</li><li>Clear usage before you scale</li></ul>
+            <Link href="/pricing">See cloud pricing <Arrow /></Link>
+          </RevealBlock>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function CustomerProof() {
   return (
     <section id="proof" className={styles.proofSection}>
       <div className={styles.sectionShell}>
         <RevealBlock className={styles.proofHeading}>
-          <div className={styles.sectionCode}>07 / CUSTOMER PROOF</div>
           <h2>Teams that ship often<br />need evidence they trust.</h2>
           <p>Customer stories from the QAShift platform.</p>
         </RevealBlock>
@@ -463,7 +655,7 @@ function CustomerProof() {
 
         <RevealBlock className={styles.xHeading}>
           <div className={styles.xMark}>𝕏</div>
-          <span>BUILDERS ON X / THE VERIFICATION GAP IN THEIR WORDS</span>
+          <span>Builders on X, on the verification gap</span>
         </RevealBlock>
         <div className={styles.xGrid}>
           {X_QUOTES.map((item, index) => (
@@ -485,7 +677,6 @@ function FinalCta() {
       <motion.div className={styles.finalBeam} animate={{ x: ["-25%", "115%"] }} transition={{ duration: 8, repeat: Infinity, ease: "linear" }} aria-hidden />
       <div className={styles.sectionShell}>
         <RevealBlock className={styles.finalInner}>
-          <div className={styles.sectionCode}>08 / YOUR NEXT RELEASE</div>
           <h2>Show Verity the product.<br /><span>Get the test and the proof.</span></h2>
           <p>Start with a URL. Keep the Playwright. Know what changed before a customer has to tell you.</p>
           <div className={styles.finalActions}>
@@ -500,7 +691,7 @@ function FinalCta() {
 
 function LandingFooter() {
   return (
-    <footer className={styles.footer}>
+    <footer id="footer" className={styles.footer}>
       <div className={styles.sectionShell}>
         <div className={styles.footerTop}>
           <div><Logo /><p>Product verification you can run, inspect, and own. A QAShift product.</p></div>
@@ -510,6 +701,7 @@ function LandingFooter() {
             <div><span>COMPANY</span><a href="https://qashifthq.com/about">About</a><a href="https://qashifthq.com/contact">Contact</a><a href="https://qashifthq.com/security">Security</a></div>
           </div>
         </div>
+        <div className={styles.footerWordmark} aria-hidden>Verity</div>
         <div className={styles.footerBottom}><span>© {new Date().getFullYear()} VERITY / QASHIFT</span><span>BUILT IN BENGALURU · TESTS STAY IN YOUR GITHUB</span></div>
       </div>
     </footer>
@@ -533,14 +725,6 @@ export function LandingExperience() {
           <div className={styles.heroNoise} aria-hidden />
           <div className={styles.heroBeam} aria-hidden />
           <motion.div className={styles.heroCopy} style={{ y: copyY, opacity }}>
-            <motion.div
-              className={styles.kicker}
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <span>01</span> PRODUCT VERIFICATION FOR TEAMS THAT SHIP DAILY
-            </motion.div>
             <motion.h1
               initial={{ opacity: 0, y: 34 }}
               animate={{ opacity: 1, y: 0 }}
@@ -589,6 +773,9 @@ export function LandingExperience() {
         <SystemStory />
         <CoverageSection />
         <OwnershipSection />
+        <AlwaysOnSection />
+        <StackSection />
+        <RuntimeSection />
         <CustomerProof />
         <FinalCta />
       </main>
