@@ -19,7 +19,8 @@
  * Env: VERITY_API_URL, VERITY_INGEST_TOKEN, VERITY_PR_NUMBER
  */
 import { execFileSync } from "node:child_process";
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, mkdtempSync, chmodSync } from "node:fs";
+import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 
 /* --------------------------- arg parsing --------------------------- */
@@ -77,6 +78,16 @@ function readReport() {
 
 const tmp = process.env.RUNNER_TEMP || process.env.TMPDIR || "/tmp";
 const reportId = randomUUID();
+/**
+ * Containerized tools run as a non-root user (ZAP and Schemathesis are uid 1000),
+ * which cannot write into a CI checkout owned by the runner user. Give each run
+ * its own world-writable output dir instead of writing into the customer's repo.
+ */
+function containerOutDir() {
+  const dir = mkdtempSync(join(tmp, "verity-"));
+  chmodSync(dir, 0o777);
+  return dir;
+}
 function sh(file, args, env = {}) {
   // Tools may exit non-zero when they find issues; we still want their report.
   try { execFileSync(file, args, { stdio: "inherit", env: { ...process.env, ...env } }); } catch { /* keep going */ }
@@ -131,22 +142,24 @@ function runEngine() {
     case "security-sast": {
       let targets = ".";
       if (tier === "fast") {
-        const changed = git(["diff", "--name-only", `${base}...HEAD`]).split("\n").filter(Boolean);
+        // Exclude deleted files: the scanner errors on a path that no longer exists.
+        const changed = git(["diff", "--name-only", "--diff-filter=d", `${base}...HEAD`]).split("\n").filter(Boolean);
         targets = changed.length ? changed : ["."];
       }
       sh("docker", ["run", "--rm", "-v", `${process.cwd()}:/src`, "-w", "/src", "semgrep/semgrep:latest", "semgrep", "scan", "--config=auto", "--json", `--output=/src/.verity-sast-${reportId}.json`, ...targets]);
       return `${process.cwd()}/.verity-sast-${reportId}.json`;
     }
     case "security-dast": {
-      const out = `${process.cwd()}/.verity-dast-${reportId}.json`;
+      const dir = containerOutDir();
       const script = tier === "fast" ? "zap-baseline.py" : "zap-full-scan.py";
-      sh("docker", ["run", "--rm", "-v", `${process.cwd()}:/zap/wrk:rw`, "ghcr.io/zaproxy/zaproxy:stable", script, "-t", target, "-J", `.verity-dast-${reportId}.json`]);
-      return out;
+      // Host network so a target started in the same CI job (localhost) is reachable.
+      sh("docker", ["run", "--rm", "--network", "host", "-v", `${dir}:/zap/wrk:rw`, "ghcr.io/zaproxy/zaproxy:stable", script, "-t", target, "-J", "report.json"]);
+      return join(dir, "report.json");
     }
     case "contract": {
-      const out = `${process.cwd()}/.verity-contract-${reportId}.xml`;
-      sh("docker", ["run", "--rm", "-v", `${process.cwd()}:/src`, "-w", "/src", "schemathesis/schemathesis:stable", "run", spec, "--url", target, "--report", "junit", "--report-junit-path", `/src/.verity-contract-${reportId}.xml`]);
-      return out;
+      const dir = containerOutDir();
+      sh("docker", ["run", "--rm", "--network", "host", "-v", `${process.cwd()}:/src:ro`, "-v", `${dir}:/out:rw`, "-w", "/src", "schemathesis/schemathesis:stable", "run", spec, "--url", target, "--report", "junit", "--report-junit-path", "/out/report.xml"]);
+      return join(dir, "report.xml");
     }
     default:
       return "";
@@ -162,6 +175,14 @@ function xattr(tag, name) {
   const m = tag.match(new RegExp(`${name}\\s*=\\s*"([^"]*)"`, "i"));
   return m ? decodeXml(m[1]) : undefined;
 }
+function junitErrorDetail(body) {
+  // eslint-disable-next-line no-control-regex
+  const text = decodeXml(body.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")).replace(/\u001b\[[0-9;]*m/g, "");
+  const i = text.search(/^\s*Error:/m);
+  if (i === -1) return null;
+  const detail = text.slice(i).trim();
+  return detail.length > 2000 ? `${detail.slice(0, 2000)}…` : detail;
+}
 function parseJUnit(xml) {
   const cases = [];
   if (!xml) return cases;
@@ -169,10 +190,13 @@ function parseJUnit(xml) {
   let m;
   while ((m = re.exec(xml)) !== null) {
     const attrs = m[1], body = m[3] ?? "";
-    const fail = body.match(/<(failure|error)\b([^>]*)(\/>|>([\s\S]*?)<\/(?:failure|error)>)/i);
+    // Several <failure>s per case are possible (Schemathesis: one per problem); keep all.
+    const fails = [...body.matchAll(/<(failure|error)\b([^>]*)(\/>|>([\s\S]*?)<\/(?:failure|error)>)/gi)];
+    const fail = fails[0];
     const skipped = /<skipped\b/i.test(body);
     let failureMessage = null;
-    if (fail) failureMessage = xattr(fail[2], "message") || (fail[4] ? decodeXml(fail[4].trim()) : "") || "Failed";
+    // Playwright's message attr is only "file:line title"; prefer the real error from the body.
+    if (fail) failureMessage = fails.map(f => junitErrorDetail(f[4] ?? "") || xattr(f[2], "message") || (f[4] ? decodeXml(f[4].trim()) : "") || "Failed").join("\n\n");
     const t = xattr(attrs, "time");
     cases.push({ name: xattr(attrs, "name") ?? "case", classname: xattr(attrs, "classname"), time: t ? Number(t) : undefined, ok: !fail && !skipped, failureMessage, skipped });
   }

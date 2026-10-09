@@ -57,6 +57,21 @@ function attr(tag: string, name: string): string | undefined {
  * (`--junit-xml`) and the agent-eval runner. A `<testcase>` is a failure if it
  * contains a `<failure>` or `<error>` child; skipped if it contains `<skipped>`.
  */
+/**
+ * Extract the assertion error from a JUnit failure body: unwrap CDATA, drop ANSI
+ * colour codes, and keep everything from the first "Error:" line. Returns null
+ * when the body carries no such line (the message attribute is used instead).
+ */
+export function junitErrorDetail(body: string): string | null {
+  const text = decodeXmlEntities(body.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1"))
+    // eslint-disable-next-line no-control-regex
+    .replace(/\u001b\[[0-9;]*m/g, "");
+  const i = text.search(/^\s*Error:/m);
+  if (i === -1) return null;
+  const detail = text.slice(i).trim();
+  return detail.length > 2000 ? `${detail.slice(0, 2000)}…` : detail;
+}
+
 export function parseJUnit(xml: string): JUnitCase[] {
   const cases: JUnitCase[] = [];
   if (!xml) return cases;
@@ -66,14 +81,22 @@ export function parseJUnit(xml: string): JUnitCase[] {
   while ((m = re.exec(xml)) !== null) {
     const attrs = m[1];
     const body = m[3] ?? "";
-    const failMatch = body.match(/<(failure|error)\b([^>]*)(\/>|>([\s\S]*?)<\/(?:failure|error)>)/i);
+    // A case can carry several <failure>s (Schemathesis emits one per distinct
+    // problem on an operation); keep them all, not just the first.
+    const fails = [...body.matchAll(/<(failure|error)\b([^>]*)(\/>|>([\s\S]*?)<\/(?:failure|error)>)/gi)];
+    const failMatch = fails[0];
     const skipped = /<skipped\b/i.test(body);
     let failureMessage: string | null = null;
     if (failMatch) {
-      failureMessage =
-        attr(failMatch[2], "message") ||
-        (failMatch[4] ? decodeXmlEntities(failMatch[4].trim()) : "") ||
-        "Failed";
+      // Playwright's message attribute is only "file:line title"; the real
+      // assertion error lives in the (CDATA) body. Prefer it when present.
+      failureMessage = fails
+        .map((f) =>
+          junitErrorDetail(f[4] ?? "") ||
+          attr(f[2], "message") ||
+          (f[4] ? decodeXmlEntities(f[4].trim()) : "") ||
+          "Failed")
+        .join("\n\n");
     }
     const timeStr = attr(attrs, "time");
     cases.push({
