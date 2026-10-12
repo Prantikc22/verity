@@ -15,11 +15,15 @@
  * Usage:
  *   node verity-engines.mjs <engine> --tier <fast|full> --report <file> [opts]
  *     engine ∈ visual | agent | perf | lighthouse | security-dast | security-sast | contract
+ *   agent: runs eval specs under --evals-dir and/or the eval suite (--suite,
+ *          default <evals-dir>/verity.evals.yaml), repeated --repeat times
+ *          (fast 1, full 3). AI-graded checks need VERITY_GRADER_API_KEY
+ *          (+ optional VERITY_GRADER_BASE_URL / VERITY_GRADER_MODEL).
  *
  * Env: VERITY_API_URL, VERITY_INGEST_TOKEN, VERITY_PR_NUMBER
  */
 import { execFileSync } from "node:child_process";
-import { readFileSync, existsSync, mkdtempSync, chmodSync } from "node:fs";
+import { readFileSync, existsSync, mkdtempSync, chmodSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 
@@ -42,6 +46,15 @@ const config = arg("config", process.env.VERITY_PERF_CONFIG ?? "");
 const snapshotsDir = arg("snapshots-dir", process.env.VERITY_VISUAL_SNAPSHOTS_DIR ?? "tests/verity/visual");
 const evalsDir = arg("evals-dir", process.env.VERITY_AGENT_EVALS_DIR ?? "tests/verity/agent");
 const endpoint = arg("endpoint", process.env.AGENT_ENDPOINT ?? "");
+// Agent eval suite (scored, multi-case). Optional; runs alongside any eval specs.
+const suitePath = arg("suite", process.env.VERITY_AGENT_SUITE ?? `${evalsDir}/verity.evals.yaml`);
+// Replies vary: Full regression asks each case 3x so inconsistency reads as flaky.
+const repeat = Math.max(1, Math.min(10, Number(arg("repeat", process.env.VERITY_AGENT_REPEAT ?? (tier === "full" ? "3" : "1"))) || 1));
+const graderKey = process.env.VERITY_GRADER_API_KEY ?? "";
+const graderBaseUrl = process.env.VERITY_GRADER_BASE_URL ?? "";
+const graderModel = process.env.VERITY_GRADER_MODEL || "gpt-4o-mini";
+// Pinned open-source eval engine (MIT). Run as a CLI subprocess; never named to customers.
+const EVAL_ENGINE = "promptfoo@0.123.1";
 const base = arg("base", "origin/main");
 // k6 load profile. Defaults from the tier: fast ⇒ smoke, full ⇒ load.
 const PERF_PROFILES = ["smoke", "load", "stress", "spike", "soak", "breakpoint"];
@@ -108,13 +121,6 @@ function runEngine() {
       sh("npx", ["--yes", "playwright", "test", snapshotsDir, "--reporter=junit"], { PLAYWRIGHT_JUNIT_OUTPUT_NAME: out });
       return out;
     }
-    case "agent": {
-      // Agent evals are Playwright API tests that assert a property of the AI
-      // endpoint's reply; the endpoint is passed through to them via env.
-      const out = `${tmp}/verity-agent-${reportId}.xml`;
-      sh("npx", ["--yes", "playwright", "test", evalsDir, "--reporter=junit"], { AGENT_ENDPOINT: endpoint, PLAYWRIGHT_JUNIT_OUTPUT_NAME: out });
-      return out;
-    }
     case "perf": {
       const out = `${tmp}/verity-perf-${reportId}.json`;
       const cfg = config || `tests/verity/perf/${tier === "fast" ? "smoke" : "load"}.yml`;
@@ -164,6 +170,81 @@ function runEngine() {
     default:
       return "";
   }
+}
+
+/**
+ * Agent evals have two optional sources, merged into ONE agent run:
+ *  - Playwright eval specs under evalsDir (*.spec.ts) → JUnit
+ *  - the scored eval suite (verity.evals.yaml) → eval-engine JSON
+ * With --report, adapt that one file instead (.json = suite, else JUnit).
+ */
+function hasEvalSpecs(dir) {
+  try {
+    return readdirSync(dir, { recursive: true }).some((f) => /\.(spec|test)\.[cm]?[jt]s$/.test(String(f)));
+  } catch { return false; }
+}
+function runEvalSuite(cfg) {
+  if (!endpoint) throw new Error("The agent eval suite needs your AI endpoint: set agent-endpoint (AGENT_ENDPOINT).");
+  const out = `${tmp}/verity-agent-suite-${reportId}.json`;
+  const env = {
+    AGENT_ENDPOINT: endpoint,
+    PROMPTFOO_DISABLE_TELEMETRY: "1", PROMPTFOO_DISABLE_UPDATE: "1", PROMPTFOO_DISABLE_SHARING: "1",
+    PROMPTFOO_DISABLE_REMOTE_GENERATION: "1",
+    // Bounded: an unreachable endpoint otherwise retries for many minutes.
+    PROMPTFOO_REQUEST_BACKOFF_MS: process.env.PROMPTFOO_REQUEST_BACKOFF_MS ?? "1000",
+    REQUEST_TIMEOUT_MS: process.env.REQUEST_TIMEOUT_MS ?? "60000",
+    PROMPTFOO_EVAL_TIMEOUT_MS: process.env.PROMPTFOO_EVAL_TIMEOUT_MS ?? "180000",
+  };
+  const args = ["eval", "-c", cfg, "-o", out, "--repeat", String(repeat), "--no-cache", "--no-progress-bar", "--no-table", "--no-share"];
+  if (/type:\s*["']?llm-rubric/.test(readFileSync(cfg, "utf8"))) {
+    if (!graderKey) throw new Error("This eval suite has AI-graded checks: set grader-api-key (VERITY_GRADER_API_KEY), or remove the llm-rubric assertions.");
+    env.OPENAI_API_KEY = graderKey;
+    if (graderBaseUrl) env.OPENAI_BASE_URL = graderBaseUrl;
+    args.push("--grader", `openai:chat:${graderModel}`);
+  }
+  // The engine needs Node >= 22.22; on older CI Node, fetch a matching Node via npx.
+  const [maj, min] = process.versions.node.split(".").map(Number);
+  const modern = maj > 22 || (maj === 22 && min >= 22);
+  sh("npx", modern ? ["--yes", EVAL_ENGINE, ...args] : ["--yes", "-p", "node@22", "-p", EVAL_ENGINE, "--", "promptfoo", ...args], env);
+  return out;
+}
+function runAgent() {
+  const sources = [];
+  if (reportPath) sources.push({ kind: reportPath.endsWith(".json") ? "suite" : "junit", path: reportPath });
+  else {
+    if (hasEvalSpecs(evalsDir)) {
+      // Playwright API tests asserting a property of the AI endpoint's reply.
+      const out = `${tmp}/verity-agent-${reportId}.xml`;
+      sh("npx", ["--yes", "playwright", "test", evalsDir, "--reporter=junit"], { AGENT_ENDPOINT: endpoint, PLAYWRIGHT_JUNIT_OUTPUT_NAME: out });
+      sources.push({ kind: "junit", path: out });
+    }
+    if (existsSync(suitePath)) sources.push({ kind: "suite", path: runEvalSuite(suitePath) });
+    if (!sources.length) throw new Error(`No agent evals found: add eval specs under ${evalsDir} or the eval suite at ${suitePath}.`);
+  }
+  const results = [];
+  for (const src of sources) {
+    if (!existsSync(src.path)) throw new Error(`Agent eval report not produced: ${src.path}`);
+    const text = readFileSync(src.path, "utf8");
+    if (src.kind === "junit") { results.push(...adaptAgentEval(text)); continue; }
+    const report = JSON.parse(text);
+    const rows = report.results?.results ?? [];
+    // Every case failed to get a reply ⇒ the endpoint is down/unauthorized: an
+    // execution failure, never a verdict on the model.
+    if (rows.length && rows.every(isAgentSuiteEndpointError)) {
+      const r = rows[0], status = r.response?.metadata?.http?.status;
+      throw new Error(`AI endpoint gave no usable reply${status ? ` (HTTP ${status})` : ""}: ${r.error || r.response?.error || "no output"}. Check agent-endpoint / agent-token.`);
+    }
+    // The engine aborts on a non-transient target error (401/403/404) and writes
+    // only the rows finished so far; a cut-short run is never a verdict.
+    const cases = Array.isArray(report.config?.tests) ? report.config.tests.length : 0;
+    if (!reportPath && cases && rows.length < cases * repeat) {
+      const bad = rows.find(isAgentSuiteEndpointError), status = bad?.response?.metadata?.http?.status;
+      throw new Error(`Agent eval suite was cut short (${rows.length} of ${cases * repeat} runs)${bad ? `: endpoint error${status ? ` HTTP ${status}` : ""} — ${bad.error || "no reply"}` : ""}. Check agent-endpoint / agent-token.`);
+    }
+    results.push(...adaptAgentSuite(report, reportPath ? "tests/verity/agent/verity.evals.yaml" : suitePath));
+  }
+  if (!results.length) throw new Error("No executed test cases in engine report.");
+  return results;
 }
 
 /* ----------------- vendored adapters (mirror core) ----------------- */
@@ -230,6 +311,39 @@ function adaptAgentEval(xml) {
     error_message: c.ok ? null : c.failureMessage ?? "Agent eval failed",
     discipline: "agent", engine: "llm-eval",
   }));
+}
+function isAgentSuiteEndpointError(r) {
+  if (r.success === true) return false;
+  if (r.failureReason === 2) return true;
+  return r.response?.output == null && Boolean(r.error || r.response?.error);
+}
+function suiteSlug(s) { return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80) || "case"; }
+function adaptAgentSuite(report, path) {
+  const byCase = new Map();
+  for (const r of report?.results?.results ?? []) {
+    const key = r.testCase?.description || (r.vars ? JSON.stringify(r.vars) : `case ${r.testIdx ?? byCase.size}`);
+    (byCase.get(key) ?? byCase.set(key, []).get(key)).push(r);
+  }
+  return [...byCase.entries()].map(([name, runs]) => {
+    const f = runs.find((r) => r.success !== true);
+    let error_message = null;
+    if (f) {
+      if (isAgentSuiteEndpointError(f)) {
+        const status = f.response?.metadata?.http?.status;
+        error_message = `Endpoint error${status ? ` (HTTP ${status})` : ""}: ${f.error || f.response?.error || "no reply"}`;
+      } else {
+        error_message = f.gradingResult?.reason || f.error || "Agent eval failed";
+        const out = f.response?.output;
+        if (out != null) { const t = typeof out === "string" ? out : JSON.stringify(out); error_message += `\nReply: ${t.length > 300 ? `${t.slice(0, 300)}…` : t}`; }
+      }
+    }
+    const lat = runs.map((r) => r.latencyMs).filter((n) => typeof n === "number");
+    return {
+      spec_path: `${path}#${suiteSlug(name)}`, name, attempts: runs.map((r) => r.success === true),
+      duration_ms: lat.length ? Math.round(lat.reduce((a, b) => a + b, 0) / lat.length) : undefined,
+      error_message, discipline: "agent", engine: "llm-eval",
+    };
+  });
 }
 function adaptSchemathesis(xml) {
   return parseJUnit(xml).filter((c) => !c.skipped).map((c) => {
@@ -336,11 +450,14 @@ function adaptLighthouse(lhr, t) {
 
 /* ----------------------- build + post payload ---------------------- */
 // Run the underlying tool (unless a --report was supplied), then adapt.
-reportPath = runEngine();
+// Agent merges its two optional sources itself (and checks its own evidence).
+const agentResults = engine === "agent" ? runAgent() : null;
+if (engine !== "agent") reportPath = runEngine();
 
 // A missing/empty/error report is an execution failure, never a clean scan.
-const evidence = readReport();
-if (["visual", "agent", "contract"].includes(engine)) {
+const evidence = engine === "agent" ? "" : readReport();
+if (engine === "agent") { /* evidence checked in runAgent */ }
+else if (["visual", "contract"].includes(engine)) {
   if (!parseJUnit(evidence).some(c => !c.skipped)) throw new Error("No executed test cases in engine report.");
 } else {
   const report = JSON.parse(evidence);
@@ -372,7 +489,7 @@ switch (engine) {
     break;
   }
   case "agent": {
-    const results = adaptAgentEval(readReport());
+    const results = agentResults;
     payload = { ...basePayload, discipline: "agent", results };
     label = `Agent (AI) — ${results.length} eval(s)`;
     break;
