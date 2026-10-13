@@ -5,7 +5,8 @@
 .costAnchor em { color: #79f2a6; font-style: normal; font-weight: 700; }
 .currencyRow { margin-bottom: 28px; display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
 .billedNote { margin-top: 8px; color: #777982; font-size: 12px; }
-.tierGrid4 { grid-template-columns: repeat(4, 1fr); }
+/* Four plans: must out-rank .tierGrid (declared below with the same specificity). */
+.tierGrid.tierGrid4 { grid-template-columns: repeat(4, 1fr); }
 .tierGrid4 .tier { padding: 28px 24px; }
 .currencyToggle { display: inline-flex; border: 1px solid rgba(255,255,255,.16); background: #08090c; }
 .currencyButton { min-width: 78px; min-height: 40px; padding: 0 14px; border: 0; background: transparent; color: #74767e; font: 600 12px var(--font-geist-mono), monospace; cursor: pointer; }
@@ -49,14 +50,13 @@
 @media (max-width: 1000px) {
   .tierGrid { grid-template-columns: 1fr 1fr; }
   .tier:last-of-type { grid-column: 1 / -1; min-height: 540px; }
-  .tierGrid4 { grid-template-columns: 1fr 1fr; }
-  .tierGrid4 .tier:last-of-type { grid-column: auto; min-height: 650px; }
+  .tierGrid.tierGrid4 { grid-template-columns: 1fr 1fr; }
   .fdeTier { grid-template-columns: 1fr; gap: 44px; }
 }
 
 @media (max-width: 700px) {
   .costAnchor { font-size: 14px; }
-  .tierGrid { grid-template-columns: 1fr; }
+  .tierGrid, .tierGrid.tierGrid4 { grid-template-columns: 1fr; }
   .tier, .tier:last-of-type { grid-column: auto; min-height: 610px; padding: 28px 24px; }
   .fdeTier { padding: 34px 24px; }
 }
