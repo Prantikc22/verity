@@ -10,12 +10,12 @@
  *   verity run --tier full  --token $VERITY_INGEST_TOKEN
  *
  * Env:
- *   VERITY_API_URL      defaults to https://verity.qashift.com
+ *   VERITY_API_URL      defaults to https://verity.qashifthq.com
  *   VERITY_INGEST_TOKEN alternative to --token
  *   VERITY_RERUNS       default 3
  */
 import { execSync, spawnSync } from "node:child_process";
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, readdirSync } from "node:fs";
 
 function arg(name, fallback) {
   const i = process.argv.indexOf(`--${name}`);
@@ -31,7 +31,7 @@ if (cmd !== "run") {
 const tier = arg("tier", "fast");
 const token = arg("token", process.env.VERITY_INGEST_TOKEN);
 const base = arg("base", "origin/main");
-const apiUrl = (process.env.VERITY_API_URL ?? "https://verity.qashift.com").replace(/\/$/, "");
+const apiUrl = (process.env.VERITY_API_URL ?? "https://verity.qashifthq.com").replace(/\/$/, "");
 const reruns = Number(process.env.VERITY_RERUNS ?? 3);
 
 if (!token) {
@@ -57,11 +57,29 @@ const changedFiles = tier === "fast"
   ? git(`diff --name-only ${base}...HEAD`).split("\n").filter(Boolean)
   : [];
 
+/**
+ * Specs of the other disciplines live beside UI/API under tests/verity/ and are
+ * run by their own engines (visual baselines, AI endpoint, load scripts). Scope
+ * this run to everything else so they are never counted as UI results.
+ */
+const OTHER_DISCIPLINE_DIRS = ["visual", "agent", "perf", "performance", "security", "contract"];
+function uiPaths() {
+  const root = "tests/verity";
+  let entries;
+  try { entries = readdirSync(root, { withFileTypes: true }); } catch { return []; }
+  if (!entries.some((e) => e.isDirectory() && OTHER_DISCIPLINE_DIRS.includes(e.name))) return [];
+  const keep = entries.filter((e) => !(e.isDirectory() && OTHER_DISCIPLINE_DIRS.includes(e.name))).map((e) => `${root}/${e.name}`);
+  // Nothing left to run ⇒ an impossible filter, so Playwright reports zero specs.
+  return keep.length ? keep : [`${root}/__verity_no_ui_specs__`];
+}
+const paths = uiPaths();
+const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 // Run Playwright with JSON reporter, rerunning failures to detect flakes.
 function runPlaywright(grep) {
   const reporter = "--reporter=json";
   const grepArg = grep ? ["--grep", grep] : [];
-  const res = spawnSync("npx", ["playwright", "test", reporter, ...grepArg], {
+  const res = spawnSync("npx", ["playwright", "test", ...paths, reporter, ...grepArg], {
     encoding: "utf8",
     maxBuffer: 64 * 1024 * 1024,
   });
@@ -73,13 +91,23 @@ function runPlaywright(grep) {
   }
 }
 
+// eslint-disable-next-line no-control-regex
+const stripAnsi = (s) => s.replace(/\u001b\[[0-9;]*m/g, "");
+function firstError(spec) {
+  for (const t of spec.tests ?? []) for (const r of t.results ?? []) {
+    const e = r.error ?? r.errors?.[0];
+    if (e?.message) { const m = stripAnsi(e.message).trim(); return m.length > 2000 ? `${m.slice(0, 2000)}…` : m; }
+  }
+  return null;
+}
+
 function collectSpecs(report) {
   const out = [];
   const walk = (suite, file) => {
     const f = suite.file ?? file;
     for (const spec of suite.specs ?? []) {
       const ok = spec.tests?.every((t) => t.results?.every((r) => r.status === "passed" || r.status === "expected"));
-      out.push({ file: f, title: spec.title, ok: !!ok });
+      out.push({ file: f, title: spec.title, ok: !!ok, error: ok ? null : firstError(spec) });
     }
     for (const child of suite.suites ?? []) walk(child, f);
   };
@@ -102,12 +130,13 @@ for (const spec of specs) {
   // Rerun failures up to N times to classify flaky vs broken.
   if (!spec.ok) {
     for (let i = 1; i < reruns; i++) {
-      const rerun = runPlaywright(spec.title);
-      const rs = collectSpecs(rerun).find((s) => s.title === spec.title);
+      // Escape: a title with regex characters (parentheses, +, ?) must still match itself.
+      const rerun = runPlaywright(escapeRe(spec.title));
+      const rs = collectSpecs(rerun).find((s) => s.title === spec.title && s.file === spec.file);
       attempts.push(rs ? rs.ok : false);
     }
   }
-  results.push({ spec_path: spec.file, name: spec.title, attempts });
+  results.push({ spec_path: spec.file, name: spec.title, attempts, error_message: spec.error });
 }
 
 const payload = {

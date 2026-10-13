@@ -23,8 +23,8 @@
  * Env: VERITY_API_URL, VERITY_INGEST_TOKEN, VERITY_PR_NUMBER
  */
 import { execFileSync } from "node:child_process";
-import { readFileSync, existsSync, mkdtempSync, chmodSync, readdirSync } from "node:fs";
-import { join } from "node:path";
+import { readFileSync, existsSync, mkdtempSync, chmodSync, readdirSync, writeFileSync, rmSync } from "node:fs";
+import { join, relative, sep } from "node:path";
 import { randomUUID } from "node:crypto";
 
 /* --------------------------- arg parsing --------------------------- */
@@ -36,7 +36,7 @@ function arg(name, fallback) {
 const tier = arg("tier", "fast");
 let reportPath = arg("report", "");
 const token = process.env.VERITY_INGEST_TOKEN;
-const apiUrl = (process.env.VERITY_API_URL ?? "https://verity.qashift.com").replace(/\/$/, "");
+const apiUrl = (process.env.VERITY_API_URL ?? "https://verity.qashifthq.com").replace(/\/$/, "");
 // Optional inputs so the runner can RUN the underlying tool itself (so callers
 // never name any tool in their CI config). When --report is given, we skip the
 // run and just adapt that file (back-compat).
@@ -56,6 +56,15 @@ const graderModel = process.env.VERITY_GRADER_MODEL || "gpt-4o-mini";
 // Pinned open-source eval engine (MIT). Run as a CLI subprocess; never named to customers.
 const EVAL_ENGINE = "promptfoo@0.123.1";
 const base = arg("base", "origin/main");
+// Visual: allowed pixel drift before a snapshot counts as changed (CI-wide default).
+const maxDiffRatio = arg("max-diff-ratio", process.env.VERITY_VISUAL_MAX_DIFF_RATIO ?? "");
+// Load-test size knobs read by the generated script (VUS / DURATION).
+const perfVus = arg("vus", process.env.VERITY_PERF_VUS ?? "");
+const perfDuration = arg("duration", process.env.VERITY_PERF_DURATION ?? "");
+// Dynamic scan depth: baseline (passive) or full (active). Empty ⇒ from tier.
+const dastDepth = arg("depth", process.env.VERITY_DAST_DEPTH ?? "") || (tier === "fast" ? "baseline" : "full");
+// The full active scan has no natural end on a large app; bound it (minutes).
+const dastMaxMinutes = String(Math.max(1, Number(arg("max-minutes", process.env.VERITY_DAST_MAX_MINUTES ?? "30")) || 30));
 // k6 load profile. Defaults from the tier: fast ⇒ smoke, full ⇒ load.
 const PERF_PROFILES = ["smoke", "load", "stress", "spike", "soak", "breakpoint"];
 let profile = arg("profile", process.env.VERITY_PERF_PROFILE ?? "");
@@ -107,6 +116,34 @@ function sh(file, args, env = {}) {
 }
 
 /**
+ * The CI-wide visual threshold (visual-max-diff-ratio) becomes the default for
+ * every toHaveScreenshot via a throwaway config that extends the repo's own
+ * Playwright config. Per-assertion options in a spec still win.
+ */
+function visualConfigArgs() {
+  const ratio = Number(maxDiffRatio);
+  if (!maxDiffRatio || !(ratio >= 0 && ratio <= 1)) return [];
+  const own = ["playwright.config.ts", "playwright.config.mts", "playwright.config.cts", "playwright.config.js", "playwright.config.mjs", "playwright.config.cjs"].find((f) => existsSync(f));
+  // Same extension as the repo's config, so Playwright loads both the same way (TS, ESM or CJS).
+  const ext = own ? own.slice(own.lastIndexOf(".")) : ".mjs";
+  let esm = [".ts", ".mts", ".mjs"].includes(ext);
+  if (ext === ".js") { try { esm = JSON.parse(readFileSync("package.json", "utf8")).type === "module"; } catch { esm = false; } }
+  const spec = ext === ".ts" ? "./playwright.config" : `./${own}`;
+  const load = !own ? "const base = {};" : esm ? `import base from "${spec}";` : `const _c = require("${spec}"); const base = _c.default ?? _c;`;
+  const shot = `toHaveScreenshot: { ...(base.expect?.toHaveScreenshot ?? {}), maxDiffPixelRatio: ${ratio} }`;
+  const exp = `{ ...base, expect: { ...(base.expect ?? {}), ${shot} } }`;
+  const path = `.verity-visual-${reportId}.config${ext}`;
+  writeFileSync(path, `${load}\n${esm ? `export default ${exp};` : `module.exports = ${exp};`}\n`);
+  return ["--config", path];
+}
+
+/** Playwright writes a missing baseline then fails the test. That's a first run, not a regression. */
+const NEW_BASELINE = /A snapshot doesn't exist at (\S+?)(?:,|\s|$)/;
+function newBaselines(results) {
+  return results.filter((r) => r.error_message && NEW_BASELINE.test(r.error_message)).map((r) => r.error_message.match(NEW_BASELINE)[1].replace(/\.$/, ""));
+}
+
+/**
  * Run the underlying engine to produce a native report, returning its path. This
  * is what lets a customer's CI config name only Verity — never the tool. Skipped
  * when --report was passed (already have output).
@@ -118,7 +155,12 @@ function runEngine() {
       // Visual specs are ordinary Playwright tests whose assertion is
       // toHaveScreenshot; run them and emit JUnit for the adapter.
       const out = `${tmp}/verity-visual-${reportId}.xml`;
-      sh("npx", ["--yes", "playwright", "test", snapshotsDir, "--reporter=junit"], { PLAYWRIGHT_JUNIT_OUTPUT_NAME: out });
+      const cfgArgs = visualConfigArgs();
+      try {
+        sh("npx", ["--yes", "playwright", "test", snapshotsDir, ...cfgArgs, "--reporter=junit"], { PLAYWRIGHT_JUNIT_OUTPUT_NAME: out });
+      } finally {
+        if (cfgArgs.length) rmSync(cfgArgs[1], { force: true });
+      }
       return out;
     }
     case "perf": {
@@ -135,6 +177,8 @@ function runEngine() {
       if (!PERF_PROFILES.includes(profile)) { console.error(`✗ Unknown --profile '${profile}'. One of: ${PERF_PROFILES.join(", ")}`); process.exit(1); }
       const args = ["run", "-e", `PROFILE=${profile}`, "-e", `K6_SUMMARY=${out}`];
       if (target) args.push("-e", `BASE_URL=${target}`);
+      if (Number(perfVus) > 0) args.push("-e", `VUS=${Math.round(Number(perfVus))}`);
+      if (/^\d+(ms|s|m|h)$/.test(perfDuration)) args.push("-e", `DURATION=${perfDuration}`);
       args.push(cfg);
       sh("k6", args);
       return out;
@@ -157,9 +201,11 @@ function runEngine() {
     }
     case "security-dast": {
       const dir = containerOutDir();
-      const script = tier === "fast" ? "zap-baseline.py" : "zap-full-scan.py";
+      if (!["baseline", "full"].includes(dastDepth)) { console.error(`✗ Unknown --depth '${dastDepth}'. One of: baseline, full`); process.exit(1); }
+      // baseline = passive (spider + inspect responses); full = active attack scan, time-boxed.
+      const zapArgs = dastDepth === "full" ? ["zap-full-scan.py", "-t", target, "-J", "report.json", "-m", "5", "-T", dastMaxMinutes] : ["zap-baseline.py", "-t", target, "-J", "report.json"];
       // Host network so a target started in the same CI job (localhost) is reachable.
-      sh("docker", ["run", "--rm", "--network", "host", "-v", `${dir}:/zap/wrk:rw`, "ghcr.io/zaproxy/zaproxy:stable", script, "-t", target, "-J", "report.json"]);
+      sh("docker", ["run", "--rm", "--network", "host", "-v", `${dir}:/zap/wrk:rw`, "ghcr.io/zaproxy/zaproxy:stable", ...zapArgs]);
       return join(dir, "report.json");
     }
     case "contract": {
@@ -345,8 +391,13 @@ function adaptAgentSuite(report, path) {
     };
   });
 }
+/** Contract reports lead each case with "1. Test Case ID: <id>"; the problem is the useful headline. */
+function tidyContractMessage(m) {
+  return m ? m.replace(/^\s*\d+\.\s*Test Case ID:\s*\S+\s*\n+/gm, "").trim() || m : m;
+}
 function adaptSchemathesis(xml) {
   return parseJUnit(xml).filter((c) => !c.skipped).map((c) => {
+    if (c.failureMessage) c.failureMessage = tidyContractMessage(c.failureMessage);
     const endpoint = normalizeEndpoint(c.name);
     return {
       spec_path: `contract:${endpoint}`, name: c.name, attempts: [c.ok],
@@ -466,7 +517,9 @@ else if (["visual", "contract"].includes(engine)) {
     if (!(metrics.requests > 0)) throw new Error("No requests executed by performance engine.");
   }
   if (["cwv", "lighthouse"].includes(engine) && (report.runtimeError || typeof report.categories?.performance?.score !== "number")) throw new Error("Lighthouse did not complete a performance measurement.");
-  if (engine === "security-sast" && (!Array.isArray(report.results) || report.errors?.length || !report.paths?.scanned?.length)) throw new Error("Static scan failed or scanned no files.");
+  // Only level "error" is fatal: partial-parse notes are "warn" and appear on most real repos.
+  const sastFatal = (report.errors ?? []).filter((e) => e.level === "error");
+  if (engine === "security-sast" && (!Array.isArray(report.results) || sastFatal.length || !report.paths?.scanned?.length)) throw new Error(`Static scan failed or scanned no files.${sastFatal[0]?.message ? ` ${String(sastFatal[0].message).slice(0, 300)}` : ""}`);
   if (engine === "security-dast" && (!Array.isArray(report.site) || !report.site.length)) throw new Error("Dynamic scan inspected no sites.");
 }
 
@@ -484,8 +537,27 @@ let label;
 switch (engine) {
   case "visual": {
     const results = adaptVisual(readReport());
+    const created = newBaselines(results);
+    for (const r of results) {
+      if (r.error_message && NEW_BASELINE.test(r.error_message)) {
+        // Nothing to compare against yet: record the capture, not a regression.
+        r.attempts = [true];
+        r.error_message = null;
+      }
+    }
+    if (created.length) {
+      const rel = created.map((p) => relative(process.cwd(), p).split(sep).join("/"));
+      console.log(`ℹ ${created.length} new visual baseline(s) captured on this runner — commit them so later runs compare against them:`);
+      for (const p of rel) console.log(`    ${p}`);
+      if (process.env.GITHUB_OUTPUT) {
+        // Unique per run: matrix jobs share a job id, and same-named artifacts overwrite each other.
+        const name = `verity-visual-baselines-${process.env.GITHUB_JOB ?? "job"}-${reportId.slice(0, 8)}`;
+        writeFileSync(process.env.GITHUB_OUTPUT, `new-baselines-name=${name}\nnew-baselines<<VERITY_EOF\n${rel.join("\n")}\nVERITY_EOF\n`, { flag: "a" });
+        console.log(`  Download them from the "${name}" artifact of this run.`);
+      }
+    }
     payload = { ...basePayload, discipline: "visual", results };
-    label = `Visual — ${results.length} snapshot(s)`;
+    label = `Visual — ${results.length} snapshot(s)${created.length ? `, ${created.length} new baseline(s)` : ""}`;
     break;
   }
   case "agent": {

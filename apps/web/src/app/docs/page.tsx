@@ -4,7 +4,8 @@ import { Navbar } from "@/components/landing/Navbar";
 import { DocsNav, type DocSection } from "./DocsNav";
 
 export const metadata: Metadata = {
-  title: "Docs",
+  title: "Docs — CI setup for UI, API, visual, agent, performance & security tests",
+  alternates: { canonical: "/docs" },
   description: "Wire Verity into your CI — UI, API, visual, agent (AI), performance, and security testing across GitHub, GitLab, and Jenkins.",
 };
 
@@ -134,11 +135,12 @@ npx verity run --tier full --token $VERITY_INGEST_TOKEN`}</Code>
           <section>
             <H id="visual" n="8">Visual</H>
             <P>AI-generated Playwright visual specs in <code>tests/verity/visual/</code> whose assertion is <code>toHaveScreenshot</code>. Each spec navigates to a stable UI state, masks volatile regions (timestamps, avatars, ads), and diffs a screenshot against the <strong>baseline committed in your repo</strong>. A diff over your <code>maxDiffPixelRatio</code> is reported as a <em>changed</em> snapshot — you approve the new baseline or fix the regression. Because baselines live in your repo and run in your CI, visual coverage is unlimited, and broken navigation locators self-heal exactly as UI specs do.</P>
+            <P><strong>First run:</strong> a new visual test has no baseline yet, so CI captures one and reports it as a pass, not a regression. The GitHub Action uploads the captured images as a <code>verity-visual-baselines-…</code> artifact — download it and commit the files next to the spec, so later runs compare against them. Capture baselines on the same OS as your CI (Linux on GitHub-hosted runners), because fonts render differently per platform.</P>
           </section>
 
           <section>
             <H id="agent" n="9">Agent (AI)</H>
-            <P>Evals for your <strong>own</strong> AI features — chatbots, RAG assistants, and tool-using agents. AI-generated Playwright API tests in <code>tests/verity/agent/</code> POST to your AI endpoint and assert a <em>property</em> of the reply, never an exact string (model output varies): grounding (no hallucination), prompt-injection resistance, correct tool-use, safety/PII, valid format, or clean refusal. Point Verity at the endpoint and store its token as a CI secret; evals run on every deploy so a prompt change or model swap can&apos;t quietly break behavior. Needs a reachable endpoint — for internal AI endpoints it runs only inside your CI.</P>
+            <P>Evals for your <strong>own</strong> AI features — chatbots, RAG assistants, and tool-using agents. Two formats, merged into one run: AI-generated Playwright API tests in <code>tests/verity/agent/</code>, and a scored <strong>eval suite</strong> (<code>tests/verity/agent/verity.evals.yaml</code>) that includes a built-in prompt-injection and PII pack. Both POST to your AI endpoint and assert a <em>property</em> of the reply, never an exact string (model output varies): grounding (no hallucination), prompt-injection resistance, correct tool-use, safety/PII, valid format, or clean refusal. Point Verity at the endpoint and store its token as a CI secret; evals run on every deploy so a prompt change or model swap can&apos;t quietly break behavior. Full regression asks each suite case 3 times, so inconsistent answers show up as flaky. Rubric (AI-graded) checks need a grader key secret (<code>VERITY_GRADER_API_KEY</code>, any OpenAI-compatible provider). Needs a reachable endpoint — for internal AI endpoints it runs only inside your CI.</P>
             <div className="mt-3 border border-neutral-100 bg-neutral-50 p-3 text-xs dark:border-neutral-800 dark:bg-neutral-900">
               <p className="font-medium">Mobile app testing</p>
               <p className="mt-1 text-neutral-600 dark:text-neutral-400">Native mobile coverage is available as a <strong>human-run (non-AI) service</strong> through QAShift — the Verity AI agent doesn&apos;t author mobile flows, because it can&apos;t reach a device or emulator the way it reaches a URL or an API. <a href="https://qashifthq.com/contact" target="_blank" rel="noopener noreferrer" className="text-indigo-600 underline">Talk to us</a> if you need it.</p>
@@ -147,17 +149,17 @@ npx verity run --tier full --token $VERITY_INGEST_TOKEN`}</Code>
 
           <section>
             <H id="performance" n="10">Performance</H>
-            <P><strong>Verity&apos;s performance engine is a load test for your API</strong>, not a website crawler. It generates concurrent traffic against the endpoints/flows Verity builds from your OpenAPI spec and measures latency percentiles (p50/p95/p99) and error rate under load — it does smoke, soak, and spike by shaping <em>phases</em>. For page-load performance, enable <strong>Core Web Vitals</strong> (the front-end half).</P>
+            <P><strong>Verity&apos;s performance engine is a load test for your API</strong>, not a website crawler. It generates concurrent traffic against the endpoints/flows Verity builds from your OpenAPI spec and measures latency percentiles (p50/p95/p99) and error rate under load — one committed script (<code>tests/verity/perf/verity.k6.js</code>) runs six named <em>profiles</em>: smoke, load, stress, spike, soak and breakpoint. For page-load performance, enable <strong>Core Web Vitals</strong> (the front-end half).</P>
             <div className="mt-3 border border-neutral-100 bg-neutral-50 p-3 text-xs dark:border-neutral-800 dark:bg-neutral-900">
               <p className="font-medium">Key terms</p>
               <ul className="mt-1 list-disc space-y-1 pl-5 text-neutral-600 dark:text-neutral-400">
                 <li><strong>VU (virtual user)</strong> — one simulated user running a scenario.</li>
-                <li><strong>arrivalRate</strong> — new VUs started per second; your load knob.</li>
-                <li><strong>ramp</strong> — increase arrivalRate over time to find the breaking point.</li>
+                <li><strong>Peak VUs</strong> — the concurrency the load profile ramps to (stress and spike multiply it). Set it on CI Setup or with <code>perf-vus</code>.</li>
+                <li><strong>Duration</strong> — how long the load profile holds at peak (<code>perf-duration</code>, e.g. <code>2m</code>).</li>
                 <li><strong>p95</strong> — watch this, not the average; it reflects your slowest real users.</li>
               </ul>
             </div>
-            <P><strong>Optimal config:</strong> smoke (every PR) stays tiny (arrivalRate 1–2, ~30s) — it catches “this PR made the API slower,” never capacity. Full load (merge) should start near real peak traffic and ramp; healthy = error rate &lt; 1% and a stable p95 as load rises. One CI runner caps at a few hundred req/s — use distributed mode for more.</P>
+            <P><strong>Optimal config:</strong> the smoke profile (every PR) is 1 virtual user for 30s — it catches “this PR made the API slower,” never capacity. On merge, run <em>load</em> at your real peak concurrency; use <em>stress</em> or <em>breakpoint</em> to find the ceiling and <em>soak</em> for leaks. Healthy = error rate &lt; 1% and a stable p95 as load rises. One CI runner tops out at a few hundred requests per second.</P>
           </section>
 
           <section>

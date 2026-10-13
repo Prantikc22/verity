@@ -62,17 +62,37 @@ export const DEFAULT_CONFIG: CiConfig = {
   contract: { openapiSpec: "openapi.yaml", apiBaseUrl: "" },
 };
 
-/** The comma-separated `engines` value the action/runner understands. */
-export function enginesCsv(c: CiConfig): string {
+/** Does this tier run a load profile? fast ⇒ the PR smoke check; full ⇒ the merge profile. */
+export function perfLoadOn(c: CiConfig, tier: "fast" | "full"): boolean {
+  return tier === "fast" ? c.perf.smoke : c.perf.fullLoad;
+}
+function cwvOn(c: CiConfig): boolean {
+  return c.perf.lighthouse && Boolean(c.perf.lighthouseUrl);
+}
+function dastOn(c: CiConfig): boolean {
+  return c.security.dast && Boolean(c.security.dastTarget);
+}
+
+/**
+ * The comma-separated `engines` value the action/runner understands. With a
+ * tier, an engine whose every check is switched off for that tier is dropped
+ * (e.g. perf on PRs when neither the smoke profile nor Core Web Vitals is on).
+ */
+export function enginesCsv(c: CiConfig, tier?: "fast" | "full"): string {
   const list: string[] = [];
   if (c.engines.ui) list.push("ui");
   if (c.engines.apiFlow) list.push("api");
   if (c.engines.contract) list.push("contract");
   if (c.engines.visual) list.push("visual");
   if (c.engines.agent) list.push("agent");
-  if (c.engines.perf) list.push("perf");
-  if (c.engines.security) list.push("security");
+  if (c.engines.perf && (!tier || perfLoadOn(c, tier) || cwvOn(c))) list.push("perf");
+  if (c.engines.security && (!tier || c.security.sast || dastOn(c))) list.push("security");
   return list.join(",") || "ui";
+}
+
+/** Scan depth for the dynamic scan on a tier: PRs are always baseline; merge follows the setting. */
+export function dastDepthFor(c: CiConfig, tier: "fast" | "full"): DastDepth {
+  return tier === "fast" ? "baseline" : c.security.dastDepth;
 }
 
 export interface EngineMeta {
@@ -122,33 +142,47 @@ export const GRADER_SECRET = "VERITY_GRADER_API_KEY";
 
 /* ---------------------------- GitHub Actions ---------------------------- */
 function githubWith(c: CiConfig, tier: "fast" | "full"): string {
+  // `with:` is a key of the step (8 spaces, same column as `uses:`); its inputs nest under it.
   const lines = [
-    `    with:`,
-    `      tier: ${tier}`,
-    `      token: \${{ secrets.VERITY_INGEST_TOKEN }}`,
-    `      engines: ${enginesCsv(c)}`,
+    `        with:`,
+    `          tier: ${tier}`,
+    `          token: \${{ secrets.VERITY_INGEST_TOKEN }}`,
+    `          engines: ${enginesCsv(c, tier)}`,
   ];
+  if (c.apiUrl !== DEFAULT_CONFIG.apiUrl) lines.push(`          api-url: ${c.apiUrl}`);
   if (c.engines.visual) {
-    lines.push(`      visual-snapshots-dir: ${c.visual.snapshotsDir}`);
-    lines.push(`      visual-max-diff-ratio: "${c.visual.maxDiffPixelRatio}"`);
+    lines.push(`          visual-snapshots-dir: ${c.visual.snapshotsDir}`);
+    lines.push(`          visual-max-diff-ratio: "${c.visual.maxDiffPixelRatio}"`);
   }
   if (c.engines.agent && c.agent.endpoint) {
-    lines.push(`      agent-endpoint: ${c.agent.endpoint}`);
-    lines.push(`      agent-token: \${{ secrets.${c.agent.authTokenSecret} }}`);
-    if (c.agent.aiGrading) lines.push(`      grader-api-key: \${{ secrets.${GRADER_SECRET} }}`);
+    lines.push(`          agent-endpoint: ${c.agent.endpoint}`);
+    lines.push(`          agent-token: \${{ secrets.${c.agent.authTokenSecret} }}`);
+    if (c.agent.aiGrading) lines.push(`          grader-api-key: \${{ secrets.${GRADER_SECRET} }}`);
   }
   if (c.engines.perf) {
-    lines.push(`      perf-config: tests/verity/perf/verity.k6.js`);
-    // fast tier ⇒ smoke; full tier ⇒ the chosen profile.
-    if (tier === "full") lines.push(`      perf-profile: ${c.perf.profile}`);
-    if (c.perf.lighthouse && c.perf.lighthouseUrl) lines.push(`      lighthouse-url: ${c.perf.lighthouseUrl}`);
+    if (perfLoadOn(c, tier)) {
+      lines.push(`          perf-config: tests/verity/perf/verity.k6.js`);
+      // fast tier ⇒ smoke; full tier ⇒ the chosen profile at the chosen size.
+      if (tier === "full") {
+        lines.push(`          perf-profile: ${c.perf.profile}`);
+        if (c.perf.arrivalRate > 0) lines.push(`          perf-vus: "${c.perf.arrivalRate}"`);
+        if (c.perf.durationSec > 0) lines.push(`          perf-duration: ${c.perf.durationSec}s`);
+      }
+    } else {
+      lines.push(`          perf-load: "false"`);
+    }
+    if (cwvOn(c)) lines.push(`          lighthouse-url: ${c.perf.lighthouseUrl}`);
   }
-  if (c.engines.security && c.security.dast && c.security.dastTarget) {
-    lines.push(`      security-target-url: ${c.security.dastTarget}`);
+  if (c.engines.security) {
+    if (!c.security.sast) lines.push(`          security-sast: "false"`);
+    if (dastOn(c)) {
+      lines.push(`          security-target-url: ${c.security.dastTarget}`);
+      lines.push(`          security-dast-depth: ${dastDepthFor(c, tier)}`);
+    }
   }
   if (c.engines.contract) {
-    lines.push(`      openapi-spec: ${c.contract.openapiSpec}`);
-    lines.push(`      api-base-url: ${c.contract.apiBaseUrl || "https://staging.example.com"}`);
+    lines.push(`          openapi-spec: ${c.contract.openapiSpec}`);
+    lines.push(`          api-base-url: ${c.contract.apiBaseUrl || "https://staging.example.com"}`);
   }
   return lines.join("\n");
 }
@@ -193,13 +227,31 @@ ${githubWith(c, "full")}
 }
 
 /* ------------------------------- GitLab CI ------------------------------ */
+/** Engines that run a containerized scanner (need a Docker client + daemon). */
+function needsDocker(c: CiConfig, tier: "fast" | "full"): boolean {
+  return c.engines.contract || (c.engines.security && (c.security.sast || dastOn(c)) && enginesCsv(c, tier).includes("security"));
+}
+
 function runnerCmds(c: CiConfig, tier: "fast" | "full", indent: string, provider: "gitlab" | "jenkins"): string[] {
   const out: string[] = [];
   out.push(`${indent}export VERITY_API_URL="${c.apiUrl}"`);
-  out.push(`${indent}curl -Ls ${RAW}/verity.mjs -o verity.mjs`);
-  out.push(`${indent}curl -Ls ${RAW}/verity-engines.mjs -o verity-engines.mjs`);
+  // Diff-aware Quick check compares against the base branch; shallow clones lack it.
+  if (tier === "fast") out.push(`${indent}git fetch --quiet origin ${c.branch} || true`);
+  out.push(`${indent}curl -fsSL ${RAW}/verity.mjs -o verity.mjs`);
+  out.push(`${indent}curl -fsSL ${RAW}/verity-engines.mjs -o verity-engines.mjs`);
   if (c.engines.ui || c.engines.apiFlow || c.engines.visual || c.engines.agent) {
     out.push(`${indent}npx playwright install --with-deps chromium`);
+  }
+  // Tool binaries go in a workspace-local bin: CI agents often run as a non-root user.
+  const needsK6 = c.engines.perf && perfLoadOn(c, tier);
+  if (needsK6 || needsDocker(c, tier)) out.push(`${indent}mkdir -p .verity-bin && export PATH="$PWD/.verity-bin:$PATH"`);
+  if (needsDocker(c, tier)) {
+    // The Playwright image has no Docker client (the daemon is dind / the host socket).
+    out.push(`${indent}command -v docker >/dev/null || curl -fsSL https://download.docker.com/linux/static/stable/x86_64/docker-27.3.1.tgz | tar xz -C .verity-bin --strip-components=1 docker/docker`);
+  }
+  if (needsK6) {
+    // The load engine is a single static binary; fetch it when the image lacks it.
+    out.push(`${indent}command -v k6 >/dev/null || curl -fsSL https://github.com/grafana/k6/releases/download/v0.54.0/k6-v0.54.0-linux-amd64.tar.gz | tar xz -C .verity-bin --strip-components=1 k6-v0.54.0-linux-amd64/k6`);
   }
   if (c.engines.ui || c.engines.apiFlow) {
     out.push(`${indent}node verity.mjs run --tier ${tier} --token "$VERITY_INGEST_TOKEN" --base origin/${c.branch}`);
@@ -207,7 +259,7 @@ function runnerCmds(c: CiConfig, tier: "fast" | "full", indent: string, provider
   // Each engine runs through the Verity runner, which drives the underlying
   // tooling internally — so your CI config never names a specific tool.
   if (c.engines.visual) {
-    out.push(`${indent}node verity-engines.mjs visual --tier ${tier} --snapshots-dir ${c.visual.snapshotsDir}`);
+    out.push(`${indent}node verity-engines.mjs visual --tier ${tier} --snapshots-dir ${c.visual.snapshotsDir} --max-diff-ratio ${c.visual.maxDiffPixelRatio}`);
   }
   if (c.engines.agent && c.agent.endpoint) {
     // The runner reads the endpoint token from AI_API_TOKEN (and the grader key
@@ -217,20 +269,24 @@ function runnerCmds(c: CiConfig, tier: "fast" | "full", indent: string, provider
     }
     out.push(`${indent}node verity-engines.mjs agent --tier ${tier} --endpoint ${c.agent.endpoint}`);
   }
-  if (c.engines.perf) {
-    // Needs the k6 binary on the runner (https://k6.io/docs/get-started/installation).
-    const prof = tier === "full" ? ` --profile ${c.perf.profile}` : "";
-    const tgt = c.contract.apiBaseUrl ? ` --target ${c.contract.apiBaseUrl}` : "";
-    out.push(`${indent}node verity-engines.mjs k6 --tier ${tier}${prof}${tgt}`);
-    if (c.perf.lighthouse && c.perf.lighthouseUrl) {
-      out.push(`${indent}node verity-engines.mjs cwv --tier ${tier} --target ${c.perf.lighthouseUrl}`);
+  if (c.engines.perf && perfLoadOn(c, tier)) {
+    let flags = "";
+    if (tier === "full") {
+      flags += ` --profile ${c.perf.profile}`;
+      if (c.perf.arrivalRate > 0) flags += ` --vus ${c.perf.arrivalRate}`;
+      if (c.perf.durationSec > 0) flags += ` --duration ${c.perf.durationSec}s`;
     }
+    if (c.contract.apiBaseUrl) flags += ` --target ${c.contract.apiBaseUrl}`;
+    out.push(`${indent}node verity-engines.mjs k6 --tier ${tier}${flags}`);
+  }
+  if (c.engines.perf && cwvOn(c)) {
+    out.push(`${indent}node verity-engines.mjs cwv --tier ${tier} --target ${c.perf.lighthouseUrl}`);
   }
   if (c.engines.security && c.security.sast) {
     out.push(`${indent}node verity-engines.mjs security-sast --tier ${tier} --base origin/${c.branch}`);
   }
-  if (c.engines.security && c.security.dast && c.security.dastTarget) {
-    out.push(`${indent}node verity-engines.mjs security-dast --tier ${tier} --target ${c.security.dastTarget}`);
+  if (c.engines.security && dastOn(c)) {
+    out.push(`${indent}node verity-engines.mjs security-dast --tier ${tier} --depth ${dastDepthFor(c, tier)} --target ${c.security.dastTarget}`);
   }
   if (c.engines.contract) {
     out.push(`${indent}node verity-engines.mjs contract --tier ${tier} --spec ${c.contract.openapiSpec} --target ${c.contract.apiBaseUrl || "https://staging.example.com"}`);
@@ -244,6 +300,11 @@ export function gitlabWorkflow(c: CiConfig): string {
   const full = runnerCmds(c, "full", "    - ", "gitlab");
   return `# .gitlab-ci.yml  — store VERITY_INGEST_TOKEN as a masked CI/CD variable
 stages: [verity]
+
+variables:
+  # Containerized scans talk to the docker:dind service.
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_TLS_CERTDIR: ""
 
 verity:fast:
   stage: verity

@@ -22,10 +22,12 @@ npm run dev                        # apps/web dev server
 npm run build                      # core typecheck + apps/web production build
 cd apps/web && npx tsc --noEmit    # typecheck web only (fast)
 cd packages/core && npm test       # core unit tests (node --test + tsx)
+cd apps/web && npm test            # CI-config generator tests (real YAML parse)
+node --test packages/action/test/evidence.test.mjs   # runner tests — run from the REPO ROOT
 npx vercel deploy --prod --yes     # DEPLOY (from repo root; needs `vercel login` first)
 ```
 
-Always run `npx tsc --noEmit` (web) and `npm test` (core) before deploying. `next build` catches RSC/client-boundary issues.
+Always run `npx tsc --noEmit` (web), `npm test` (core + web) and the runner tests before deploying. Engine changes in `packages/action` are only live for customers once synced to `qashift/verity-action` and the `v1` tag is moved (needs a token with write access to the `qashift` org). `next build` catches RSC/client-boundary issues.
 
 ## How it works (the model)
 

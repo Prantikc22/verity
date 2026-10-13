@@ -360,8 +360,9 @@ Rules for the code:
   (await expect(page.getByRole('...')).toHaveScreenshot('<name>.png')).
 - STABILIZE before snapshotting to avoid false diffs: wait for the key element to be
   visible, and mask or disable volatile regions with { mask: [locator, ...] } for
-  things like timestamps, ads, avatars, or animated banners. Use a small, meaningful
-  maxDiffPixelRatio (e.g. { maxDiffPixelRatio: 0.01 }) rather than an exact match.
+  things like timestamps, ads, avatars, or animated banners. Do NOT pass
+  maxDiffPixelRatio / maxDiffPixels / threshold: the allowed drift is set once for
+  the whole suite in CI, and a per-assertion value would override it.
 - Do NOT assert on functional text/URLs here — the screenshot IS the assertion. One
   focused state per file. Use test.step() to label phases.
 - Credentials: if CREDENTIALS are provided use those literal values; else fall back
@@ -707,6 +708,8 @@ Respond as STRICT JSON: {"cases": [{"description": string, "input": string, "ass
   "[grounding] Does not invent a refund amount". Categories: grounding, refusal,
   format, safety, tool-use.
 - "input": the exact user message to send.
+- Each assertion is an object with "type" and (except is-json) "value", exactly like
+  {"type": "icontains", "value": "business days"} — never {"icontains": "business days"}.
 - "assert" types (use only these):
   contains / icontains / not-contains / not-icontains (value: substring),
   regex / not-regex (value: JavaScript regex source, no slashes),

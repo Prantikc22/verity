@@ -568,10 +568,16 @@ export function sortFindings(findings: Finding[]): Finding[] {
  * output, so we report ONLY the final (one per operation) cases — never every
  * input it tried. Each test case name is the operation, e.g. "POST /users".
  */
+/** Contract reports lead each case with "1. Test Case ID: <id>"; the problem is the useful headline. */
+export function tidyContractMessage(m: string | null | undefined): string | null | undefined {
+  return m ? m.replace(/^\s*\d+\.\s*Test Case ID:\s*\S+\s*\n+/gm, "").trim() || m : m;
+}
+
 export function adaptSchemathesis(junitXml: string): UnifiedResult[] {
   return parseJUnit(junitXml)
     .filter((c) => !c.skipped)
     .map((c) => {
+      if (c.failureMessage) c.failureMessage = tidyContractMessage(c.failureMessage) ?? null;
       const endpoint = normalizeEndpoint(c.name);
       return {
         spec_path: `contract:${endpoint}`,

@@ -1,5 +1,5 @@
 name: "Verity"
-description: "AI-augmented testing: UI/API + Visual (Playwright), Agent/LLM evals, Performance (k6 + Lighthouse), Security (ZAP+Semgrep), API contract (Schemathesis). Runs in YOUR CI; reports to Verity."
+description: "AI-augmented testing: UI/API + Visual (Playwright), AI agent evals, load tests + Core Web Vitals, dynamic + static security scans, API contract checks. Runs in YOUR CI; reports to Verity."
 author: "QAShift"
 branding:
   icon: "check-circle"
@@ -65,27 +65,57 @@ inputs:
     description: "Load profile to run: smoke|load|stress|spike|soak|breakpoint. Empty ⇒ derived from tier (fast=smoke, full=load)."
     required: false
     default: ""
+  perf-vus:
+    description: "Peak concurrency (virtual users) for the load profile. Empty ⇒ the script's default."
+    required: false
+    default: ""
+  perf-duration:
+    description: "Steady-phase length for the load profile, e.g. 2m. Empty ⇒ the script's default."
+    required: false
+    default: ""
+  perf-load:
+    description: "Run the load profile. Set 'false' to run only Core Web Vitals (lighthouse-url)."
+    required: false
+    default: "true"
   lighthouse-url:
-    description: "If set, run Lighthouse CI against this URL for Core Web Vitals (optional, separate from k6)."
+    description: "If set, measure Core Web Vitals for this page URL (optional, separate from the load test)."
     required: false
     default: ""
   # ---- security (ZAP DAST + Semgrep SAST) ----
   security-target-url:
-    description: "Reachable preview/staging URL for the ZAP DAST scan."
+    description: "Reachable preview/staging URL for the dynamic (running-app) security scan."
     required: false
     default: ""
+  security-sast:
+    description: "Run the static code scan. Set 'false' to run only the dynamic scan."
+    required: false
+    default: "true"
+  security-dast-depth:
+    description: "Dynamic scan depth: 'baseline' (passive) or 'full' (active). Empty ⇒ from tier (fast=baseline, full=full)."
+    required: false
+    default: ""
+  security-dast-max-minutes:
+    description: "Time limit for the full active scan, in minutes."
+    required: false
+    default: "30"
   # ---- shared API inputs (reused by contract + perf; NO second upload) ----
   openapi-spec:
-    description: "Path or URL to the OpenAPI spec (reused for Schemathesis and API-driven load setup)."
+    description: "Path or URL to the OpenAPI spec (reused for contract checks and API-driven load setup)."
     required: false
     default: ""
   api-base-url:
-    description: "Reachable base URL of the API under test (required for Schemathesis to execute)."
+    description: "Reachable base URL of the API under test (required for contract checks to execute)."
     required: false
     default: ""
 runs:
   using: "composite"
   steps:
+    # Each engine step records a failure instead of stopping, so one broken engine
+    # never hides the others' results; "Verity — result" fails the job at the end.
+    - name: "Verity — start"
+      shell: bash
+      run: rm -f "$RUNNER_TEMP/verity-failed"
+
     # ============================ UI + API flow (existing, UNCHANGED) ===========
     # The vendored Playwright runner. Runs whenever 'ui' or 'api' is selected.
     - name: "Verity — UI/API (Playwright)"
@@ -95,12 +125,13 @@ runs:
         VERITY_INGEST_TOKEN: ${{ inputs.token }}
         VERITY_API_URL: ${{ inputs.api-url }}
         VERITY_PR_NUMBER: ${{ github.event.pull_request.number }}
-      run: node "${{ github.action_path }}/verity.mjs" run --tier "${{ inputs.tier }}" --base "${{ inputs.base }}"
+      run: node "${{ github.action_path }}/verity.mjs" run --tier "${{ inputs.tier }}" --base "${{ inputs.base }}" || echo "UI/API" >> "$RUNNER_TEMP/verity-failed"
 
     # ============================ VISUAL (screenshot regression) ================
     # Playwright visual specs (toHaveScreenshot) diffed against baselines committed
     # in YOUR repo. The runner runs Playwright itself; no tool is named in your CI.
     - name: "Verity — Visual (screenshot regression)"
+      id: visual
       if: contains(inputs.engines, 'visual')
       shell: bash
       env:
@@ -108,9 +139,19 @@ runs:
         VERITY_API_URL: ${{ inputs.api-url }}
         VERITY_PR_NUMBER: ${{ github.event.pull_request.number }}
         VERITY_VISUAL_SNAPSHOTS_DIR: ${{ inputs.visual-snapshots-dir }}
+        VERITY_VISUAL_MAX_DIFF_RATIO: ${{ inputs.visual-max-diff-ratio }}
       run: |
         set -e
-        node "${{ github.action_path }}/verity-engines.mjs" visual --tier "${{ inputs.tier }}"
+        node "${{ github.action_path }}/verity-engines.mjs" visual --tier "${{ inputs.tier }}" || echo "Visual" >> "$RUNNER_TEMP/verity-failed"
+
+    # First run of a new visual test: the baseline is captured on this runner.
+    # Hand it back as an artifact so it can be committed (same OS as later runs).
+    - name: "Verity — new visual baselines"
+      if: always() && steps.visual.outputs.new-baselines != ''
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ steps.visual.outputs.new-baselines-name }}
+        path: ${{ steps.visual.outputs.new-baselines }}
 
     # ============================ AGENT (LLM / AI-feature evals) =================
     # Playwright API evals (tests/verity/agent/*.spec.ts) and/or the scored eval
@@ -131,14 +172,14 @@ runs:
         VERITY_GRADER_MODEL: ${{ inputs.grader-model }}
       run: |
         set -e
-        node "${{ github.action_path }}/verity-engines.mjs" agent --tier "${{ inputs.tier }}"
+        node "${{ github.action_path }}/verity-engines.mjs" agent --tier "${{ inputs.tier }}" || echo "Agent" >> "$RUNNER_TEMP/verity-failed"
 
     # ============================ PERFORMANCE (k6 profiles) =====================
     # fast ⇒ smoke profile on every PR; full ⇒ your chosen profile on merge.
     # One script runs every profile; the runner invokes k6 itself and posts the
     # summary. No tool is named in YOUR workflow — only "perf".
     - name: "Verity — Performance (load profiles)"
-      if: contains(inputs.engines, 'perf')
+      if: contains(inputs.engines, 'perf') && inputs.perf-load != 'false'
       shell: bash
       env:
         VERITY_INGEST_TOKEN: ${{ inputs.token }}
@@ -147,18 +188,20 @@ runs:
         VERITY_TARGET_URL: ${{ inputs.api-base-url }}
         VERITY_PERF_PROFILE: ${{ inputs.perf-profile }}
         VERITY_PERF_CONFIG: ${{ inputs.perf-config }}
+        VERITY_PERF_VUS: ${{ inputs.perf-vus }}
+        VERITY_PERF_DURATION: ${{ inputs.perf-duration }}
       run: |
         set -e
         # Install k6 if the runner doesn't have it (self-contained, no external action).
         if ! command -v k6 >/dev/null 2>&1; then
           K6_VER=v0.54.0
-          curl -fsSL "https://github.com/grafana/k6/releases/download/${K6_VER}/k6-${K6_VER}-linux-amd64.tar.gz" | tar xz
-          sudo mv k6-*/k6 /usr/local/bin/ 2>/dev/null || mv k6-*/k6 /usr/local/bin/
+          mkdir -p "$RUNNER_TEMP/verity-bin" && export PATH="$RUNNER_TEMP/verity-bin:$PATH"
+          curl -fsSL "https://github.com/grafana/k6/releases/download/${K6_VER}/k6-${K6_VER}-linux-amd64.tar.gz" | tar xz -C "$RUNNER_TEMP/verity-bin" --strip-components=1 "k6-${K6_VER}-linux-amd64/k6"
         fi
-        node "${{ github.action_path }}/verity-engines.mjs" k6 --tier "${{ inputs.tier }}"
+        node "${{ github.action_path }}/verity-engines.mjs" k6 --tier "${{ inputs.tier }}" || echo "Performance" >> "$RUNNER_TEMP/verity-failed"
 
     # ---- optional Lighthouse CI (Core Web Vitals) — separate, lightweight ------
-    - name: "Verity — Performance (Lighthouse CWV)"
+    - name: "Verity — Performance (Core Web Vitals)"
       if: contains(inputs.engines, 'perf') && inputs.lighthouse-url != ''
       shell: bash
       env:
@@ -168,13 +211,13 @@ runs:
         VERITY_TARGET_URL: ${{ inputs.lighthouse-url }}
       run: |
         set -e
-        node "${{ github.action_path }}/verity-engines.mjs" lighthouse --tier "${{ inputs.tier }}"
+        node "${{ github.action_path }}/verity-engines.mjs" lighthouse --tier "${{ inputs.tier }}" || echo "Core Web Vitals" >> "$RUNNER_TEMP/verity-failed"
 
     # ============================ SECURITY (Docker: Python runtime) =============
     # SAST — Semgrep CE via the official Docker image (CLI subprocess only; never
     # linked into our code → clear of LGPL-2.1). Diff on PR, full repo on schedule.
-    - name: "Verity — Security SAST (Semgrep)"
-      if: contains(inputs.engines, 'security')
+    - name: "Verity — Security (code scan)"
+      if: contains(inputs.engines, 'security') && inputs.security-sast != 'false'
       shell: bash
       env:
         VERITY_INGEST_TOKEN: ${{ inputs.token }}
@@ -183,10 +226,11 @@ runs:
         VERITY_BASE_REF: ${{ inputs.base }}
       run: |
         set -e
-        node "${{ github.action_path }}/verity-engines.mjs" security-sast --tier "${{ inputs.tier }}" --base "$VERITY_BASE_REF"
+        node "${{ github.action_path }}/verity-engines.mjs" security-sast --tier "${{ inputs.tier }}" --base "$VERITY_BASE_REF" || echo "Security (code)" >> "$RUNNER_TEMP/verity-failed"
 
-    # DAST — OWASP ZAP via Docker. Baseline scan on PR, full active scan on merge.
-    - name: "Verity — Security DAST (ZAP)"
+    # DAST — OWASP ZAP via Docker. Baseline scan on PR, full active scan on merge
+    # (time-boxed by security-dast-max-minutes; security-dast-depth overrides).
+    - name: "Verity — Security (app scan)"
       if: contains(inputs.engines, 'security') && inputs.security-target-url != ''
       shell: bash
       env:
@@ -194,14 +238,16 @@ runs:
         VERITY_API_URL: ${{ inputs.api-url }}
         VERITY_PR_NUMBER: ${{ github.event.pull_request.number }}
         VERITY_TARGET_URL: ${{ inputs.security-target-url }}
+        VERITY_DAST_DEPTH: ${{ inputs.security-dast-depth }}
+        VERITY_DAST_MAX_MINUTES: ${{ inputs.security-dast-max-minutes }}
       run: |
         set -e
-        node "${{ github.action_path }}/verity-engines.mjs" security-dast --tier "${{ inputs.tier }}"
+        node "${{ github.action_path }}/verity-engines.mjs" security-dast --tier "${{ inputs.tier }}" || echo "Security (app)" >> "$RUNNER_TEMP/verity-failed"
 
     # ============================ API CONTRACT (Docker: Schemathesis) ===========
     # Property-based contract testing, parallel to the existing Playwright flow
     # tests. Needs a reachable base URL to execute (internal APIs: customer CI only).
-    - name: "Verity — API contract (Schemathesis)"
+    - name: "Verity — API contract checks"
       if: contains(inputs.engines, 'contract') && inputs.openapi-spec != '' && inputs.api-base-url != ''
       shell: bash
       env:
@@ -212,4 +258,17 @@ runs:
         VERITY_TARGET_URL: ${{ inputs.api-base-url }}
       run: |
         set -e
-        node "${{ github.action_path }}/verity-engines.mjs" contract --tier "${{ inputs.tier }}"
+        node "${{ github.action_path }}/verity-engines.mjs" contract --tier "${{ inputs.tier }}" || echo "API contract" >> "$RUNNER_TEMP/verity-failed"
+
+    # ============================ RESULT =========================================
+    - name: "Verity — result"
+      if: always()
+      shell: bash
+      run: |
+        f="$RUNNER_TEMP/verity-failed"
+        if [ -s "$f" ]; then
+          echo "✗ Verity: these checks did not pass — $(paste -sd ',' "$f" | sed 's/,/, /g'). See the steps above."
+          rm -f "$f"
+          exit 1
+        fi
+        echo "✓ Verity: every selected check ran and reported."

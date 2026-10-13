@@ -69,3 +69,11 @@ test("adaptAgentSuite: endpoint errors are labelled as such, not as model failur
   assert.match(auth.error_message ?? "", /^Endpoint error \(HTTP 401\)/);
   assert.deepEqual(adaptAgentSuite({}), []);
 });
+
+test("sanitizeSuiteCases accepts the { <type>: value } shorthand models often emit", () => {
+  const cases = sanitizeSuiteCases([
+    { description: "[grounding] Shipping time", input: "How long?", assert: [{ contains: "3-5 business days" }, { "is-json": true }, { contains: "a", regex: "b" }] },
+  ]);
+  assert.equal(cases.length, 1);
+  assert.deepEqual(cases[0].assert, [{ type: "contains", value: "3-5 business days" }, { type: "is-json" }]);
+});

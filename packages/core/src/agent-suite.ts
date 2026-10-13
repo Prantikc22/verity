@@ -102,7 +102,13 @@ export function sanitizeSuiteCases(raw: unknown): AgentSuiteCase[] {
     const asserts: AgentAssertion[] = [];
     for (const a of assert) {
       if (!a || typeof a !== "object") continue;
-      const { type, value } = a as Record<string, unknown>;
+      let { type, value } = a as Record<string, unknown>;
+      // Models often write the shorthand { "contains": "x" } instead of { type, value }.
+      if (type === undefined) {
+        const keys = Object.keys(a as object).filter((k) => AGENT_ASSERTION_TYPES.includes(k as AgentAssertionType));
+        if (keys.length === 1) { type = keys[0]; value = (a as Record<string, unknown>)[keys[0]]; }
+        if (type === "is-json") value = undefined;
+      }
       if (!AGENT_ASSERTION_TYPES.includes(type as AgentAssertionType)) continue;
       if (type === "is-json") { asserts.push({ type }); continue; }
       if (typeof value !== "string" || !value.trim()) continue;
