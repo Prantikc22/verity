@@ -96,7 +96,7 @@ export default async function PricingPage() {
           <div className={styles.shell}>
             <header className={styles.sectionHeading}>
               <h2>Start free.<br /><span>Upgrade when it saves you time.</span></h2>
-              <p>Three self-serve plans, no sales call. Plans differ by how many tests Verity writes for you each month, self-healing, pull-request checks and projects.</p>
+              <p>Four self-serve plans, no sales call. Plans differ by how many tests Verity writes for you each month, self-healing, pull-request checks and projects.</p>
             </header>
             <VeritySelfServeCards inIndia={inIndia} billing={billing} />
           </div>
