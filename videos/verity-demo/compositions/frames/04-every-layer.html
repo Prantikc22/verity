@@ -1,0 +1,249 @@
+<template>
+  <style>
+    @font-face{font-family:Inter;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-2c55a0e60120577a-s.0-dom-5bn10r2.woff2")format("woff2");unicode-range:U+460-52F,U+1C80-1C8A,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F}
+    @font-face{font-family:Inter;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-9c72aa0f40e4eef8-s.1y4-pdgsjb-pw.woff2")format("woff2");unicode-range:U+301,U+400-45F,U+490-491,U+4B0-4B1,U+2116}
+    @font-face{font-family:Inter;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-ad66f9afd8947f86-s.3lvt2whj97whp.woff2")format("woff2");unicode-range:U+1F??}
+    @font-face{font-family:Inter;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-5476f68d60460930-s.2uwcyprjm3xu3.woff2")format("woff2");unicode-range:U+370-377,U+37A-37F,U+384-38A,U+38C,U+38E-3A1,U+3A3-3FF}
+    @font-face{font-family:Inter;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-2bbe8d2671613f1f-s.0k62hbripvv8p.woff2")format("woff2");unicode-range:U+102-103,U+110-111,U+128-129,U+168-169,U+1A0-1A1,U+1AF-1B0,U+300-301,U+303-304,U+308-309,U+323,U+329,U+1EA0-1EF9,U+20AB}
+    @font-face{font-family:Inter;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2")format("woff2");unicode-range:U+??,U+131,U+152-153,U+2BB-2BC,U+2C6,U+2DA,U+2DC,U+304,U+308,U+329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+    @font-face{font-family:Geist Mono;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-5ce348bf30bf5439-s.31988l_ccedte.woff2")format("woff2");unicode-range:U+460-52F,U+1C80-1C8A,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F}
+    @font-face{font-family:Geist Mono;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-4fa387ec64143e14-s.2tuy5pz7dlieh.woff2")format("woff2");unicode-range:U+301,U+400-45F,U+490-491,U+4B0-4B1,U+2116}
+    @font-face{font-family:Geist Mono;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-6306c77e7c8268e4-s.2dbetqa9o8jxf.woff2")format("woff2");unicode-range:U+2000-2001,U+2004-2008,U+200A,U+23B8-23BD,U+2500-259F}
+    @font-face{font-family:Geist Mono;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-7d817b4c03b0c5f1-s.1uyisp29ctx0d.woff2")format("woff2");unicode-range:U+102-103,U+110-111,U+128-129,U+168-169,U+1A0-1A1,U+1AF-1B0,U+300-301,U+303-304,U+308-309,U+323,U+329,U+1EA0-1EF9,U+20AB}
+    @font-face{font-family:Geist Mono;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-bbc41e54d2fcbd21-s.1rgnod-3esatf.woff2")format("woff2");unicode-range:U+100-2BA,U+2BD-2C5,U+2C7-2CC,U+2CE-2D7,U+2DD-2FF,U+304,U+308,U+329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C4,U+2113,U+2C60-2C7F,U+A720-A7FF}
+    @font-face{font-family:Geist Mono;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-797e433ab948586e-s.p.0r6juujl39pe6.woff2")format("woff2");unicode-range:U+??,U+131,U+152-153,U+2BB-2BC,U+2C6,U+2DA,U+2DC,U+304,U+308,U+329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+
+    #root {
+      position: absolute;
+      inset: 0;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      font-family: Inter, sans-serif;
+      color: #F7F7F3;
+    }
+    .clip { position: absolute; inset: 0; }
+    #f04-every-layer-ground {
+      background: #050608;
+    }
+    #f04-every-layer-stage {
+      container-type: size;
+    }
+    /* headline — h2 (5 words), lowercase, upper third, left */
+    #f04-every-layer-kicker {
+      position: absolute;
+      left: 10cqw;
+      top: 7cqw;
+      font-family: "Geist Mono", monospace;
+      font-weight: 500;
+      font-size: 0.9cqw;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #9B9DA5;
+      display: flex;
+      align-items: center;
+      gap: 0.8cqw;
+    }
+    #f04-every-layer-kicker-stub {
+      width: 36px;
+      height: 2px;
+      background: #79F2A6;
+    }
+    #f04-every-layer-headline {
+      position: absolute;
+      left: 10cqw;
+      top: 8.2cqw;
+      margin: 0;
+      font-size: 4.5cqw;
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      text-transform: lowercase;
+      white-space: nowrap;
+    }
+    #f04-every-layer-headline .f04-every-layer-w {
+      display: inline-block;
+      margin-right: 0.24em;
+    }
+    /* 3x2 grid, ~80% width */
+    #f04-every-layer-grid {
+      position: absolute;
+      left: 10cqw;
+      top: 15.2cqw;
+      width: 80cqw;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-auto-rows: 11.5cqw;
+      gap: 1.25cqw;
+    }
+    .f04-every-layer-tile {
+      position: relative;
+      border: 1px solid rgba(247,247,243,0.12);
+      background: #0A0C10;
+      padding: 1.7cqw 1.8cqw 1.5cqw;
+      display: flex;
+      flex-direction: column;
+    }
+    .f04-every-layer-rule {
+      position: absolute;
+      left: -1px;
+      right: -1px;
+      top: -1px;
+      height: 5px;
+      background: #79F2A6;
+      transform-origin: 0% 50%;
+    }
+    .f04-every-layer-num {
+      position: absolute;
+      right: 1.8cqw;
+      top: 1.9cqw;
+      font-family: "Geist Mono", monospace;
+      font-weight: 500;
+      font-size: 0.8cqw;
+      letter-spacing: 0.14em;
+      color: #9B9DA5;
+    }
+    .f04-every-layer-label {
+      font-size: 2.8cqw;
+      font-weight: 700;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      text-transform: lowercase;
+    }
+    .f04-every-layer-path {
+      margin-top: 0.7cqw;
+      font-family: "Geist Mono", monospace;
+      font-weight: 500;
+      font-size: 1.2cqw;
+      letter-spacing: 0.01em;
+      color: #45D5FF;
+    }
+    .f04-every-layer-check {
+      margin-top: auto;
+      font-size: 1.42cqw;
+      font-weight: 400;
+      line-height: 1.3;
+      color: #9B9DA5;
+    }
+    .f04-every-layer-check::before {
+      content: "/ ";
+      font-family: "Geist Mono", monospace;
+      color: #79F2A6;
+      font-weight: 600;
+    }
+    /* footer chip */
+    #f04-every-layer-chip {
+      position: absolute;
+      left: 10cqw;
+      top: 41cqw;
+      display: flex;
+      align-items: center;
+      gap: 0.9cqw;
+      padding: 0.75cqw 1.4cqw;
+      background: #79F2A6;
+      color: #050608;
+      font-size: 1.45cqw;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+    }
+    #f04-every-layer-chip-dot {
+      width: 0.55cqw;
+      height: 0.55cqw;
+      border-radius: 50%;
+      background: #050608;
+    }
+  </style>
+
+  <div id="root" data-composition-id="04-every-layer" data-start="0" data-duration="6.5" data-width="1920" data-height="1080">
+    <div id="f04-every-layer-ground" class="clip" data-start="0" data-duration="6.5" data-track-index="0"></div>
+
+    <div id="f04-every-layer-stage" class="clip" data-start="0" data-duration="6.5" data-track-index="1">
+      <div id="f04-every-layer-kicker"><span id="f04-every-layer-kicker-stub"></span><span>Six test types</span></div>
+      <h2 id="f04-every-layer-headline"><span class="f04-every-layer-w">Every</span><span class="f04-every-layer-w">layer</span><span class="f04-every-layer-w">that</span><span class="f04-every-layer-w">can</span><span class="f04-every-layer-w">break.</span></h2>
+
+      <div id="f04-every-layer-grid">
+        <div class="f04-every-layer-tile" id="f04-every-layer-t1">
+          <div class="f04-every-layer-rule"></div>
+          <div class="f04-every-layer-num">01</div>
+          <div class="f04-every-layer-label">UI journeys</div>
+          <div class="f04-every-layer-path">ui/checkout.spec.ts</div>
+          <div class="f04-every-layer-check">Real clicks, end to end</div>
+        </div>
+        <div class="f04-every-layer-tile" id="f04-every-layer-t2">
+          <div class="f04-every-layer-rule"></div>
+          <div class="f04-every-layer-num">02</div>
+          <div class="f04-every-layer-label">API</div>
+          <div class="f04-every-layer-path">api/items.spec.ts</div>
+          <div class="f04-every-layer-check">Status, schema, auth</div>
+        </div>
+        <div class="f04-every-layer-tile" id="f04-every-layer-t3">
+          <div class="f04-every-layer-rule"></div>
+          <div class="f04-every-layer-num">03</div>
+          <div class="f04-every-layer-label">Visual</div>
+          <div class="f04-every-layer-path">visual/home.visual.spec.ts</div>
+          <div class="f04-every-layer-check">Pixel diffs vs. baseline</div>
+        </div>
+        <div class="f04-every-layer-tile" id="f04-every-layer-t4">
+          <div class="f04-every-layer-rule"></div>
+          <div class="f04-every-layer-num">04</div>
+          <div class="f04-every-layer-label">AI agent evals</div>
+          <div class="f04-every-layer-path">agent/verity.evals.yaml</div>
+          <div class="f04-every-layer-check">Answers graded each release</div>
+        </div>
+        <div class="f04-every-layer-tile" id="f04-every-layer-t5">
+          <div class="f04-every-layer-rule"></div>
+          <div class="f04-every-layer-num">05</div>
+          <div class="f04-every-layer-label">Load</div>
+          <div class="f04-every-layer-path">perf/verity.k6.js</div>
+          <div class="f04-every-layer-check">Latency under real traffic</div>
+        </div>
+        <div class="f04-every-layer-tile" id="f04-every-layer-t6">
+          <div class="f04-every-layer-rule"></div>
+          <div class="f04-every-layer-num">06</div>
+          <div class="f04-every-layer-label">Security</div>
+          <div class="f04-every-layer-path">code + app scans</div>
+          <div class="f04-every-layer-check">Vulnerabilities before merge</div>
+        </div>
+      </div>
+
+      <div id="f04-every-layer-chip"><span id="f04-every-layer-chip-dot"></span><span>All six on every plan — Free included</span></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <script>
+    (function () {
+      window.__timelines = window.__timelines || {};
+      const P = "#f04-every-layer-";
+      const tl = gsap.timeline({ paused: true });
+
+      // Scene 1 (0.0–0.9s): headline rises in word by word, kicker leads
+      tl.fromTo(P + "kicker", { opacity: 0, x: -16 }, { opacity: 1, x: 0, duration: 0.4, ease: "power3.out" }, 0.0);
+      tl.fromTo(P + "headline .f04-every-layer-w",
+        { opacity: 0, y: 34 },
+        { opacity: 1, y: 0, duration: 0.5, ease: "power3.out", stagger: 0.07 }, 0.05);
+
+      // Scene 2 (0.9–4.4s): tiles assemble one at a time in reading order
+      const start = 0.9, gap = 0.52;
+      for (let i = 1; i <= 6; i++) {
+        const t = P + "t" + i;
+        const at = start + (i - 1) * gap;
+        tl.fromTo(t, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, at);
+        tl.fromTo(t + " .f04-every-layer-rule", { scaleX: 0 }, { scaleX: 1, duration: 0.45, ease: "power2.inOut" }, at + 0.08);
+        tl.fromTo([t + " .f04-every-layer-label", t + " .f04-every-layer-num"], { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.35, ease: "power2.out" }, at + 0.12);
+        tl.fromTo(t + " .f04-every-layer-path", { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.35, ease: "power2.out" }, at + 0.2);
+        tl.fromTo(t + " .f04-every-layer-check", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power1.out" }, at + 0.28);
+      }
+
+      // Scene 3 (4.4–6.0s): footer chip lands; grid holds still
+      tl.fromTo(P + "chip", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 4.4);
+      tl.fromTo(P + "chip-dot", { scale: 0 }, { scale: 1, duration: 0.4, ease: "back.out(2.5)" }, 4.55);
+
+      // pad timeline to the full frame length
+      tl.set({}, {}, 6.0);
+
+      window.__timelines["04-every-layer"] = tl;
+    })();
+  </script>
+</template>

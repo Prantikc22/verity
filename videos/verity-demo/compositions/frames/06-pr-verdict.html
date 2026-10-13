@@ -1,0 +1,253 @@
+<template>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<style>
+@font-face{font-family:Inter;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-2c55a0e60120577a-s.0-dom-5bn10r2.woff2")format("woff2");unicode-range:U+460-52F,U+1C80-1C8A,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F}
+@font-face{font-family:Inter;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-9c72aa0f40e4eef8-s.1y4-pdgsjb-pw.woff2")format("woff2");unicode-range:U+301,U+400-45F,U+490-491,U+4B0-4B1,U+2116}
+@font-face{font-family:Inter;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-ad66f9afd8947f86-s.3lvt2whj97whp.woff2")format("woff2");unicode-range:U+1F??}
+@font-face{font-family:Inter;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-5476f68d60460930-s.2uwcyprjm3xu3.woff2")format("woff2");unicode-range:U+370-377,U+37A-37F,U+384-38A,U+38C,U+38E-3A1,U+3A3-3FF}
+@font-face{font-family:Inter;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-2bbe8d2671613f1f-s.0k62hbripvv8p.woff2")format("woff2");unicode-range:U+102-103,U+110-111,U+128-129,U+168-169,U+1A0-1A1,U+1AF-1B0,U+300-301,U+303-304,U+308-309,U+323,U+329,U+1EA0-1EF9,U+20AB}
+@font-face{font-family:Inter;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2")format("woff2");unicode-range:U+??,U+131,U+152-153,U+2BB-2BC,U+2C6,U+2DA,U+2DC,U+304,U+308,U+329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:Geist Mono;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-5ce348bf30bf5439-s.31988l_ccedte.woff2")format("woff2");unicode-range:U+460-52F,U+1C80-1C8A,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F}
+@font-face{font-family:Geist Mono;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-4fa387ec64143e14-s.2tuy5pz7dlieh.woff2")format("woff2");unicode-range:U+301,U+400-45F,U+490-491,U+4B0-4B1,U+2116}
+@font-face{font-family:Geist Mono;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-6306c77e7c8268e4-s.2dbetqa9o8jxf.woff2")format("woff2");unicode-range:U+2000-2001,U+2004-2008,U+200A,U+23B8-23BD,U+2500-259F}
+@font-face{font-family:Geist Mono;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-7d817b4c03b0c5f1-s.1uyisp29ctx0d.woff2")format("woff2");unicode-range:U+102-103,U+110-111,U+128-129,U+168-169,U+1A0-1A1,U+1AF-1B0,U+300-301,U+303-304,U+308-309,U+323,U+329,U+1EA0-1EF9,U+20AB}
+@font-face{font-family:Geist Mono;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-bbc41e54d2fcbd21-s.1rgnod-3esatf.woff2")format("woff2");unicode-range:U+100-2BA,U+2BD-2C5,U+2C7-2CC,U+2CE-2D7,U+2DD-2FF,U+304,U+308,U+329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C4,U+2113,U+2C60-2C7F,U+A720-A7FF}
+#root{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:hidden;font-family:Inter,sans-serif;color:#F7F7F3;}
+.f06-pr-verdict-bg{position:absolute;left:0;top:0;width:1920px;height:1080px;background:#050608;}
+.f06-pr-verdict-stage{position:absolute;left:0;top:0;width:1920px;height:1080px;}
+.f06-pr-verdict-kicker{position:absolute;left:110px;top:88px;font-family:"Geist Mono",monospace;font-weight:500;font-size:16px;letter-spacing:0.14em;text-transform:uppercase;color:#8B73FF;}
+.f06-pr-verdict-kicker i{display:inline-block;width:36px;height:2px;background:#7657FF;vertical-align:middle;margin-right:14px;font-style:normal;}
+.f06-pr-verdict-head{position:absolute;left:106px;top:116px;font-size:86px;font-weight:770;line-height:1;letter-spacing:-0.03em;white-space:nowrap;}
+.f06-pr-verdict-w{display:inline-block;margin-right:0.22em;}
+.f06-pr-verdict-w.f06-pr-verdict-hl{color:#7657FF;margin-right:0;}
+.f06-pr-verdict-panel{position:absolute;left:110px;top:244px;width:1300px;height:600px;}
+.f06-pr-verdict-phead{position:absolute;left:0;top:0;width:1300px;height:76px;background:#0A0C10;border:1px solid rgba(247,247,243,0.12);z-index:4;}
+.f06-pr-verdict-logo{position:absolute;left:30px;top:20px;width:36px;height:36px;filter:invert(1);}
+.f06-pr-verdict-ptitle{position:absolute;left:84px;top:19px;font-size:28px;font-weight:650;letter-spacing:-0.01em;white-space:nowrap;}
+.f06-pr-verdict-ptitle span{font-family:"Geist Mono",monospace;font-weight:500;font-size:20px;letter-spacing:0.06em;color:#9B9DA5;margin-left:16px;}
+.f06-pr-verdict-pstat{position:absolute;right:28px;top:26px;height:24px;font-family:"Geist Mono",monospace;font-weight:500;font-size:16px;letter-spacing:0.14em;text-transform:uppercase;white-space:nowrap;}
+.f06-pr-verdict-pstat-run,.f06-pr-verdict-pstat-done{position:absolute;right:0;top:0;line-height:24px;white-space:nowrap;}
+.f06-pr-verdict-pstat-run{color:#9B9DA5;padding-left:34px;}
+.f06-pr-verdict-pstat-done{color:#F7F7F3;}
+.f06-pr-verdict-hspin{position:absolute;left:0;top:0;width:24px;height:24px;}
+.f06-pr-verdict-row{position:absolute;left:0;width:1300px;height:92px;background:#0A0C10;border-left:1px solid rgba(247,247,243,0.12);border-right:1px solid rgba(247,247,243,0.12);border-bottom:1px solid rgba(247,247,243,0.12);z-index:2;}
+.f06-pr-verdict-tint{position:absolute;left:0;top:0;width:100%;height:100%;}
+.f06-pr-verdict-tint-flaky{background:rgba(242,184,75,0.14);}
+.f06-pr-verdict-tint-fail{background:rgba(240,82,90,0.12);}
+.f06-pr-verdict-spin,.f06-pr-verdict-ico{position:absolute;left:30px;top:28px;width:36px;height:36px;}
+.f06-pr-verdict-title{position:absolute;left:96px;top:14px;font-size:28px;font-weight:650;letter-spacing:-0.01em;white-space:nowrap;}
+.f06-pr-verdict-data{position:absolute;left:96px;top:52px;height:28px;font-family:"Geist Mono",monospace;font-size:22px;line-height:28px;color:#9B9DA5;white-space:nowrap;}
+.f06-pr-verdict-data b{font-weight:600;color:#F7F7F3;}
+.f06-pr-verdict-skel{position:absolute;left:96px;top:60px;width:300px;height:12px;background:rgba(247,247,243,0.10);}
+.f06-pr-verdict-pill{position:absolute;right:28px;top:30px;height:32px;line-height:32px;padding:0 14px;font-family:"Geist Mono",monospace;font-weight:500;font-size:15px;letter-spacing:0.14em;text-transform:uppercase;white-space:nowrap;}
+.f06-pr-verdict-pill-run{border:1px solid rgba(247,247,243,0.12);line-height:30px;color:#9B9DA5;background:#0A0C10;}
+.f06-pr-verdict-pill-pass{background:#79F2A6;color:#050608;}
+.f06-pr-verdict-pill-flaky{background:#F2B84B;color:#050608;}
+.f06-pr-verdict-pill-fail{background:#F0525A;color:#050608;}
+.f06-pr-verdict-pill-sec{background:#F7F7F3;color:#050608;}
+.f06-pr-verdict-chip{display:inline-block;width:26px;height:26px;border-radius:50%;vertical-align:-6px;margin-right:6px;position:relative;}
+.f06-pr-verdict-chip svg{position:absolute;left:0;top:0;width:26px;height:26px;}
+.f06-pr-verdict-chip-ring{position:absolute;left:0;top:0;width:26px;height:26px;border-radius:50%;border:2px solid rgba(247,247,243,0.25);box-sizing:border-box;}
+.f06-pr-verdict-chip-fill{position:absolute;left:0;top:0;width:26px;height:26px;border-radius:50%;}
+.f06-pr-verdict-flakytxt{display:inline-block;margin-left:8px;}
+.f06-pr-verdict-mask{position:absolute;left:0;top:352px;width:1300px;height:64px;overflow:hidden;z-index:1;}
+.f06-pr-verdict-sheet{position:absolute;left:0;top:0;width:1300px;height:64px;background:#0A0C10;border-left:1px solid rgba(247,247,243,0.12);border-right:1px solid rgba(247,247,243,0.12);border-bottom:1px solid rgba(247,247,243,0.12);}
+.f06-pr-verdict-sheet-tint{position:absolute;left:0;top:0;width:100%;height:100%;background:rgba(240,82,90,0.12);}
+.f06-pr-verdict-ev{position:absolute;left:96px;top:8px;width:1176px;height:46px;background:#050608;border:1px solid rgba(247,247,243,0.12);box-sizing:border-box;overflow:hidden;}
+.f06-pr-verdict-evtxt{position:absolute;left:18px;top:9px;height:28px;font-family:"Geist Mono",monospace;font-size:22px;line-height:28px;color:#F7F7F3;white-space:nowrap;}
+.f06-pr-verdict-evtxt b{color:#79F2A6;font-weight:600;}
+.f06-pr-verdict-below{position:absolute;left:0;top:416px;width:1300px;height:184px;z-index:3;}
+.f06-pr-verdict-leader{position:absolute;left:1410px;width:40px;height:2px;background:#F7F7F3;}
+.f06-pr-verdict-callout{position:absolute;left:1450px;white-space:nowrap;background:#F7F7F3;color:#050608;padding:14px 20px 16px 26px;font-size:30px;font-weight:700;line-height:1.2;letter-spacing:-0.02em;}
+.f06-pr-verdict-callout i{position:absolute;left:0;top:0;width:8px;height:100%;font-style:normal;}
+.f06-pr-verdict-ne{display:inline-block;width:0.62em;height:0.62em;vertical-align:-0.02em;margin:0 0.08em;}
+</style>
+
+<div id="root" data-composition-id="06-pr-verdict" data-width="1920" data-height="1080" data-duration="8.5">
+  <div id="f06-pr-verdict-bg" class="clip f06-pr-verdict-bg" data-start="0" data-duration="8.5" data-track-index="0"></div>
+
+  <div id="f06-pr-verdict-stage" class="clip f06-pr-verdict-stage" data-start="0" data-duration="8.5" data-track-index="1">
+    <div id="f06-pr-verdict-kicker" class="f06-pr-verdict-kicker"><i></i>pull request · checks</div>
+    <div id="f06-pr-verdict-head" class="f06-pr-verdict-head"><span class="f06-pr-verdict-w">every</span><span class="f06-pr-verdict-w">pr</span><span class="f06-pr-verdict-w">gets</span><span class="f06-pr-verdict-w">a</span><span class="f06-pr-verdict-w f06-pr-verdict-hl">verdict.</span></div>
+
+    <div id="f06-pr-verdict-panel" class="f06-pr-verdict-panel">
+      <div id="f06-pr-verdict-phead" class="f06-pr-verdict-phead">
+        <img class="f06-pr-verdict-logo" src="assets/logo-e39d26bc.svg" alt="">
+        <div class="f06-pr-verdict-ptitle">Verity — Quick check<span>PR #482</span></div>
+        <div class="f06-pr-verdict-pstat">
+          <div id="f06-pr-verdict-pstat-run" class="f06-pr-verdict-pstat-run"><svg id="f06-pr-verdict-hspin" class="f06-pr-verdict-hspin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="rgba(247,247,243,0.14)" stroke-width="3"/><circle cx="12" cy="12" r="9" fill="none" stroke="#7657FF" stroke-width="3" stroke-dasharray="16 57" stroke-linecap="square"/></svg>running 5 checks</div>
+          <div id="f06-pr-verdict-pstat-done" class="f06-pr-verdict-pstat-done">complete · 1 failing</div>
+        </div>
+      </div>
+
+      <!-- row 0: UI + API -->
+      <div id="f06-pr-verdict-row0" class="f06-pr-verdict-row" style="top:76px">
+        <svg id="f06-pr-verdict-spin0" class="f06-pr-verdict-spin" viewBox="0 0 36 36"><circle cx="18" cy="18" r="13" fill="none" stroke="rgba(247,247,243,0.14)" stroke-width="3.5"/><circle cx="18" cy="18" r="13" fill="none" stroke="#7657FF" stroke-width="3.5" stroke-dasharray="22 60"/></svg>
+        <svg id="f06-pr-verdict-ico0" class="f06-pr-verdict-ico" viewBox="0 0 36 36"><rect width="36" height="36" fill="#79F2A6"/><path d="M9 18.5l6 6 12-13" fill="none" stroke="#050608" stroke-width="3.6"/></svg>
+        <div class="f06-pr-verdict-title">UI + API</div>
+        <div id="f06-pr-verdict-skel0" class="f06-pr-verdict-skel"></div>
+        <div id="f06-pr-verdict-data0" class="f06-pr-verdict-data"><b>38</b> passed</div>
+        <div id="f06-pr-verdict-prun0" class="f06-pr-verdict-pill f06-pr-verdict-pill-run">running</div>
+        <div id="f06-pr-verdict-pres0" class="f06-pr-verdict-pill f06-pr-verdict-pill-pass">passed</div>
+      </div>
+
+      <!-- row 1: flaky -->
+      <div id="f06-pr-verdict-row1" class="f06-pr-verdict-row" style="top:168px">
+        <div id="f06-pr-verdict-tint1" class="f06-pr-verdict-tint f06-pr-verdict-tint-flaky"></div>
+        <svg id="f06-pr-verdict-spin1" class="f06-pr-verdict-spin" viewBox="0 0 36 36"><circle cx="18" cy="18" r="13" fill="none" stroke="rgba(247,247,243,0.14)" stroke-width="3.5"/><circle cx="18" cy="18" r="13" fill="none" stroke="#7657FF" stroke-width="3.5" stroke-dasharray="22 60"/></svg>
+        <svg id="f06-pr-verdict-ico1" class="f06-pr-verdict-ico" viewBox="0 0 36 36"><rect x="1.75" y="1.75" width="32.5" height="32.5" fill="#0A0C10" stroke="#F2B84B" stroke-width="3.5"/><rect x="1.75" y="1.75" width="16.25" height="32.5" fill="#F2B84B"/></svg>
+        <div class="f06-pr-verdict-title">Invalid credentials are rejected</div>
+        <div id="f06-pr-verdict-skel1" class="f06-pr-verdict-skel"></div>
+        <div id="f06-pr-verdict-data1" class="f06-pr-verdict-data">
+          <span class="f06-pr-verdict-chip"><span class="f06-pr-verdict-chip-ring"></span><span id="f06-pr-verdict-cf0" class="f06-pr-verdict-chip-fill" style="background:#F0525A"><svg viewBox="0 0 26 26"><path d="M9 9l8 8M17 9l-8 8" stroke="#050608" stroke-width="2.6"/></svg></span></span><span class="f06-pr-verdict-chip"><span class="f06-pr-verdict-chip-ring"></span><span id="f06-pr-verdict-cf1" class="f06-pr-verdict-chip-fill" style="background:#F0525A"><svg viewBox="0 0 26 26"><path d="M9 9l8 8M17 9l-8 8" stroke="#050608" stroke-width="2.6"/></svg></span></span><span class="f06-pr-verdict-chip"><span class="f06-pr-verdict-chip-ring"></span><span id="f06-pr-verdict-cf2" class="f06-pr-verdict-chip-fill" style="background:#79F2A6"><svg viewBox="0 0 26 26"><path d="M7.5 13.5l4 4 7-8.5" fill="none" stroke="#050608" stroke-width="2.6"/></svg></span></span><span id="f06-pr-verdict-flakytxt" class="f06-pr-verdict-flakytxt">flaky, not blocking</span>
+        </div>
+        <div id="f06-pr-verdict-prun1" class="f06-pr-verdict-pill f06-pr-verdict-pill-run">running</div>
+        <div id="f06-pr-verdict-pres1" class="f06-pr-verdict-pill f06-pr-verdict-pill-flaky">flaky · not blocking</div>
+      </div>
+
+      <!-- row 2: real failure -->
+      <div id="f06-pr-verdict-row2" class="f06-pr-verdict-row" style="top:260px">
+        <div id="f06-pr-verdict-tint2" class="f06-pr-verdict-tint f06-pr-verdict-tint-fail"></div>
+        <svg id="f06-pr-verdict-spin2" class="f06-pr-verdict-spin" viewBox="0 0 36 36"><circle cx="18" cy="18" r="13" fill="none" stroke="rgba(247,247,243,0.14)" stroke-width="3.5"/><circle cx="18" cy="18" r="13" fill="none" stroke="#7657FF" stroke-width="3.5" stroke-dasharray="22 60"/></svg>
+        <svg id="f06-pr-verdict-ico2" class="f06-pr-verdict-ico" viewBox="0 0 36 36"><rect width="36" height="36" fill="#F0525A"/><path d="M11 11l14 14M25 11L11 25" stroke="#050608" stroke-width="3.6"/></svg>
+        <div class="f06-pr-verdict-title">GET /api/items/{id}</div>
+        <div id="f06-pr-verdict-skel2" class="f06-pr-verdict-skel"></div>
+        <div id="f06-pr-verdict-data2" class="f06-pr-verdict-data">Undocumented status · received <b>400</b> · documented 200, 404</div>
+        <div id="f06-pr-verdict-prun2" class="f06-pr-verdict-pill f06-pr-verdict-pill-run">running</div>
+        <div id="f06-pr-verdict-pres2" class="f06-pr-verdict-pill f06-pr-verdict-pill-fail">failed</div>
+      </div>
+
+      <!-- evidence expansion (anchored under the red row) -->
+      <div class="f06-pr-verdict-mask" data-layout-allow-overflow>
+        <div id="f06-pr-verdict-sheet" class="f06-pr-verdict-sheet">
+          <div class="f06-pr-verdict-sheet-tint"></div>
+          <div class="f06-pr-verdict-ev"><div id="f06-pr-verdict-evtxt" class="f06-pr-verdict-evtxt"><b>Reproduce:</b> curl -X GET …/api/items/null</div></div>
+        </div>
+      </div>
+
+      <!-- everything after the expansion rides one wrapper -->
+      <div id="f06-pr-verdict-below" class="f06-pr-verdict-below">
+        <div id="f06-pr-verdict-row3" class="f06-pr-verdict-row" style="top:0px">
+          <svg id="f06-pr-verdict-spin3" class="f06-pr-verdict-spin" viewBox="0 0 36 36"><circle cx="18" cy="18" r="13" fill="none" stroke="rgba(247,247,243,0.14)" stroke-width="3.5"/><circle cx="18" cy="18" r="13" fill="none" stroke="#7657FF" stroke-width="3.5" stroke-dasharray="22 60"/></svg>
+          <svg id="f06-pr-verdict-ico3" class="f06-pr-verdict-ico" viewBox="0 0 36 36"><rect width="36" height="36" fill="#79F2A6"/><path d="M9 18.5l6 6 12-13" fill="none" stroke="#050608" stroke-width="3.6"/></svg>
+          <div class="f06-pr-verdict-title">Load</div>
+          <div id="f06-pr-verdict-skel3" class="f06-pr-verdict-skel"></div>
+          <div id="f06-pr-verdict-data3" class="f06-pr-verdict-data">p95 <b>1 ms</b> · <b>0%</b> errors</div>
+          <div id="f06-pr-verdict-prun3" class="f06-pr-verdict-pill f06-pr-verdict-pill-run">running</div>
+          <div id="f06-pr-verdict-pres3" class="f06-pr-verdict-pill f06-pr-verdict-pill-pass">passed</div>
+        </div>
+        <div id="f06-pr-verdict-row4" class="f06-pr-verdict-row" style="top:92px">
+          <svg id="f06-pr-verdict-spin4" class="f06-pr-verdict-spin" viewBox="0 0 36 36"><circle cx="18" cy="18" r="13" fill="none" stroke="rgba(247,247,243,0.14)" stroke-width="3.5"/><circle cx="18" cy="18" r="13" fill="none" stroke="#7657FF" stroke-width="3.5" stroke-dasharray="22 60"/></svg>
+          <svg id="f06-pr-verdict-ico4" class="f06-pr-verdict-ico" viewBox="0 0 36 36"><rect width="36" height="36" fill="#F7F7F3"/><rect x="13" y="13" width="10" height="10" fill="#050608"/></svg>
+          <div class="f06-pr-verdict-title">Security</div>
+          <div id="f06-pr-verdict-skel4" class="f06-pr-verdict-skel"></div>
+          <div id="f06-pr-verdict-data4" class="f06-pr-verdict-data"><b>6</b> findings · CSP header not set (medium)</div>
+          <div id="f06-pr-verdict-prun4" class="f06-pr-verdict-pill f06-pr-verdict-pill-run">running</div>
+          <div id="f06-pr-verdict-pres4" class="f06-pr-verdict-pill f06-pr-verdict-pill-sec">6 findings</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- callouts in the right gutter -->
+    <div id="f06-pr-verdict-lead1" class="f06-pr-verdict-leader" style="top:457px"></div>
+    <div id="f06-pr-verdict-call1" class="f06-pr-verdict-callout" style="top:426px"><i style="background:#F2B84B"></i>flaky <svg class="f06-pr-verdict-ne" viewBox="0 0 20 20"><path d="M2 7h16M2 13h16M14 2L6 18" fill="none" stroke="currentColor" stroke-width="2.6"/></svg> broken</div>
+    <div id="f06-pr-verdict-lead2" class="f06-pr-verdict-leader" style="top:627px"></div>
+    <div id="f06-pr-verdict-call2" class="f06-pr-verdict-callout" style="top:592px"><i style="background:#F0525A"></i>with the evidence<br>to fix it.</div>
+  </div>
+
+  <script>
+    (function () {
+      var P = "f06-pr-verdict-";
+      var $ = function (n) { return document.getElementById(P + n); };
+      var tl = gsap.timeline({ paused: true });
+
+      // ---- macro: one slow receipt push underneath the whole shot ----
+      tl.fromTo($("stage"), { scale: 1 }, { scale: 1.03, transformOrigin: "960px 540px", duration: 8, ease: "power1.inOut" }, 0);
+
+      // ---- Scene 1 (0.0-1.0): headline + panel with five pending rows ----
+      tl.fromTo($("kicker"), { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.4, ease: "power2.out" }, 0.0);
+      var words = $("head").children;
+      for (var w = 0; w < words.length; w++) {
+        tl.fromTo(words[w], { opacity: 0, y: 46 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 0.05 + w * 0.07);
+      }
+      tl.fromTo($("phead"), { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.4, ease: "back.out(1.6)" }, 0.15);
+      var rowIds = ["row0", "row1", "row2", "row3", "row4"];
+      for (var r = 0; r < 5; r++) {
+        tl.fromTo($(rowIds[r]), { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.38, ease: "power2.out" }, 0.3 + r * 0.09);
+      }
+
+      // initial hidden states for result elements (fromTo-set at t=0, seek-safe)
+      var hideIds = ["ico0","ico1","ico2","ico3","ico4","data0","data1","data2","data3","data4",
+                     "pres0","pres1","pres2","pres3","pres4","tint1","tint2","pstat-done",
+                     "cf0","cf1","cf2","flakytxt","call1","call2"];
+      for (var h = 0; h < hideIds.length; h++) tl.set($(hideIds[h]), { opacity: 0 }, 0);
+      tl.set([$("lead1"), $("lead2")], { scaleX: 0, transformOrigin: "0% 50%" }, 0);
+      // anchored expand: sheet + below tucked up by the sheet height
+      tl.set([$("sheet"), $("below")], { y: -64 }, 0);
+      tl.set($("evtxt"), { clipPath: "inset(0% 100% 0% 0%)" }, 0);
+
+      // working-state spinners: finite, timeline-driven, die exactly at resolve
+      var RES = [1.1, 2.45, 3.0, 3.8, 4.6];
+      for (var s = 0; s < 5; s++) {
+        tl.fromTo($("spin" + s), { rotation: 0 }, { rotation: 360 * Math.round(RES[s] * 1.5), transformOrigin: "50% 50%", duration: RES[s], ease: "none" }, 0);
+      }
+      tl.fromTo($("hspin"), { rotation: 0 }, { rotation: 360 * 7, transformOrigin: "50% 50%", duration: 5.0, ease: "none" }, 0);
+
+      // ---- Scene 2 (1.0-5.2): rows resolve top to bottom ----
+      function resolve(i, t, tintId) {
+        tl.to($("spin" + i), { opacity: 0, scale: 0.4, transformOrigin: "50% 50%", duration: 0.14, ease: "power2.in" }, t);
+        tl.fromTo($("ico" + i), { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, transformOrigin: "50% 50%", duration: 0.4, ease: "back.out(2.4)" }, t + 0.08);
+        tl.to($("skel" + i), { opacity: 0, duration: 0.15 }, t);
+        tl.to($("prun" + i), { opacity: 0, duration: 0.14 }, t);
+        tl.fromTo($("pres" + i), { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, transformOrigin: "100% 50%", duration: 0.36, ease: "back.out(2)" }, t + 0.1);
+        if (tintId) tl.fromTo($(tintId), { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power1.out" }, t + 0.05);
+      }
+
+      // row 0 - pass
+      resolve(0, RES[0]);
+      tl.fromTo($("data0"), { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" }, RES[0] + 0.05);
+
+      // row 1 - flaky: the three attempts fill in sequence, then the verdict lands
+      tl.to($("skel1"), { opacity: 0, duration: 0.15 }, 1.75);
+      tl.set($("data1"), { opacity: 1 }, 1.8);
+      var cf = ["cf0", "cf1", "cf2"];
+      for (var c = 0; c < 3; c++) {
+        tl.fromTo($(cf[c]), { opacity: 0, scale: 0.3 }, { opacity: 1, scale: 1, transformOrigin: "50% 50%", duration: 0.28, ease: "back.out(2.6)" }, 1.8 + c * 0.22);
+      }
+      resolve(1, RES[1], "tint1");
+      tl.fromTo($("flakytxt"), { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.3, ease: "power2.out" }, RES[1] + 0.05);
+
+      // row 2 - real failure
+      resolve(2, RES[2], "tint2");
+      tl.fromTo($("data2"), { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" }, RES[2] + 0.05);
+
+      // row 3 - load
+      resolve(3, RES[3]);
+      tl.fromTo($("data3"), { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" }, RES[3] + 0.05);
+
+      // row 4 - security
+      resolve(4, RES[4]);
+      tl.fromTo($("data4"), { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" }, RES[4] + 0.05);
+
+      // header tense flip: running -> complete
+      tl.to($("pstat-run"), { opacity: 0, duration: 0.15 }, 5.0);
+      tl.fromTo($("pstat-done"), { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" }, 5.05);
+
+      // ---- Scene 3 (5.2-6.6): flaky callout, then the red row expands ----
+      tl.fromTo($("lead1"), { scaleX: 0 }, { scaleX: 1, duration: 0.22, ease: "power2.out" }, 5.3);
+      tl.fromTo($("call1"), { opacity: 0, x: -24, scale: 0.9 }, { opacity: 1, x: 0, scale: 1, transformOrigin: "0% 50%", duration: 0.42, ease: "back.out(1.8)" }, 5.4);
+
+      tl.fromTo([$("sheet"), $("below")], { y: -64 }, { y: 0, duration: 0.5, ease: "power3.inOut" }, 5.85);
+      tl.fromTo($("evtxt"), { clipPath: "inset(0% 100% 0% 0%)" }, { clipPath: "inset(0% 0% 0% 0%)", duration: 0.5, ease: "steps(20)" }, 6.15);
+
+      // ---- Scene 4 (6.6-8.0): evidence callout pins to the red row; hold ----
+      tl.fromTo($("lead2"), { scaleX: 0 }, { scaleX: 1, duration: 0.22, ease: "power2.out" }, 6.7);
+      tl.fromTo($("call2"), { opacity: 0, x: -24, scale: 0.9 }, { opacity: 1, x: 0, scale: 1, transformOrigin: "0% 50%", duration: 0.42, ease: "back.out(1.8)" }, 6.8);
+
+      tl.set({}, {}, 8);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["06-pr-verdict"] = tl;
+    })();
+  </script>
+</div>
+</template>

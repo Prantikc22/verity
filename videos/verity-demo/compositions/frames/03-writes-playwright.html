@@ -1,0 +1,510 @@
+<template>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <style>
+    @font-face{font-family:Inter;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-2c55a0e60120577a-s.0-dom-5bn10r2.woff2")format("woff2");unicode-range:U+460-52F,U+1C80-1C8A,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F}
+    @font-face{font-family:Inter;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-9c72aa0f40e4eef8-s.1y4-pdgsjb-pw.woff2")format("woff2");unicode-range:U+301,U+400-45F,U+490-491,U+4B0-4B1,U+2116}
+    @font-face{font-family:Inter;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-ad66f9afd8947f86-s.3lvt2whj97whp.woff2")format("woff2");unicode-range:U+1F??}
+    @font-face{font-family:Inter;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-5476f68d60460930-s.2uwcyprjm3xu3.woff2")format("woff2");unicode-range:U+370-377,U+37A-37F,U+384-38A,U+38C,U+38E-3A1,U+3A3-3FF}
+    @font-face{font-family:Inter;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-2bbe8d2671613f1f-s.0k62hbripvv8p.woff2")format("woff2");unicode-range:U+102-103,U+110-111,U+128-129,U+168-169,U+1A0-1A1,U+1AF-1B0,U+300-301,U+303-304,U+308-309,U+323,U+329,U+1EA0-1EF9,U+20AB}
+    @font-face{font-family:Inter;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2")format("woff2");unicode-range:U+??,U+131,U+152-153,U+2BB-2BC,U+2C6,U+2DA,U+2DC,U+304,U+308,U+329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+    @font-face{font-family:Geist Mono;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-5ce348bf30bf5439-s.31988l_ccedte.woff2")format("woff2");unicode-range:U+460-52F,U+1C80-1C8A,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F}
+    @font-face{font-family:Geist Mono;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-4fa387ec64143e14-s.2tuy5pz7dlieh.woff2")format("woff2");unicode-range:U+301,U+400-45F,U+490-491,U+4B0-4B1,U+2116}
+    @font-face{font-family:Geist Mono;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-6306c77e7c8268e4-s.2dbetqa9o8jxf.woff2")format("woff2");unicode-range:U+2000-2001,U+2004-2008,U+200A,U+23B8-23BD,U+2500-259F}
+    @font-face{font-family:Geist Mono;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-7d817b4c03b0c5f1-s.1uyisp29ctx0d.woff2")format("woff2");unicode-range:U+102-103,U+110-111,U+128-129,U+168-169,U+1A0-1A1,U+1AF-1B0,U+300-301,U+303-304,U+308-309,U+323,U+329,U+1EA0-1EF9,U+20AB}
+    @font-face{font-family:Geist Mono;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-bbc41e54d2fcbd21-s.1rgnod-3esatf.woff2")format("woff2");unicode-range:U+100-2BA,U+2BD-2C5,U+2C7-2CC,U+2CE-2D7,U+2DD-2FF,U+304,U+308,U+329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C4,U+2113,U+2C60-2C7F,U+A720-A7FF}
+    @font-face{font-family:Geist Mono;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-797e433ab948586e-s.p.0r6juujl39pe6.woff2")format("woff2");unicode-range:U+??,U+131,U+152-153,U+2BB-2BC,U+2C6,U+2DA,U+2DC,U+304,U+308,U+329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+
+    #root {
+      position: absolute;
+      inset: 0;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      font-family: Inter, sans-serif;
+      color: #F7F7F3;
+    }
+    .w03-bg {
+      position: absolute;
+      inset: 0;
+      background: #050608;
+    }
+    .w03-stage {
+      position: absolute;
+      inset: 0;
+    }
+    .w03-world {
+      position: absolute;
+      inset: 0;
+      transform-origin: 640px 450px;
+    }
+
+    /* ---------- editor pane (left ~65%) ---------- */
+    .w03-pane {
+      position: absolute;
+      left: 106px;
+      top: 148px;
+      width: 1170px;
+      background: #0A0C10;
+      outline: 1px solid rgba(247, 247, 243, 0.12);
+      color: #F7F7F3;
+    }
+    .w03-titlebar {
+      position: relative;
+      height: 64px;
+      display: flex;
+      align-items: stretch;
+      border-bottom: 1px solid rgba(247, 247, 243, 0.12);
+    }
+    .w03-tab {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 0 28px 0 18px;
+      border-right: 1px solid rgba(247, 247, 243, 0.12);
+    }
+    .w03-tab-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -1px;
+      height: 2px;
+      background: #79F2A6;
+      transform-origin: 0 50%;
+    }
+    .w03-badge {
+      width: 36px;
+      height: 36px;
+      background: #F7F7F3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .w03-badge img {
+      width: 26px;
+      height: 26px;
+      display: block;
+    }
+    .w03-tabname {
+      font-family: "Geist Mono", monospace;
+      font-size: 20px;
+      font-weight: 500;
+      color: #45D5FF;
+      letter-spacing: 0.01em;
+    }
+    .w03-tabmeta {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      padding-right: 28px;
+      font-family: "Geist Mono", monospace;
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #9B9DA5;
+    }
+
+    .w03-code {
+      position: relative;
+      padding: 34px 32px 34px 18px;
+      font-family: "Geist Mono", monospace;
+      font-size: 24px;
+      line-height: 44px;
+      font-weight: 400;
+    }
+    .w03-activeline {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 34px;
+      height: 44px;
+      background: rgba(247, 247, 243, 0.05);
+    }
+    .w03-line {
+      position: relative;
+      white-space: pre;
+      height: 44px;
+    }
+    .w03-ln {
+      display: inline-block;
+      width: 44px;
+      margin-right: 28px;
+      text-align: right;
+      color: #7A7C82;
+    }
+    .w03-kw { color: #7657FF; font-weight: 600; }
+    .w03-str { color: #79F2A6; }
+    .w03-fn { color: #F7F7F3; }
+    .w03-pn { color: #9B9DA5; }
+    .w03-id { color: #E5E7E6; }
+    .w03-loc {
+      background-repeat: no-repeat;
+      background-position: 0 100%;
+      background-size: 0% 3px;
+      background-image: linear-gradient(#79F2A6, #79F2A6);
+      padding-bottom: 2px;
+    }
+    .w03-caret {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 13px;
+      height: 30px;
+      background: #79F2A6;
+      --col: 0;
+      --row: 0;
+      transform: translate(calc(92px + var(--col) * 1ch), calc(41px + var(--row) * 44px));
+    }
+
+    /* ---------- status strip ---------- */
+    .w03-strip {
+      position: absolute;
+      left: 106px;
+      top: 706px;
+      width: 1170px;
+      height: 76px;
+      background: #0A0C10;
+      outline: 1px solid rgba(247, 247, 243, 0.12);
+      display: flex;
+      align-items: center;
+      padding: 0 32px;
+    }
+    .w03-state {
+      position: absolute;
+      left: 32px;
+      top: 0;
+      height: 76px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      font-family: Inter, sans-serif;
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .w03-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      display: block;
+    }
+    .w03-run { color: #9B9DA5; }
+    .w03-run .w03-dot { background: #9B9DA5; }
+    .w03-ok { color: #79F2A6; }
+    .w03-ok .w03-dot { background: #79F2A6; }
+    .w03-check {
+      width: 30px;
+      height: 30px;
+      display: block;
+    }
+    .w03-stripmeta {
+      margin-left: auto;
+      font-family: "Geist Mono", monospace;
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #9B9DA5;
+    }
+
+    /* ---------- right column (~35%) ---------- */
+    .w03-col {
+      position: absolute;
+      left: 1352px;
+      top: 156px;
+      width: 462px;
+    }
+    .w03-kicker {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-family: "Geist Mono", monospace;
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #8B73FF;
+      margin-bottom: 40px;
+    }
+    .w03-stub {
+      width: 36px;
+      height: 2px;
+      background: #7657FF;
+      display: block;
+    }
+    .w03-block {
+      position: relative;
+      padding-top: 22px;
+      margin-bottom: 40px;
+    }
+    .w03-hair {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 1px;
+      background: rgba(247, 247, 243, 0.12);
+      transform-origin: 0 50%;
+    }
+    .w03-num {
+      display: block;
+      font-family: "Geist Mono", monospace;
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      color: #9B9DA5;
+      margin-bottom: 14px;
+    }
+    .w03-say {
+      font-family: Inter, sans-serif;
+      font-size: 54px;
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      color: #F7F7F3;
+    }
+    .w03-say.accent { color: #7657FF; }
+    .w03-w {
+      display: inline-block;
+      margin-right: 0.24em;
+    }
+  </style>
+
+  <div id="root" data-composition-id="03-writes-playwright" data-width="1920" data-height="1080" data-duration="7.5">
+    <div id="f03-writes-playwright-bg" class="w03-bg clip" data-start="0" data-duration="7.5" data-track-index="0"></div>
+
+    <div id="f03-writes-playwright-stage" class="w03-stage clip" data-start="0" data-duration="7.5" data-track-index="1">
+      <div class="w03-world" id="f03-writes-playwright-world">
+
+        <!-- editor pane -->
+        <div class="w03-pane" id="f03-writes-playwright-pane">
+          <div class="w03-titlebar">
+            <div class="w03-tab">
+              <div class="w03-badge" id="f03-writes-playwright-badge"><img src="assets/logo-a63c10fa.svg" alt="Playwright" /></div>
+              <span class="w03-tabname" id="f03-writes-playwright-tabname">tests/verity/ui/checkout.spec.ts</span>
+              <span class="w03-tab-line" id="f03-writes-playwright-tabline"></span>
+            </div>
+            <div class="w03-tabmeta" id="f03-writes-playwright-tabmeta">TypeScript</div>
+          </div>
+          <div class="w03-code" id="f03-writes-playwright-code">
+            <div class="w03-activeline" id="f03-writes-playwright-active"></div>
+            <div class="w03-caret" id="f03-writes-playwright-caret"></div>
+          </div>
+        </div>
+
+        <!-- status strip -->
+        <div class="w03-strip" id="f03-writes-playwright-strip">
+          <div class="w03-state w03-run" id="f03-writes-playwright-run">
+            <span class="w03-dot" id="f03-writes-playwright-rundot"></span>
+            <span>Running in a real browser…</span>
+          </div>
+          <div class="w03-state w03-ok" id="f03-writes-playwright-ok">
+            <span class="w03-dot" id="f03-writes-playwright-okdot"></span>
+            <span id="f03-writes-playwright-oktext">Verified in a real browser</span>
+            <svg class="w03-check" id="f03-writes-playwright-check" viewBox="0 0 30 30" fill="none">
+              <path id="f03-writes-playwright-checkpath" d="M6 15.5 L12.5 22 L24.5 8.5" stroke="#79F2A6" stroke-width="3.5" stroke-linecap="square" stroke-linejoin="miter" />
+            </svg>
+          </div>
+          <div class="w03-stripmeta" id="f03-writes-playwright-stripmeta">checkout.spec.ts</div>
+        </div>
+
+        <!-- right column -->
+        <div class="w03-col">
+          <div class="w03-kicker" id="f03-writes-playwright-kicker"><span class="w03-stub"></span>No. 03 / Output</div>
+
+          <div class="w03-block" id="f03-writes-playwright-b1">
+            <span class="w03-hair"></span>
+            <span class="w03-num">01</span>
+            <div class="w03-say"><span class="w03-w">readable</span><span class="w03-w">playwright.</span></div>
+          </div>
+          <div class="w03-block" id="f03-writes-playwright-b2">
+            <span class="w03-hair"></span>
+            <span class="w03-num">02</span>
+            <div class="w03-say"><span class="w03-w">grounded</span><span class="w03-w">in</span><span class="w03-w">your</span><span class="w03-w">live</span><span class="w03-w">app.</span></div>
+          </div>
+          <div class="w03-block" id="f03-writes-playwright-b3">
+            <span class="w03-hair"></span>
+            <span class="w03-num">03</span>
+            <div class="w03-say accent"><span class="w03-w">yours</span><span class="w03-w">to</span><span class="w03-w">keep.</span></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var FID = "03-writes-playwright";
+      var DUR = 7;
+      var scope = document.querySelector('[data-composition-id="' + FID + '"]') || document;
+      var $ = function (sel) { return scope.querySelector(sel); };
+      var E = function (n) { return scope.querySelector('[id="f' + FID + "-" + n + '"]'); };
+      var $$ = function (sel) { return Array.prototype.slice.call(scope.querySelectorAll(sel)); };
+
+      // ---------- the real spec (wrapped at 80 cols) ----------
+      var SRC = [
+        'test("guest can check out with a saved cart", async ({ page }) => {',
+        '  await page.goto("https://staging.greenhouse.app/cart");',
+        '  await page.getByRole("button", { name: "Checkout" }).click();',
+        '  await page.getByLabel("Email").fill("guest@example.com");',
+        '  await page.getByRole("button", { name: "Place order" }).click();',
+        '  await expect(',
+        '    page.getByRole("heading", { name: "Order confirmed" })',
+        '  ).toBeVisible();',
+        '});'
+      ];
+      var KW = { test: 1, async: 1, await: 1, expect: 1 };
+
+      function classify(line) {
+        var cls = new Array(line.length);
+        var i = 0;
+        while (i < line.length) {
+          var ch = line[i];
+          if (ch === '"') {
+            var j = line.indexOf('"', i + 1);
+            for (var k = i; k <= j; k++) cls[k] = "w03-str";
+            i = j + 1;
+          } else if (/[A-Za-z_$]/.test(ch)) {
+            var m = /^[A-Za-z_$][A-Za-z0-9_$]*/.exec(line.slice(i))[0];
+            var c = KW[m] ? "w03-kw" : (line[i + m.length] === "(" ? "w03-fn" : "w03-id");
+            for (var q = i; q < i + m.length; q++) cls[q] = c;
+            i += m.length;
+          } else {
+            cls[i] = ch === " " ? "" : "w03-pn";
+            i++;
+          }
+        }
+        return cls;
+      }
+
+      // locator ranges: from "getBy" through its matching ")"
+      function locRange(line) {
+        var s = line.indexOf("getBy");
+        if (s < 0) return null;
+        var depth = 0;
+        for (var i = line.indexOf("(", s); i < line.length; i++) {
+          if (line[i] === "(") depth++;
+          else if (line[i] === ")") { depth--; if (depth === 0) return [s, i]; }
+        }
+        return null;
+      }
+
+      // ---------- schedule: stream 1.0s → 4.5s, char-proportional ----------
+      var T0 = 1.0, T1 = 4.5, PAUSE = 0.06;
+      var typedCount = 0;
+      SRC.forEach(function (l) { typedCount += l.replace(/^\s+/, "").length; });
+      var perChar = (T1 - T0 - PAUSE * SRC.length) / typedCount;
+
+      var code = E("code");
+      var caret = E("caret");
+      var active = E("active");
+      var tl = gsap.timeline({ paused: true });
+
+      var lines = [];   // { ln, chars:[{el,t,col}], start, indent, row }
+      var locs = [];    // { el, start, end }
+      var t = T0;
+
+      SRC.forEach(function (line, li) {
+        var row = document.createElement("div");
+        row.className = "w03-line";
+        var ln = document.createElement("span");
+        ln.className = "w03-ln";
+        ln.textContent = String(li + 1);
+        row.appendChild(ln);
+        var cls = classify(line);
+        var lr = locRange(line);
+        var indent = /^\s*/.exec(line)[0].length;
+        t += PAUSE;
+        var rec = { ln: ln, chars: [], start: t, indent: indent, row: li };
+        var host = row, locEl = null, locStart = 0;
+        for (var i = 0; i < line.length; i++) {
+          if (lr && i === lr[0]) {
+            locEl = document.createElement("span");
+            locEl.className = "w03-loc";
+            row.appendChild(locEl);
+            host = locEl;
+            locStart = t;
+          }
+          var sp = document.createElement("span");
+          sp.className = cls[i] || "";
+          sp.textContent = line[i];
+          host.appendChild(sp);
+          var at = i < indent ? t : (t += perChar);
+          rec.chars.push({ el: sp, t: at, col: i });
+          if (lr && i === lr[1]) {
+            locs.push({ el: locEl, start: locStart, end: t });
+            host = row;
+          }
+        }
+        lines.push(rec);
+        code.appendChild(row);
+      });
+      var TYPE_END = t;
+
+      // stream: every character + gutter number lands at its scheduled time (discrete sets)
+      tl.fromTo(caret, { "--col": 0, "--row": 0, opacity: 0 }, { "--col": 0, "--row": 0, opacity: 0, duration: 0.001 }, 0);
+      lines.forEach(function (L) {
+        tl.fromTo(L.ln, { opacity: 0 }, { opacity: 1, duration: 0.12, ease: "none" }, L.start);
+        tl.set(active, { y: L.row * 44, opacity: 1 }, L.start);
+        tl.set(caret, { "--col": L.indent, "--row": L.row }, L.start);
+        L.chars.forEach(function (c) {
+          tl.fromTo(c.el, { opacity: 0 }, { opacity: 1, duration: 0.001, ease: "none" }, c.t);
+          if (c.col >= L.indent) tl.set(caret, { "--col": c.col + 1 }, c.t);
+        });
+      });
+      tl.fromTo(active, { opacity: 0 }, { opacity: 0, duration: 0.001 }, 0);
+
+      // caret: blinks before the stream, solid while streaming, blinks on the hold
+      [0.8, 0.95].forEach(function (b, k) { tl.set(caret, { opacity: k % 2 ? 0 : 1 }, b); });
+      tl.set(caret, { opacity: 1 }, T0);
+      for (var b = TYPE_END + 0.3, k = 0; b < DUR; b += 0.5, k++) {
+        tl.set(caret, { opacity: k % 2 ? 1 : 0 }, b);
+      }
+
+      // locator glow (attack / sustain / release to a rest level) + green underline draw
+      locs.forEach(function (lc) {
+        var span = lc.end - lc.start;
+        tl.fromTo(lc.el, { backgroundSize: "0% 3px" }, { backgroundSize: "100% 3px", duration: span + 0.12, ease: "power1.out" }, lc.start);
+        tl.fromTo(lc.el, { textShadow: "0px 0px 0px rgba(121,242,166,0)" }, { textShadow: "0px 0px 16px rgba(121,242,166,0.85)", duration: 0.12, ease: "none" }, lc.start);
+        tl.to(lc.el, { textShadow: "0px 0px 6px rgba(121,242,166,0.22)", duration: 0.6, ease: "power1.out" }, lc.end + 0.2);
+      });
+
+      // Scene 1 (0.0–1.0): pane slides up into the 65/35 layout
+      tl.fromTo(E("pane"), { y: 90, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7, ease: "power3.out" }, 0);
+      tl.fromTo(E("badge"), { scale: 0.4, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.45, ease: "back.out(2.2)" }, 0.35);
+      tl.fromTo(E("tabname"), { x: -14, opacity: 0 }, { x: 0, opacity: 1, duration: 0.45, ease: "power2.out" }, 0.42);
+      tl.fromTo(E("tabline"), { scaleX: 0 }, { scaleX: 1, duration: 0.5, ease: "power2.inOut" }, 0.5);
+      tl.fromTo(E("tabmeta"), { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power1.out" }, 0.7);
+      tl.fromTo(E("kicker"), { x: -16, opacity: 0 }, { x: 0, opacity: 1, duration: 0.5, ease: "power2.out" }, 0.75);
+
+      // slow continuous push-in under the stream (one camera move)
+      tl.fromTo(E("world"), { scale: 1 }, { scale: 1.025, duration: 6, ease: "power1.inOut" }, 1.0);
+
+      // right column statements, each on its cue
+      function block(id, at) {
+        var b = E(id);
+        tl.fromTo(b.querySelector(".w03-hair"), { scaleX: 0 }, { scaleX: 1, duration: 0.55, ease: "power2.inOut" }, at);
+        tl.fromTo(b.querySelector(".w03-num"), { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.35, ease: "power2.out" }, at + 0.08);
+        tl.fromTo(b.querySelectorAll(".w03-w"), { opacity: 0, y: 34 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out", stagger: 0.07 }, at + 0.12);
+      }
+      block("b1", 1.1);   // with line 1
+      block("b2", 4.65);  // Scene 3
+      block("b3", 5.35);
+
+      // Scene 4: status strip resolves
+      tl.fromTo(E("strip"), { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 5.7);
+      tl.fromTo(E("run"), { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "none" }, 5.8);
+      tl.fromTo(E("rundot"), { scale: 1 }, { scale: 0.55, duration: 0.18, ease: "sine.inOut" }, 5.85);
+      tl.fromTo(E("stripmeta"), { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "none" }, 5.9);
+      tl.fromTo(E("run"), { opacity: 1, y: 0 }, { opacity: 0, y: -12, duration: 0.16, ease: "power2.in", immediateRender: false }, 6.1);
+      tl.fromTo(E("ok"), { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.28, ease: "power3.out" }, 6.18);
+      tl.fromTo(E("okdot"), { scale: 0.3 }, { scale: 1, duration: 0.45, ease: "back.out(3)" }, 6.18);
+      tl.fromTo(E("checkpath"), { strokeDasharray: 34, strokeDashoffset: 34 }, { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" }, 6.32);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines[FID] = tl;
+    })();
+  </script>
+</template>

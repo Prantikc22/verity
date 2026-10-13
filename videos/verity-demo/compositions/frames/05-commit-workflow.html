@@ -1,0 +1,321 @@
+<template>
+<div id="root" data-composition-id="05-commit-workflow" data-start="0" data-duration="6.4" data-width="1920" data-height="1080">
+<style>
+@font-face{font-family:Inter;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-2c55a0e60120577a-s.0-dom-5bn10r2.woff2")format("woff2");unicode-range:U+460-52F,U+1C80-1C8A,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F}
+@font-face{font-family:Inter;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-9c72aa0f40e4eef8-s.1y4-pdgsjb-pw.woff2")format("woff2");unicode-range:U+301,U+400-45F,U+490-491,U+4B0-4B1,U+2116}
+@font-face{font-family:Inter;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-ad66f9afd8947f86-s.3lvt2whj97whp.woff2")format("woff2");unicode-range:U+1F??}
+@font-face{font-family:Inter;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-5476f68d60460930-s.2uwcyprjm3xu3.woff2")format("woff2");unicode-range:U+370-377,U+37A-37F,U+384-38A,U+38C,U+38E-3A1,U+3A3-3FF}
+@font-face{font-family:Inter;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-2bbe8d2671613f1f-s.0k62hbripvv8p.woff2")format("woff2");unicode-range:U+102-103,U+110-111,U+128-129,U+168-169,U+1A0-1A1,U+1AF-1B0,U+300-301,U+303-304,U+308-309,U+323,U+329,U+1EA0-1EF9,U+20AB}
+@font-face{font-family:Inter;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2")format("woff2");unicode-range:U+??,U+131,U+152-153,U+2BB-2BC,U+2C6,U+2DA,U+2DC,U+304,U+308,U+329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:Geist Mono;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-5ce348bf30bf5439-s.31988l_ccedte.woff2")format("woff2");unicode-range:U+460-52F,U+1C80-1C8A,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F}
+@font-face{font-family:Geist Mono;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-4fa387ec64143e14-s.2tuy5pz7dlieh.woff2")format("woff2");unicode-range:U+301,U+400-45F,U+490-491,U+4B0-4B1,U+2116}
+@font-face{font-family:Geist Mono;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-6306c77e7c8268e4-s.2dbetqa9o8jxf.woff2")format("woff2");unicode-range:U+2000-2001,U+2004-2008,U+200A,U+23B8-23BD,U+2500-259F}
+@font-face{font-family:Geist Mono;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-7d817b4c03b0c5f1-s.1uyisp29ctx0d.woff2")format("woff2");unicode-range:U+102-103,U+110-111,U+128-129,U+168-169,U+1A0-1A1,U+1AF-1B0,U+300-301,U+303-304,U+308-309,U+323,U+329,U+1EA0-1EF9,U+20AB}
+@font-face{font-family:Geist Mono;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-bbc41e54d2fcbd21-s.1rgnod-3esatf.woff2")format("woff2");unicode-range:U+100-2BA,U+2BD-2C5,U+2C7-2CC,U+2CE-2D7,U+2DD-2FF,U+304,U+308,U+329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C4,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:Geist Mono;font-style:normal;font-weight:100 900;font-display:swap;src:url("assets/fonts/captured-797e433ab948586e-s.p.0r6juujl39pe6.woff2")format("woff2");unicode-range:U+??,U+131,U+152-153,U+2BB-2BC,U+2C6,U+2DA,U+2DC,U+304,U+308,U+329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+</style>
+<style>
+  #root {
+    position: relative;
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    container-type: size;
+    font-family: Inter, sans-serif;
+    color: #F7F7F3;
+  }
+  #root .clip { position: absolute; inset: 0; }
+  #f05-bg { background: #050608; }
+  #f05-world { transform-origin: 62% 46%; }
+
+  /* ── left column ── */
+  #f05-left {
+    position: absolute;
+    left: 106px;
+    top: 178px;
+    width: 640px;
+  }
+  .f05-kicker {
+    font-family: "Geist Mono", monospace;
+    font-size: 18px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #9B9DA5;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .f05-rule { width: 36px; height: 2px; background: #79F2A6; display: inline-block; }
+  #f05-head {
+    margin-top: 34px;
+    font-size: 132px;
+    font-weight: 770;
+    line-height: 0.92;
+    letter-spacing: -0.04em;
+    text-transform: lowercase;
+  }
+  .f05-word { display: block; will-change: transform, opacity; }
+  #f05-claims { margin-top: 56px; }
+  .f05-claim {
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    text-transform: lowercase;
+    display: flex;
+    align-items: baseline;
+    gap: 18px;
+  }
+  .f05-claim::before {
+    content: "/";
+    font-family: "Geist Mono", monospace;
+    font-weight: 500;
+    color: #7657FF;
+  }
+  .f05-claim + .f05-claim { margin-top: 8px; }
+  #f05-claim2 { color: #79F2A6; }
+
+  #f05-chips {
+    position: absolute;
+    left: 106px;
+    top: 800px;
+    display: flex;
+    gap: 14px;
+  }
+  .f05-chip {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 56px;
+    padding: 0 20px;
+    border: 1px solid rgba(247, 247, 243, 0.12);
+    font-family: "Geist Mono", monospace;
+    font-size: 19px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #F7F7F3;
+  }
+  .f05-chip img, .f05-chip-svg { width: 24px; height: 24px; display: block; }
+  .f05-chip img { filter: invert(1); }
+  .f05-chip-mark { width: 10px; height: 10px; background: #F7F7F3; display: block; }
+
+  /* ── terminal card ── */
+  #f05-card {
+    position: absolute;
+    left: 836px;
+    top: 168px;
+    width: 978px;
+    height: 676px;
+    background: #0A0C10;
+    border: 1px solid rgba(247, 247, 243, 0.12);
+    color: #F7F7F3;
+    font-family: "Geist Mono", monospace;
+  }
+  .f05-bar {
+    height: 78px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 0 36px;
+    border-bottom: 1px solid rgba(247, 247, 243, 0.12);
+    font-size: 22px;
+    letter-spacing: 0.02em;
+    color: #9B9DA5;
+  }
+  .f05-bar img { width: 30px; height: 30px; filter: invert(1); display: block; }
+  .f05-bar-file { color: #F7F7F3; }
+  .f05-bar-tag {
+    margin-left: auto;
+    font-size: 15px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #79F2A6;
+  }
+  .f05-code { padding: 40px 40px 0 36px; }
+  .f05-line {
+    display: flex;
+    align-items: center;
+    height: 54px;
+    font-size: 29px;
+    white-space: pre;
+  }
+  .f05-ln { width: 52px; color: #7A7C82; font-size: 22px; flex: none; }
+  .f05-k { color: #7657FF; }
+  .f05-p { color: #9B9DA5; }
+  .f05-v { color: #F7F7F3; }
+  .f05-caret {
+    display: inline-block;
+    width: 15px;
+    height: 34px;
+    margin-left: 3px;
+    background: #79F2A6;
+    align-self: center;
+    visibility: hidden;
+  }
+  .f05-sep {
+    height: 1px;
+    margin: 26px 0 28px 52px;
+    background: rgba(247, 247, 243, 0.12);
+    transform-origin: left center;
+  }
+  .f05-dollar { color: #79F2A6; }
+  #f05-ok {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    color: #79F2A6;
+    font-weight: 600;
+    transform-origin: left center;
+  }
+  .f05-ok-dim { color: #9B9DA5; font-weight: 400; font-size: 24px; }
+</style>
+
+<div id="f05-bg" class="clip" data-start="0" data-duration="6.4" data-track-index="0"></div>
+
+<div id="f05-world" class="clip" data-start="0" data-duration="6.4" data-track-index="1">
+  <div id="f05-left">
+    <div class="f05-kicker" id="f05-kicker"><span class="f05-rule"></span>Setup · one file</div>
+    <div id="f05-head">
+      <span class="f05-word">commit</span>
+      <span class="f05-word">one</span>
+      <span class="f05-word">workflow.</span>
+    </div>
+    <div id="f05-claims">
+      <div class="f05-claim" id="f05-claim1">runs in your ci.</div>
+      <div class="f05-claim" id="f05-claim2">unlimited runs.</div>
+    </div>
+  </div>
+
+  <div id="f05-chips">
+    <div class="f05-chip"><svg class="f05-chip-svg" viewBox="0 0 24 24" aria-hidden="true"><path fill="#F7F7F3" d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"></path></svg>GitHub Actions</div>
+    <div class="f05-chip"><img src="assets/logo-865f34be.svg" alt="" />GitLab</div>
+    <div class="f05-chip"><span class="f05-chip-mark"></span>Jenkins</div>
+  </div>
+
+  <div id="f05-card">
+    <div class="f05-bar">
+      <img src="assets/logo-e39d26bc.svg" alt="" />
+      <span class="f05-bar-file">.github/workflows/verity.yml</span>
+      <span class="f05-bar-tag">yaml</span>
+    </div>
+    <div class="f05-code">
+      <div class="f05-line" data-l="0"><span class="f05-ln">1</span><span class="f05-seg"></span><span class="f05-caret"></span></div>
+      <div class="f05-line" data-l="1"><span class="f05-ln">2</span><span class="f05-seg"></span><span class="f05-caret"></span></div>
+      <div class="f05-line" data-l="2"><span class="f05-ln">3</span><span class="f05-seg"></span><span class="f05-caret"></span></div>
+      <div class="f05-line" data-l="3"><span class="f05-ln">4</span><span class="f05-seg"></span><span class="f05-caret"></span></div>
+      <div class="f05-sep" id="f05-sep"></div>
+      <div class="f05-line" data-l="4"><span class="f05-ln"></span><span class="f05-seg"></span><span class="f05-caret"></span></div>
+      <div class="f05-line" data-l="5"><span class="f05-ln"></span><span id="f05-ok"><span>✓ pushed</span><span class="f05-ok-dim">main → origin</span></span></div>
+      <div class="f05-line" data-l="6"><span class="f05-ln"></span><span class="f05-seg"></span><span class="f05-caret"></span></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<script>
+  (function () {
+    var ID = "05-commit-workflow";
+    var DUR = 6;
+    var root = document.querySelector('[data-composition-id="' + ID + '"]');
+    var q = function (s) { return root.querySelector(s); };
+    var qa = function (s) { return Array.prototype.slice.call(root.querySelectorAll(s)); };
+
+    // Typed lines: segments [class, text, instant?]. Times in seconds.
+    var LINES = [
+      { s: 1.25, e: 1.95, segs: [["f05-p", "- "], ["f05-k", "uses"], ["f05-p", ": "], ["f05-v", "qashift/verity-action@v1"]] },
+      { s: 2.05, e: 2.25, segs: [["f05-p", "  ", 1], ["f05-k", "with"], ["f05-p", ":"]] },
+      { s: 2.35, e: 2.65, segs: [["f05-p", "    ", 1], ["f05-k", "tier"], ["f05-p", ": "], ["f05-v", "fast"]] },
+      { s: 2.75, e: 3.45, segs: [["f05-p", "    ", 1], ["f05-k", "engines"], ["f05-p", ": "], ["f05-v", "ui,api,visual,agent,perf,security"]] },
+      { s: 3.7, e: 4.35, segs: [["f05-dollar", "$ ", 1], ["f05-v", "git commit -m \"Add Verity\" && git push"]] },
+      null,
+      { s: 4.7, e: 4.7, segs: [["f05-dollar", "$ ", 1]] }
+    ];
+    // Caret ownership windows per line index
+    var CARET = [[1.0, 2.05, 0], [2.05, 2.35, 1], [2.35, 2.75, 2], [2.75, 3.62, 3], [3.62, 4.52, 4], [4.7, 99, 6]];
+
+    var lineEls = {};
+    qa(".f05-line").forEach(function (el) { lineEls[el.getAttribute("data-l")] = el; });
+
+    // Pre-build spans per segment
+    LINES.forEach(function (ln, i) {
+      if (!ln) return;
+      var host = lineEls[i].querySelector(".f05-seg");
+      ln.spans = ln.segs.map(function (sg) {
+        var sp = document.createElement("span");
+        sp.className = sg[0];
+        host.appendChild(sp);
+        return sp;
+      });
+      ln.typed = ln.segs.reduce(function (n, sg) { return n + (sg[2] ? 0 : sg[1].length); }, 0);
+    });
+
+    function renderLine(ln, t) {
+      var n = 0;
+      if (t >= ln.s) {
+        n = ln.e > ln.s ? Math.floor(((t - ln.s) / (ln.e - ln.s)) * ln.typed) : ln.typed;
+        if (n > ln.typed) n = ln.typed;
+      }
+      var left = n;
+      ln.segs.forEach(function (sg, j) {
+        if (t < ln.s) { ln.spans[j].textContent = ""; return; }
+        if (sg[2]) { ln.spans[j].textContent = sg[1]; return; }
+        var take = Math.min(left, sg[1].length);
+        ln.spans[j].textContent = sg[1].substring(0, take);
+        left -= take;
+      });
+    }
+
+    var carets = {};
+    qa(".f05-line").forEach(function (el) {
+      var c = el.querySelector(".f05-caret");
+      if (c) carets[el.getAttribute("data-l")] = c;
+    });
+
+    function render(t) {
+      LINES.forEach(function (ln) { if (ln) renderLine(ln, t); });
+      var owner = -1;
+      for (var i = 0; i < CARET.length; i++) {
+        if (t >= CARET[i][0] && t < CARET[i][1]) { owner = CARET[i][2]; break; }
+      }
+      var ln = LINES[owner];
+      var typing = ln && t >= ln.s && t < ln.e;
+      var on = typing || Math.sin(t * Math.PI * 2 / 0.64) > 0;
+      Object.keys(carets).forEach(function (k) {
+        carets[k].style.visibility = (+k === owner && on) ? "visible" : "hidden";
+      });
+    }
+
+    var tl = gsap.timeline({ paused: true });
+
+    // Scene 1 — headline (0.0–0.9)
+    tl.fromTo("#f05-kicker", { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.45, ease: "power3.out" }, 0.05);
+    tl.fromTo(qa(".f05-word"), { opacity: 0, y: 70 }, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out", stagger: 0.11 }, 0.0);
+
+    // Slow continuous push-in under the whole shot (single camera move)
+    tl.fromTo("#f05-world", { scale: 1 }, { scale: 1.035, duration: DUR, ease: "sine.inOut" }, 0);
+
+    // Scene 2 — terminal card springs in (0.9) then YAML types
+    tl.fromTo("#f05-card", { opacity: 0, scale: 0.9, y: 40 }, { opacity: 1, scale: 1, y: 0, duration: 0.55, ease: "power3.out" }, 0.9);
+
+    // Scene 3 — separator + git line + pushed
+    tl.fromTo("#f05-sep", { scaleX: 0 }, { scaleX: 1, duration: 0.35, ease: "power2.out" }, 3.55);
+    tl.fromTo("#f05-ok", { opacity: 0, scale: 0 }, { opacity: 1, scale: 1, duration: 0.4, ease: "power3.out" }, 4.5);
+
+    // Scene 4 — claims + provider chips
+    tl.fromTo("#f05-claim1", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 4.85);
+    tl.fromTo("#f05-claim2", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 5.2);
+    tl.fromTo(qa(".f05-chip"), { opacity: 0, scale: 0, y: 16 }, { opacity: 1, scale: 1, y: 0, duration: 0.4, ease: "power3.out", stagger: 0.09 }, 5.4);
+
+    // Typing + caret driver (seek-safe: everything derived from driver.t)
+    var driver = { t: 0 };
+    tl.fromTo(driver, { t: 0 }, { t: DUR, duration: DUR, ease: "none", onUpdate: function () { render(driver.t); } }, 0);
+    render(0);
+
+    window.__timelines = window.__timelines || {};
+    window.__timelines[ID] = tl;
+  })();
+</script>
+</div>
+</template>

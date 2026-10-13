@@ -41,6 +41,16 @@ const jsonLd = {
       offers: { "@type": "Offer", price: "0", priceCurrency: "USD", description: "Free plan: 1 project, 15 AI test generations a month, unlimited CI runs." },
     },
     {
+      "@type": "VideoObject",
+      name: "Verity product demo",
+      description: "Paste a URL, Verity writes Playwright tests for UI, API, visual, AI-agent, load and security, you commit one workflow, and every pull request gets a verdict with evidence.",
+      thumbnailUrl: `${SITE_URL}/demo/verity-demo-poster.jpg`,
+      contentUrl: `${SITE_URL}/demo/verity-demo.mp4`,
+      uploadDate: "2026-10-13",
+      duration: "PT48S",
+      publisher: { "@id": `${SITE_URL}/#org` },
+    },
+    {
       "@type": "FAQPage",
       mainEntity: LANDING_FAQ.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })),
     },

@@ -435,6 +435,31 @@ function GapSection() {
   );
 }
 
+function DemoSection() {
+  return (
+    <section id="demo" className={styles.demoSection} aria-labelledby="demo-title">
+      <div className={styles.sectionShell}>
+        <RevealBlock className={styles.demoHeading}>
+          <span className={styles.eyebrow}>SEE IT WORK · 48 SECONDS</span>
+          <h2 id="demo-title">From a URL to a verdict<br /><span>on every pull request.</span></h2>
+        </RevealBlock>
+        <div className={styles.demoFrame}>
+          <video
+            controls
+            playsInline
+            preload="metadata"
+            poster="/demo/verity-demo-poster.jpg"
+            aria-label="Verity product demo: paste a URL, Verity writes Playwright tests, commit one workflow, and every pull request gets a verdict with evidence."
+          >
+            <source src="/demo/verity-demo.mp4" type="video/mp4" />
+          </video>
+        </div>
+        <p className={styles.demoNote}>Real output from Verity — the generated Playwright, the CI workflow, and a pull request&apos;s verdict with a flaky test told apart from a real failure.</p>
+      </div>
+    </section>
+  );
+}
+
 function HowItWorks() {
   return (
     <section id="how" className={styles.howSection} aria-labelledby="how-title">
@@ -874,7 +899,7 @@ export function LandingExperience() {
               transition={{ duration: 0.55, delay: 0.3 }}
             >
               <UrlStart id="hero-url" />
-              <a href="#how" className={`${styles.textCta} ${styles.heroHow}`}>See how it works <Arrow down /></a>
+              <a href="#demo" className={`${styles.textCta} ${styles.heroHow}`}>Watch the 48-second demo <Arrow down /></a>
             </motion.div>
             <motion.div
               className={styles.heroFootnotes}
@@ -895,6 +920,7 @@ export function LandingExperience() {
           </div>
         </section>
         <CustomerRail />
+        <DemoSection />
         <HowItWorks />
         <GapSection />
         <StatsSection />

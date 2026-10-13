@@ -27,3 +27,10 @@ test-results
 
 # separate repo (qashift/verity-demo)
 examples/verity-demo/
+
+# HyperFrames video projects: keep sources, skip regenerable heavy output
+videos/*/capture/
+videos/*/renders/
+videos/*/.hyperframes/
+videos/*/snapshots/
+videos/*/node_modules/

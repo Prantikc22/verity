@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "preferences": {
+    "flow": {
+      "value": "automation",
+      "confirmed_in": [
+        "verity-demo"
+      ],
+      "updated_at": "2026-10-13T15:13:11.925Z"
+    },
+    "storyboard": {
+      "value": "no",
+      "confirmed_in": [
+        "verity-demo"
+      ],
+      "updated_at": "2026-10-13T15:13:16.975Z"
+    },
+    "aspect": {
+      "value": "1920x1080",
+      "confirmed_in": [
+        "verity-demo"
+      ],
+      "updated_at": "2026-10-13T15:13:17.007Z"
+    },
+    "language": {
+      "value": "en",
+      "confirmed_in": [
+        "verity-demo"
+      ],
+      "updated_at": "2026-10-13T15:13:17.040Z"
+    },
+    "destination": {
+      "value": "website-embed",
+      "confirmed_in": [
+        "verity-demo"
+      ],
+      "updated_at": "2026-10-13T15:13:17.071Z"
+    },
+    "style_preset.product-launch-video": {
+      "value": "broadside",
+      "confirmed_in": [
+        "verity-demo"
+      ],
+      "updated_at": "2026-10-13T15:15:47.067Z"
+    }
+  },
+  "sightings": {}
+}

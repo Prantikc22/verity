@@ -1,0 +1,14 @@
+{
+  "lines": [
+    {
+      "id": "01",
+      "sfx": [
+        "soft-tick on each swap",
+        "low impact on the last line"
+      ]
+    }
+  ],
+  "bgm": {
+    "mode": "none"
+  }
+}
