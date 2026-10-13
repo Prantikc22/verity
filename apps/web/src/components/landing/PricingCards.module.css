@@ -3,9 +3,12 @@
 .costAnchor strong { color: #f1f1ed; }
 .costAnchor s { color: #c6c7cc; text-decoration-color: #ff7973; }
 .costAnchor em { color: #79f2a6; font-style: normal; font-weight: 700; }
-.currencyRow { margin-bottom: 28px; display: flex; justify-content: center; }
+.currencyRow { margin-bottom: 28px; display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+.billedNote { margin-top: 8px; color: #777982; font-size: 12px; }
+.tierGrid4 { grid-template-columns: repeat(4, 1fr); }
+.tierGrid4 .tier { padding: 28px 24px; }
 .currencyToggle { display: inline-flex; border: 1px solid rgba(255,255,255,.16); background: #08090c; }
-.currencyButton { min-width: 78px; min-height: 40px; border: 0; background: transparent; color: #74767e; font: 600 12px var(--font-geist-mono), monospace; cursor: pointer; }
+.currencyButton { min-width: 78px; min-height: 40px; padding: 0 14px; border: 0; background: transparent; color: #74767e; font: 600 12px var(--font-geist-mono), monospace; cursor: pointer; }
 .currencyActive { background: #f3f3ef; color: #07080a; }
 .tierGrid { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid rgba(255,255,255,.14); border-left: 1px solid rgba(255,255,255,.14); }
 .tier { position: relative; min-height: 650px; padding: 32px; display: flex; flex-direction: column; border-right: 1px solid rgba(255,255,255,.14); border-bottom: 1px solid rgba(255,255,255,.14); background: #090b0f; }
@@ -46,6 +49,8 @@
 @media (max-width: 1000px) {
   .tierGrid { grid-template-columns: 1fr 1fr; }
   .tier:last-of-type { grid-column: 1 / -1; min-height: 540px; }
+  .tierGrid4 { grid-template-columns: 1fr 1fr; }
+  .tierGrid4 .tier:last-of-type { grid-column: auto; min-height: 650px; }
   .fdeTier { grid-template-columns: 1fr; gap: 44px; }
 }
 

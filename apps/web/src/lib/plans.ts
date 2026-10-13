@@ -11,6 +11,9 @@ export interface PlanLimits {
   priceUsd: number | null;
   /** INR per month. null = custom/contact. */
   priceInr: number | null;
+  /** Self-serve annual prices (whole year, billed once). Absent ⇒ monthly only. */
+  priceUsdYearly?: number;
+  priceInrYearly?: number;
   billingNote: string;
   /** Max maintained tests in the suite (runs are always unlimited). */
   maxTests: number;
@@ -74,12 +77,45 @@ export const PLANS: Record<PlanTier, PlanLimits> = {
       "1 project",
     ],
   },
+  solo: {
+    tier: "solo",
+    name: "Solo",
+    tagline: "One product, self-healing tests, results on every PR.",
+    priceUsd: 19,
+    priceInr: 1199,
+    priceUsdYearly: 180,
+    priceInrYearly: 11499,
+    billingNote: "per month · billed monthly",
+    maxTests: 25,
+    // 1 project: the DB project-cap trigger's default branch (else → 1) covers 'solo'.
+    maxProjects: 1,
+    testGensPerMonth: 60,
+    cloudRunsPerMonth: 10,
+    cloudTrialsPerMonth: 1,
+    ciRuns: "unlimited",
+    maxRunHistory: 30,
+    selfHealing: true,
+    prGating: true,
+    mergeBlocking: false,
+    predictionsGA: false,
+    predictionsBeta: false,
+    fde: false,
+    pomConversion: false,
+    highlights: [
+      "60 AI-written tests / mo, every test type",
+      "Self-healing + pull-request checks",
+      "Unlimited CI runs · 1 project",
+      "Self-serve — no engineer, no call",
+    ],
+  },
   pro: {
     tier: "pro",
     name: "Pro",
     tagline: "The full engine, self-driven. No engineer, no call.",
     priceUsd: 49,
     priceInr: 2999,
+    priceUsdYearly: 468,
+    priceInrYearly: 28799,
     billingNote: "per month · billed monthly",
     maxTests: 50,
     maxProjects: 3,
@@ -110,6 +146,8 @@ export const PLANS: Record<PlanTier, PlanLimits> = {
     tagline: "Self-serve, scaled for a whole team.",
     priceUsd: 149,
     priceInr: 9999,
+    priceUsdYearly: 1428,
+    priceInrYearly: 95999,
     billingNote: "per month · billed monthly",
     maxTests: 150,
     maxProjects: 10,
@@ -252,7 +290,10 @@ export const PLANS: Record<PlanTier, PlanLimits> = {
   },
 };
 
-export const PAID_TIERS: PlanTier[] = ["pro", "team", "starter", "growth", "scale"];
+export const PAID_TIERS: PlanTier[] = ["solo", "pro", "team", "starter", "growth", "scale"];
+/** Self-serve tiers that can be bought yearly (20% off). */
+export const YEARLY_TIERS: PlanTier[] = ["solo", "pro", "team"];
+export type BillingInterval = "monthly" | "yearly";
 
 export function planFor(tier: PlanTier | null | undefined): PlanLimits {
   return PLANS[tier ?? "free"];

@@ -453,6 +453,7 @@ function HowItWorks() {
         <div className={styles.howCta}>
           <Link href="/login?next=/dashboard" className={styles.primaryCta}>Start free <Arrow /></Link>
           <Link href="/docs" className={styles.textCta}>Read the setup guide <Arrow /></Link>
+          <a href="https://github.com/qashift/verity-demo" className={styles.textCta} target="_blank" rel="noopener noreferrer">See an example repo on GitHub <Arrow /></a>
         </div>
       </div>
     </section>

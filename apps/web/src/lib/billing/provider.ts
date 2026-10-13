@@ -6,6 +6,8 @@ export interface CreateSubscriptionInput {
   customerEmail?: string;
   /** Billing currency — selects the matching plan so the charge matches the price shown. */
   currency?: "USD" | "INR";
+  /** Billing period — selects the monthly or yearly plan. */
+  interval?: "monthly" | "yearly";
 }
 
 export interface CreateSubscriptionResult {

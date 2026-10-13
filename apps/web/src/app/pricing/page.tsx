@@ -16,18 +16,20 @@ export const metadata: Metadata = {
   openGraph: { title: "Verity pricing — free plan, unlimited CI runs", description: DESCRIPTION, url: "/pricing" },
 };
 
-const FAQ = [
+const faqFor = (yearly: boolean) => [
   { q: "What counts toward my monthly allowance?", a: "Only AI-written tests: each test Verity generates for you — UI, API, visual, AI-agent eval or load test — counts once. Running tests never counts, so your suite can run on every commit." },
   { q: "Are CI runs really unlimited?", a: "Yes, on every plan including Free. Your CI provides the compute, so Verity never meters executions there. Cloud runs (our browsers, no CI needed) are capped per plan." },
   { q: "Which test types are on the Free plan?", a: "All of them: UI, API, visual, AI-agent, load and security. Paid plans add volume, self-healing, pull-request checks and more projects." },
   { q: "How is this different from credit-based testing tools?", a: "Credit-based tools usually charge every time a test runs on their servers. Verity charges for writing tests and lets you run them free, forever, in your own pipeline — as plain Playwright code you own." },
   { q: "Do we own the tests?", a: "Yes. Tests are readable Playwright (plus a load-test script and an eval YAML file) committed to your repository. If you cancel, they keep running." },
-  { q: "Can I change or cancel my plan?", a: "Yes. Plans are month to month with no contract — email hello@qashifthq.com to change or cancel. Your tests stay in your repo either way." },
+  { q: "Can I change or cancel my plan?", a: yearly
+    ? "Yes. Pay monthly, or yearly to save 20%; there is no contract beyond the period you've paid for. Email hello@qashifthq.com to change or cancel. Your tests stay in your repo either way."
+    : "Yes. Plans are month to month with no contract — email hello@qashifthq.com to change or cancel. Your tests stay in your repo either way." },
   { q: "When should we choose Managed Testing?", a: "When you want the outcome owned rather than another tool to operate. A QAShift engineer takes responsibility for strategy, coverage, maintenance, failure triage and release reporting." },
   { q: "What about security and private code?", a: "Tests and scans run inside your CI, so code and secrets stay in your infrastructure; only results are sent to Verity." },
 ];
 
-const jsonLd = {
+const jsonLdFor = (FAQ: { q: string; a: string }[]) => ({
   "@context": "https://schema.org",
   "@graph": [
     {
@@ -43,7 +45,7 @@ const jsonLd = {
     },
     { "@type": "FAQPage", mainEntity: FAQ.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })) },
   ],
-};
+});
 
 const OWNERSHIP = [
   ["01", "Test strategy", "OWNED WITH YOU"],
@@ -52,8 +54,19 @@ const OWNERSHIP = [
   ["04", "Release reporting", "SHIPPED TO THE TEAM"],
 ] as const;
 
+/** A tier/period is only offered once its Razorpay plan exists (never sell what can't be bought). */
+function billingAvailability() {
+  const has = (k: string) => Boolean(process.env[k]);
+  const solo = has("RAZORPAY_PLAN_SOLO");
+  const yearly = has("RAZORPAY_PLAN_PRO_YEARLY") && has("RAZORPAY_PLAN_TEAM_YEARLY") && (!solo || has("RAZORPAY_PLAN_SOLO_YEARLY"));
+  return { solo, yearly };
+}
+
 export default async function PricingPage() {
   const inIndia = await isIndia();
+  const billing = billingAvailability();
+  const FAQ = faqFor(billing.yearly);
+  const jsonLd = jsonLdFor(FAQ);
 
   return (
     <div className={styles.page}>
@@ -85,7 +98,7 @@ export default async function PricingPage() {
               <h2>Start free.<br /><span>Upgrade when it saves you time.</span></h2>
               <p>Three self-serve plans, no sales call. Plans differ by how many tests Verity writes for you each month, self-healing, pull-request checks and projects.</p>
             </header>
-            <VeritySelfServeCards inIndia={inIndia} />
+            <VeritySelfServeCards inIndia={inIndia} billing={billing} />
           </div>
         </section>
 

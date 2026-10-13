@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import styles from "./PricingCards.module.css";
+import { PLANS } from "@/lib/plans";
 
 type RazorpayCtor = new (opts: Record<string, unknown>) => { open: () => void };
 declare global {
@@ -24,7 +25,7 @@ function loadRazorpay(): Promise<boolean> {
 
 /** Tiers that can start a Razorpay checkout: self-serve here + FDE tiers via the
  *  QAShift "Pay & start now" deep link. The backend validates against PAID_TIERS. */
-const CHECKOUT_TIERS = ["pro", "team", "starter", "growth", "scale"] as const;
+const CHECKOUT_TIERS = ["solo", "pro", "team", "starter", "growth", "scale"] as const;
 type CheckoutTier = (typeof CHECKOUT_TIERS)[number];
 
 interface Tier {
@@ -39,7 +40,7 @@ interface Tier {
   note?: string;
   cta: { label: string; href: string };
   /** A paid tier initiates Razorpay checkout instead of just linking. */
-  paidTier?: "pro" | "team";
+  paidTier?: "solo" | "pro" | "team";
   highlight?: boolean;
 }
 
@@ -64,6 +65,21 @@ const TIERS: Tier[] = [
       "Results posted on pull requests",
     ],
     cta: { label: "Start free", href: "/login?next=/dashboard" },
+  },
+  {
+    name: "Solo",
+    blurb: "One product, tests that fix themselves, results on every PR.",
+    usd: 19, inr: 1199,
+    cap: "60 AI-written tests / month",
+    features: [
+      "Everything in Free",
+      "Self-healing: selector fixes as reviewable diffs",
+      "Checks + comments on every pull request",
+      "1 project · up to 25 tests",
+      "10 cloud runs / month",
+    ],
+    cta: { label: "Start Solo", href: "/login?next=/pricing" },
+    paidTier: "solo",
   },
   {
     name: "Pro",
@@ -97,32 +113,56 @@ const TIERS: Tier[] = [
   },
 ];
 
-export function VeritySelfServeCards({}: { inIndia: boolean }) {
+/** Which purchases are actually configured (server-side Razorpay plan ids). */
+export interface BillingAvailability { solo: boolean; yearly: boolean }
+
+export function VeritySelfServeCards({ billing = { solo: false, yearly: false } }: { inIndia: boolean; billing?: BillingAvailability }) {
   // USD is the default for everyone (global-standard for dev tools); INR stays a
   // one-click toggle for teams who prefer to pay in rupees.
   const [currency, setCurrency] = useState<"USD" | "INR">("USD");
+  // Annual is the default once it can be bought: it is the better deal.
+  const [interval, setBillingInterval] = useState<"monthly" | "yearly">(billing.yearly ? "yearly" : "monthly");
+  const tiers = TIERS.filter((t) => t.paidTier !== "solo" || billing.solo);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState("");
   // Tier a checkout was auto-started for (from a QAShift deep link or a
   // post-login resume) — drives the "what's happening" banner.
   const [deepLink, setDeepLink] = useState<string | null>(null);
-  const fmt = (t: Tier) =>
-    currency === "INR" ? (t.inr === 0 ? "₹0" : `₹${t.inr.toLocaleString("en-IN")}`) : t.usd === 0 ? "$0" : `$${t.usd}`;
+  const money = (n: number) => (currency === "INR" ? `₹${n.toLocaleString("en-IN")}` : `$${n.toLocaleString("en-US")}`);
+  // Yearly plans show the per-month equivalent, with the yearly charge underneath.
+  const yearly = (t: Tier) => {
+    const p = t.paidTier ? PLANS[t.paidTier] : null;
+    const total = p ? (currency === "INR" ? p.priceInrYearly : p.priceUsdYearly) : undefined;
+    return interval === "yearly" && total ? total : null;
+  };
+  const fmt = (t: Tier) => {
+    const y = yearly(t);
+    if (y) return money(Math.round(y / 12));
+    const m = currency === "INR" ? t.inr : t.usd;
+    return m === 0 ? money(0) : money(m);
+  };
 
   // Resume checkout after a login round-trip, or when arriving from the QAShift
   // FDE "Pay & start now" deep link (?checkout=pro|team|starter|growth|scale).
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const c = new URLSearchParams(window.location.search).get("checkout");
-    if (c && CHECKOUT_TIERS.includes(c as CheckoutTier)) startCheckout(c as CheckoutTier);
+    const q = new URLSearchParams(window.location.search);
+    const c = q.get("checkout");
+    const i = q.get("interval");
+    const resumeInterval = i === "yearly" || i === "monthly" ? i : undefined;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time resume of the period chosen before sign-in
+    if (resumeInterval) setBillingInterval(resumeInterval);
+    if (c && CHECKOUT_TIERS.includes(c as CheckoutTier)) startCheckout(c as CheckoutTier, resumeInterval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const tierName = (t: string) => ({ pro: "Pro", team: "Team", starter: "Starter", growth: "Growth", scale: "Scale" }[t] ?? t);
+  const tierName = (t: string) => ({ solo: "Solo", pro: "Pro", team: "Team", starter: "Starter", growth: "Growth", scale: "Scale" }[t] ?? t);
 
   // Paid tier → Razorpay checkout. If not signed in, bounce to login and come
   // back to /pricing so the user can complete the purchase.
-  async function startCheckout(tier: CheckoutTier) {
+  async function startCheckout(tier: CheckoutTier, chosen: "monthly" | "yearly" = interval) {
+    // Yearly only exists for the self-serve tiers (and only when configured).
+    const period = chosen === "yearly" && billing.yearly && ["solo", "pro", "team"].includes(tier) ? "yearly" : "monthly";
     setDeepLink(tier); // remember the tier for the modal label + retry
     setBusy(tier);
     setError("");
@@ -130,11 +170,11 @@ export function VeritySelfServeCards({}: { inIndia: boolean }) {
       const res = await fetch("/api/billing/checkout", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ tier, currency }),
+        body: JSON.stringify({ tier, currency, interval: period }),
       });
       if (res.status === 401) {
         // Not signed in — send to login, then resume checkout on return.
-        window.location.href = "/login?next=" + encodeURIComponent("/pricing?checkout=" + tier);
+        window.location.href = "/login?next=" + encodeURIComponent(`/pricing?checkout=${tier}&interval=${period}`);
         return;
       }
       const data = await res.json();
@@ -146,7 +186,7 @@ export function VeritySelfServeCards({}: { inIndia: boolean }) {
           key: data.keyId,
           subscription_id: data.subscriptionId,
           name: "Verity",
-          description: `Verity ${tier.charAt(0).toUpperCase() + tier.slice(1)} — monthly`,
+          description: `Verity ${tierName(tier)} — ${period}`,
           theme: { color: "#4f46e5" },
           handler: () => window.location.assign("/dashboard?upgraded=1"),
           modal: { ondismiss: () => setBusy(null) },
@@ -201,6 +241,16 @@ export function VeritySelfServeCards({}: { inIndia: boolean }) {
       </p>
       {/* Currency toggle — above the cards, matching the platform pattern */}
       <div className={styles.currencyRow}>
+        {billing.yearly && (
+          <div className={styles.currencyToggle} role="group" aria-label="Billing period">
+            {(["monthly", "yearly"] as const).map((i) => (
+              <button key={i} onClick={() => setBillingInterval(i)} aria-pressed={interval === i}
+                className={`${styles.currencyButton} ${interval === i ? styles.currencyActive : ""}`}>
+                {i === "monthly" ? "Monthly" : "Annual · save 20%"}
+              </button>
+            ))}
+          </div>
+        )}
         <div className={styles.currencyToggle}>
           {(["USD", "INR"] as const).map((c) => (
             <button key={c} onClick={() => setCurrency(c)}
@@ -211,8 +261,8 @@ export function VeritySelfServeCards({}: { inIndia: boolean }) {
         </div>
       </div>
 
-      <div className={styles.tierGrid}>
-        {TIERS.map((t) => (
+      <div className={`${styles.tierGrid} ${tiers.length === 4 ? styles.tierGrid4 : ""}`}>
+        {tiers.map((t) => (
           <div key={t.name} className={`${styles.tier} ${t.highlight ? styles.tierHighlight : ""}`}>
             {t.highlight && (
               <div className={styles.popular}>MOST POPULAR</div>
@@ -224,6 +274,9 @@ export function VeritySelfServeCards({}: { inIndia: boolean }) {
               <strong>{fmt(t)}</strong>
               <span>{t.usd === 0 ? "" : "/mo"}</span>
             </div>
+            {t.usd !== 0 && (
+              <div className={styles.billedNote}>{yearly(t) ? `${money(yearly(t)!)} billed yearly` : "billed monthly"}</div>
+            )}
             <div className={styles.cap}>{t.cap}</div>
             <ul className={styles.featureList}>
               {t.features.map((f) => <li key={f} className="flex gap-2"><span className="text-emerald-500">✓</span>{f}</li>)}

@@ -4,7 +4,7 @@ import { getUser, getPrimaryOrg, ensureOrgForCurrentUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { captureServer } from "@/lib/analytics/posthog-server";
 import { FUNNEL_EVENTS } from "@/lib/analytics/events";
-import { PAID_TIERS, type PlanTier } from "@/lib/plans";
+import { PAID_TIERS, YEARLY_TIERS, type BillingInterval, type PlanTier } from "@/lib/plans";
 
 export const runtime = "nodejs";
 
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Only org admins can change billing." }, { status: 403 });
   }
 
-  let body: { tier?: PlanTier; currency?: "USD" | "INR" };
+  let body: { tier?: PlanTier; currency?: "USD" | "INR"; interval?: BillingInterval };
   try {
     body = await req.json();
   } catch {
@@ -30,6 +30,10 @@ export async function POST(req: NextRequest) {
   const tier = body.tier;
   if (!tier || !PAID_TIERS.includes(tier)) {
     return NextResponse.json({ error: "Invalid plan tier." }, { status: 400 });
+  }
+  const interval: BillingInterval = body.interval === "yearly" ? "yearly" : "monthly";
+  if (interval === "yearly" && !YEARLY_TIERS.includes(tier)) {
+    return NextResponse.json({ error: "Annual billing is available for Solo, Pro and Team." }, { status: 400 });
   }
 
   const provider = getPaymentProvider();
@@ -71,6 +75,7 @@ export async function POST(req: NextRequest) {
       tier,
       customerEmail: user.email,
       currency: body.currency === "USD" ? "USD" : "INR",
+      interval,
     });
 
     await admin.from("subscriptions").upsert(

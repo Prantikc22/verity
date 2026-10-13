@@ -9,8 +9,15 @@ import type {
   SubscriptionStatusEvent,
 } from "./provider";
 
-/** Map our plan tiers to Razorpay plan IDs (created in the Razorpay dashboard). */
-function planId(tier: PlanTier, currency: "USD" | "INR" = "INR"): string | undefined {
+/**
+ * Map our plan tiers to Razorpay plan IDs (created in the Razorpay dashboard).
+ * Env: RAZORPAY_PLAN_<TIER>[_YEARLY][_USD]. A missing yearly plan never falls
+ * back to the monthly one (that would charge the wrong amount).
+ */
+export function planId(tier: PlanTier, currency: "USD" | "INR" = "INR", interval: "monthly" | "yearly" = "monthly"): string | undefined {
+  const key = `RAZORPAY_PLAN_${tier.toUpperCase()}${interval === "yearly" ? "_YEARLY" : ""}`;
+  if (interval === "yearly") return currency === "USD" ? process.env[`${key}_USD`] ?? process.env[key] : process.env[key];
+  if (tier === "solo") return currency === "USD" ? process.env[`${key}_USD`] ?? process.env[key] : process.env[key];
   // USD-specific plan if configured; otherwise the base (INR) plan.
   const usd: Partial<Record<PlanTier, string | undefined>> = {
     pro: process.env.RAZORPAY_PLAN_PRO_USD,
@@ -65,18 +72,20 @@ export class RazorpayProvider implements PaymentProvider {
 
   async createSubscription(input: CreateSubscriptionInput): Promise<CreateSubscriptionResult> {
     if (!this.client) throw new Error("Razorpay is not configured (missing RAZORPAY_KEY_ID/SECRET).");
-    const plan_id = planId(input.tier, input.currency ?? "INR");
+    const interval = input.interval ?? "monthly";
+    const plan_id = planId(input.tier, input.currency ?? "INR", interval);
     if (!plan_id) {
-      throw new Error(`No Razorpay plan is configured for the ${input.tier} plan${input.currency === "USD" ? " (USD)" : ""}. Set RAZORPAY_PLAN_${input.tier.toUpperCase()}${input.currency === "USD" ? "_USD" : ""} to a valid plan id.`);
+      throw new Error(`No Razorpay plan is configured for the ${input.tier} plan (${interval}${input.currency === "USD" ? ", USD" : ""}). Set RAZORPAY_PLAN_${input.tier.toUpperCase()}${interval === "yearly" ? "_YEARLY" : ""}${input.currency === "USD" ? "_USD" : ""} to a valid plan id.`);
     }
 
     let sub;
     try {
       sub = await this.client.subscriptions.create({
         plan_id,
-        total_count: 12,
+        // Billing cycles before the subscription completes: 12 months, or 5 years.
+        total_count: interval === "yearly" ? 5 : 12,
         customer_notify: 1,
-        notes: { org_id: input.orgId, tier: input.tier },
+        notes: { org_id: input.orgId, tier: input.tier, interval },
       });
     } catch (e) {
       // Razorpay SDK throws { statusCode, error: { code, description } } — surface
