@@ -9,3 +9,4 @@ export * from "./hardening";
 export * from "./disciplines";
 export * from "./adapters";
 export * from "./perf";
+export * from "./agent-suite";

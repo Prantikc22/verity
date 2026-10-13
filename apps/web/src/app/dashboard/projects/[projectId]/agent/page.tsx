@@ -42,7 +42,7 @@ export default async function AgentPage({ params }: { params: Promise<{ projectI
 
       <section className="border border-neutral-200 p-5 dark:border-neutral-800">
         <p className="text-sm text-neutral-600 dark:text-neutral-300">
-          Point Verity at the HTTP endpoint behind your AI feature. It generates Playwright API evals that run in your CI on every deploy — so a prompt change, a model swap, or a new retrieval source can&apos;t quietly break grounding, safety, or tool-calling. Because output varies, every assertion checks a robust property (a substring, a refusal, valid JSON, an absent secret) rather than a fixed answer.
+          Point Verity at the HTTP endpoint behind your AI feature. It generates a scored eval suite (or Playwright API evals) that runs in your CI on every deploy — so a prompt change, a model swap, or a new retrieval source can&apos;t quietly break grounding, safety, or tool-calling. Because output varies, every assertion checks a robust property (a substring, a refusal, valid JSON, an absent secret) rather than a fixed answer.
         </p>
         <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {CATEGORIES.map((c) => (

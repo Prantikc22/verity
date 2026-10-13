@@ -30,6 +30,31 @@ test("parseJUnit: pass, fail, skipped", () => {
   assert.equal(cases[2].skipped, true);
 });
 
+test("parseJUnit: prefers Playwright's CDATA assertion error over the location-only message", () => {
+  const xml = `<testcase name="Ignores prompt injection"><failure message="injection.spec.ts:2:1 Ignores prompt injection" type="FAILURE">
+<![CDATA[  tests/verity/agent/injection.spec.ts:2:1 › Ignores prompt injection ───
+
+    \u001b[31mError: expect(received).not.toContain(expected)\u001b[39m
+
+    Expected substring: not "CANARY-1234"
+]]></failure></testcase>`;
+  const [c] = parseJUnit(xml);
+  assert.match(c.failureMessage ?? "", /^Error: expect\(received\)\.not\.toContain/);
+  assert.match(c.failureMessage ?? "", /CANARY-1234/);
+  assert.doesNotMatch(c.failureMessage ?? "", /\u001b/);
+});
+
+test("adaptSchemathesis: keeps every failure on an operation, not just the first", () => {
+  const xml = `<testcase name="POST /items">
+    <failure type="failure" message="Unsupported method TRACE returned 404, expected 405">a</failure>
+    <failure type="failure" message="Server error. Received: 500 TypeError: cannot read name of undefined">b</failure>
+  </testcase>`;
+  const [r] = adaptSchemathesis(xml);
+  assert.match(r.error_message ?? "", /405/);
+  assert.match(r.error_message ?? "", /500/);
+  assert.equal(r.meaning, "missing-field-returns-5xx");
+});
+
 test("adaptVisual: maps snapshots to pass/fail with visual discipline", () => {
   const xml = `<testcase name="Home" classname="tests/verity/visual/home.spec.ts" time="3"></testcase>
     <testcase name="Checkout" classname="tests/verity/visual/checkout.spec.ts"><failure message="snapshot changed">x</failure></testcase>`;

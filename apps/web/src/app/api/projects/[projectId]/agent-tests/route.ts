@@ -2,7 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { createClient } from "@/lib/supabase/server";
-import { proposeAgentEvals, generateAgentEval } from "@/lib/llm/generate";
+import { proposeAgentEvals, generateAgentEval, generateAgentEvalSuite } from "@/lib/llm/generate";
+import { AGENT_SUITE_PATH, AGENT_REDTEAM_PACK } from "@qashift/verity-core";
 import { llmConfig } from "@/lib/llm/provider";
 import { planFor } from "@/lib/plans";
 import type { Json } from "@/lib/supabase/database.types";
@@ -15,6 +16,12 @@ const Body = z.object({
   endpoint: z.string().url().optional(),
   auth: z.string().max(200).optional(),
   max: z.number().int().positive().max(8).default(4),
+  // "specs" (default): one Playwright eval file per case. "suite": one scored
+  // eval-suite file (built-in adversarial pack + AI-written cases).
+  mode: z.enum(["specs", "suite"]).default("specs"),
+  requestField: z.string().regex(/^[A-Za-z_][A-Za-z0-9_]*$/).max(40).optional(),
+  responsePath: z.string().max(120).optional(),
+  aiGrading: z.boolean().default(false),
 });
 
 function specPathFor(title: string): string {
@@ -52,9 +59,31 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
 
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Bad request." }, { status: 400 });
-  const { featureContext, endpoint, auth, max } = parsed.data;
+  const { featureContext, endpoint, auth, max, mode } = parsed.data;
 
   const toGenerate = Math.min(max, headroom);
+
+  if (mode === "suite") {
+    try {
+      // The suite is ONE maintained file (one generation), upserted by path.
+      const gen = await generateAgentEvalSuite({
+        featureContext, endpointContext: endpoint, max: Math.max(max, 6), allowGrader: parsed.data.aiGrading,
+        requestField: parsed.data.requestField, responsePath: parsed.data.responsePath,
+      });
+      await supabase.from("tests").update({ status: "archived" }).eq("project_id", project.id).eq("kind", "agent").eq("spec_path", AGENT_SUITE_PATH).neq("status", "archived");
+      const name = "Agent eval suite";
+      const { error } = await supabase.from("tests").insert({
+        project_id: project.id, org_id: project.org_id, kind: "agent",
+        name, suite: "Agent", description: `${AGENT_REDTEAM_PACK.length} built-in adversarial checks + ${gen.caseCount} cases for this feature.`,
+        source_url: endpoint ?? null, spec_path: AGENT_SUITE_PATH, spec_content: gen.specContent,
+        plan: gen.plan as unknown as Json, source_files: [], generated_model: gen.model, critical_path: false, status: "draft",
+      });
+      if (error) { const status = error.code === "42501" ? 403 : 500; return NextResponse.json({ error: error.message }, { status }); }
+      return NextResponse.json({ ok: true, saved: [{ name, spec_path: AGENT_SUITE_PATH }], cases: gen.caseCount + AGENT_REDTEAM_PACK.length });
+    } catch (err) {
+      return NextResponse.json({ error: err instanceof Error ? err.message : "generation failed" }, { status: 500 });
+    }
+  }
 
   try {
     const { candidates } = await proposeAgentEvals({ featureContext, endpointContext: endpoint, max: toGenerate });

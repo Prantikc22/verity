@@ -15,11 +15,16 @@
  * Usage:
  *   node verity-engines.mjs <engine> --tier <fast|full> --report <file> [opts]
  *     engine ∈ visual | agent | perf | lighthouse | security-dast | security-sast | contract
+ *   agent: runs eval specs under --evals-dir and/or the eval suite (--suite,
+ *          default <evals-dir>/verity.evals.yaml), repeated --repeat times
+ *          (fast 1, full 3). AI-graded checks need VERITY_GRADER_API_KEY
+ *          (+ optional VERITY_GRADER_BASE_URL / VERITY_GRADER_MODEL).
  *
  * Env: VERITY_API_URL, VERITY_INGEST_TOKEN, VERITY_PR_NUMBER
  */
 import { execFileSync } from "node:child_process";
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, mkdtempSync, chmodSync, readdirSync } from "node:fs";
+import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 
 /* --------------------------- arg parsing --------------------------- */
@@ -41,6 +46,15 @@ const config = arg("config", process.env.VERITY_PERF_CONFIG ?? "");
 const snapshotsDir = arg("snapshots-dir", process.env.VERITY_VISUAL_SNAPSHOTS_DIR ?? "tests/verity/visual");
 const evalsDir = arg("evals-dir", process.env.VERITY_AGENT_EVALS_DIR ?? "tests/verity/agent");
 const endpoint = arg("endpoint", process.env.AGENT_ENDPOINT ?? "");
+// Agent eval suite (scored, multi-case). Optional; runs alongside any eval specs.
+const suitePath = arg("suite", process.env.VERITY_AGENT_SUITE ?? `${evalsDir}/verity.evals.yaml`);
+// Replies vary: Full regression asks each case 3x so inconsistency reads as flaky.
+const repeat = Math.max(1, Math.min(10, Number(arg("repeat", process.env.VERITY_AGENT_REPEAT ?? (tier === "full" ? "3" : "1"))) || 1));
+const graderKey = process.env.VERITY_GRADER_API_KEY ?? "";
+const graderBaseUrl = process.env.VERITY_GRADER_BASE_URL ?? "";
+const graderModel = process.env.VERITY_GRADER_MODEL || "gpt-4o-mini";
+// Pinned open-source eval engine (MIT). Run as a CLI subprocess; never named to customers.
+const EVAL_ENGINE = "promptfoo@0.123.1";
 const base = arg("base", "origin/main");
 // k6 load profile. Defaults from the tier: fast ⇒ smoke, full ⇒ load.
 const PERF_PROFILES = ["smoke", "load", "stress", "spike", "soak", "breakpoint"];
@@ -77,6 +91,16 @@ function readReport() {
 
 const tmp = process.env.RUNNER_TEMP || process.env.TMPDIR || "/tmp";
 const reportId = randomUUID();
+/**
+ * Containerized tools run as a non-root user (ZAP and Schemathesis are uid 1000),
+ * which cannot write into a CI checkout owned by the runner user. Give each run
+ * its own world-writable output dir instead of writing into the customer's repo.
+ */
+function containerOutDir() {
+  const dir = mkdtempSync(join(tmp, "verity-"));
+  chmodSync(dir, 0o777);
+  return dir;
+}
 function sh(file, args, env = {}) {
   // Tools may exit non-zero when they find issues; we still want their report.
   try { execFileSync(file, args, { stdio: "inherit", env: { ...process.env, ...env } }); } catch { /* keep going */ }
@@ -95,13 +119,6 @@ function runEngine() {
       // toHaveScreenshot; run them and emit JUnit for the adapter.
       const out = `${tmp}/verity-visual-${reportId}.xml`;
       sh("npx", ["--yes", "playwright", "test", snapshotsDir, "--reporter=junit"], { PLAYWRIGHT_JUNIT_OUTPUT_NAME: out });
-      return out;
-    }
-    case "agent": {
-      // Agent evals are Playwright API tests that assert a property of the AI
-      // endpoint's reply; the endpoint is passed through to them via env.
-      const out = `${tmp}/verity-agent-${reportId}.xml`;
-      sh("npx", ["--yes", "playwright", "test", evalsDir, "--reporter=junit"], { AGENT_ENDPOINT: endpoint, PLAYWRIGHT_JUNIT_OUTPUT_NAME: out });
       return out;
     }
     case "perf": {
@@ -131,26 +148,103 @@ function runEngine() {
     case "security-sast": {
       let targets = ".";
       if (tier === "fast") {
-        const changed = git(["diff", "--name-only", `${base}...HEAD`]).split("\n").filter(Boolean);
+        // Exclude deleted files: the scanner errors on a path that no longer exists.
+        const changed = git(["diff", "--name-only", "--diff-filter=d", `${base}...HEAD`]).split("\n").filter(Boolean);
         targets = changed.length ? changed : ["."];
       }
       sh("docker", ["run", "--rm", "-v", `${process.cwd()}:/src`, "-w", "/src", "semgrep/semgrep:latest", "semgrep", "scan", "--config=auto", "--json", `--output=/src/.verity-sast-${reportId}.json`, ...targets]);
       return `${process.cwd()}/.verity-sast-${reportId}.json`;
     }
     case "security-dast": {
-      const out = `${process.cwd()}/.verity-dast-${reportId}.json`;
+      const dir = containerOutDir();
       const script = tier === "fast" ? "zap-baseline.py" : "zap-full-scan.py";
-      sh("docker", ["run", "--rm", "-v", `${process.cwd()}:/zap/wrk:rw`, "ghcr.io/zaproxy/zaproxy:stable", script, "-t", target, "-J", `.verity-dast-${reportId}.json`]);
-      return out;
+      // Host network so a target started in the same CI job (localhost) is reachable.
+      sh("docker", ["run", "--rm", "--network", "host", "-v", `${dir}:/zap/wrk:rw`, "ghcr.io/zaproxy/zaproxy:stable", script, "-t", target, "-J", "report.json"]);
+      return join(dir, "report.json");
     }
     case "contract": {
-      const out = `${process.cwd()}/.verity-contract-${reportId}.xml`;
-      sh("docker", ["run", "--rm", "-v", `${process.cwd()}:/src`, "-w", "/src", "schemathesis/schemathesis:stable", "run", spec, "--url", target, "--report", "junit", "--report-junit-path", `/src/.verity-contract-${reportId}.xml`]);
-      return out;
+      const dir = containerOutDir();
+      sh("docker", ["run", "--rm", "--network", "host", "-v", `${process.cwd()}:/src:ro`, "-v", `${dir}:/out:rw`, "-w", "/src", "schemathesis/schemathesis:stable", "run", spec, "--url", target, "--report", "junit", "--report-junit-path", "/out/report.xml"]);
+      return join(dir, "report.xml");
     }
     default:
       return "";
   }
+}
+
+/**
+ * Agent evals have two optional sources, merged into ONE agent run:
+ *  - Playwright eval specs under evalsDir (*.spec.ts) → JUnit
+ *  - the scored eval suite (verity.evals.yaml) → eval-engine JSON
+ * With --report, adapt that one file instead (.json = suite, else JUnit).
+ */
+function hasEvalSpecs(dir) {
+  try {
+    return readdirSync(dir, { recursive: true }).some((f) => /\.(spec|test)\.[cm]?[jt]s$/.test(String(f)));
+  } catch { return false; }
+}
+function runEvalSuite(cfg) {
+  if (!endpoint) throw new Error("The agent eval suite needs your AI endpoint: set agent-endpoint (AGENT_ENDPOINT).");
+  const out = `${tmp}/verity-agent-suite-${reportId}.json`;
+  const env = {
+    AGENT_ENDPOINT: endpoint,
+    PROMPTFOO_DISABLE_TELEMETRY: "1", PROMPTFOO_DISABLE_UPDATE: "1", PROMPTFOO_DISABLE_SHARING: "1",
+    PROMPTFOO_DISABLE_REMOTE_GENERATION: "1",
+    // Bounded: an unreachable endpoint otherwise retries for many minutes.
+    PROMPTFOO_REQUEST_BACKOFF_MS: process.env.PROMPTFOO_REQUEST_BACKOFF_MS ?? "1000",
+    REQUEST_TIMEOUT_MS: process.env.REQUEST_TIMEOUT_MS ?? "60000",
+    PROMPTFOO_EVAL_TIMEOUT_MS: process.env.PROMPTFOO_EVAL_TIMEOUT_MS ?? "180000",
+  };
+  const args = ["eval", "-c", cfg, "-o", out, "--repeat", String(repeat), "--no-cache", "--no-progress-bar", "--no-table", "--no-share"];
+  if (/type:\s*["']?llm-rubric/.test(readFileSync(cfg, "utf8"))) {
+    if (!graderKey) throw new Error("This eval suite has AI-graded checks: set grader-api-key (VERITY_GRADER_API_KEY), or remove the llm-rubric assertions.");
+    env.OPENAI_API_KEY = graderKey;
+    if (graderBaseUrl) env.OPENAI_BASE_URL = graderBaseUrl;
+    args.push("--grader", `openai:chat:${graderModel}`);
+  }
+  // The engine needs Node >= 22.22; on older CI Node, fetch a matching Node via npx.
+  const [maj, min] = process.versions.node.split(".").map(Number);
+  const modern = maj > 22 || (maj === 22 && min >= 22);
+  sh("npx", modern ? ["--yes", EVAL_ENGINE, ...args] : ["--yes", "-p", "node@22", "-p", EVAL_ENGINE, "--", "promptfoo", ...args], env);
+  return out;
+}
+function runAgent() {
+  const sources = [];
+  if (reportPath) sources.push({ kind: reportPath.endsWith(".json") ? "suite" : "junit", path: reportPath });
+  else {
+    if (hasEvalSpecs(evalsDir)) {
+      // Playwright API tests asserting a property of the AI endpoint's reply.
+      const out = `${tmp}/verity-agent-${reportId}.xml`;
+      sh("npx", ["--yes", "playwright", "test", evalsDir, "--reporter=junit"], { AGENT_ENDPOINT: endpoint, PLAYWRIGHT_JUNIT_OUTPUT_NAME: out });
+      sources.push({ kind: "junit", path: out });
+    }
+    if (existsSync(suitePath)) sources.push({ kind: "suite", path: runEvalSuite(suitePath) });
+    if (!sources.length) throw new Error(`No agent evals found: add eval specs under ${evalsDir} or the eval suite at ${suitePath}.`);
+  }
+  const results = [];
+  for (const src of sources) {
+    if (!existsSync(src.path)) throw new Error(`Agent eval report not produced: ${src.path}`);
+    const text = readFileSync(src.path, "utf8");
+    if (src.kind === "junit") { results.push(...adaptAgentEval(text)); continue; }
+    const report = JSON.parse(text);
+    const rows = report.results?.results ?? [];
+    // Every case failed to get a reply ⇒ the endpoint is down/unauthorized: an
+    // execution failure, never a verdict on the model.
+    if (rows.length && rows.every(isAgentSuiteEndpointError)) {
+      const r = rows[0], status = r.response?.metadata?.http?.status;
+      throw new Error(`AI endpoint gave no usable reply${status ? ` (HTTP ${status})` : ""}: ${r.error || r.response?.error || "no output"}. Check agent-endpoint / agent-token.`);
+    }
+    // The engine aborts on a non-transient target error (401/403/404) and writes
+    // only the rows finished so far; a cut-short run is never a verdict.
+    const cases = Array.isArray(report.config?.tests) ? report.config.tests.length : 0;
+    if (!reportPath && cases && rows.length < cases * repeat) {
+      const bad = rows.find(isAgentSuiteEndpointError), status = bad?.response?.metadata?.http?.status;
+      throw new Error(`Agent eval suite was cut short (${rows.length} of ${cases * repeat} runs)${bad ? `: endpoint error${status ? ` HTTP ${status}` : ""} — ${bad.error || "no reply"}` : ""}. Check agent-endpoint / agent-token.`);
+    }
+    results.push(...adaptAgentSuite(report, reportPath ? "tests/verity/agent/verity.evals.yaml" : suitePath));
+  }
+  if (!results.length) throw new Error("No executed test cases in engine report.");
+  return results;
 }
 
 /* ----------------- vendored adapters (mirror core) ----------------- */
@@ -162,6 +256,14 @@ function xattr(tag, name) {
   const m = tag.match(new RegExp(`${name}\\s*=\\s*"([^"]*)"`, "i"));
   return m ? decodeXml(m[1]) : undefined;
 }
+function junitErrorDetail(body) {
+  // eslint-disable-next-line no-control-regex
+  const text = decodeXml(body.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")).replace(/\u001b\[[0-9;]*m/g, "");
+  const i = text.search(/^\s*Error:/m);
+  if (i === -1) return null;
+  const detail = text.slice(i).trim();
+  return detail.length > 2000 ? `${detail.slice(0, 2000)}…` : detail;
+}
 function parseJUnit(xml) {
   const cases = [];
   if (!xml) return cases;
@@ -169,10 +271,13 @@ function parseJUnit(xml) {
   let m;
   while ((m = re.exec(xml)) !== null) {
     const attrs = m[1], body = m[3] ?? "";
-    const fail = body.match(/<(failure|error)\b([^>]*)(\/>|>([\s\S]*?)<\/(?:failure|error)>)/i);
+    // Several <failure>s per case are possible (Schemathesis: one per problem); keep all.
+    const fails = [...body.matchAll(/<(failure|error)\b([^>]*)(\/>|>([\s\S]*?)<\/(?:failure|error)>)/gi)];
+    const fail = fails[0];
     const skipped = /<skipped\b/i.test(body);
     let failureMessage = null;
-    if (fail) failureMessage = xattr(fail[2], "message") || (fail[4] ? decodeXml(fail[4].trim()) : "") || "Failed";
+    // Playwright's message attr is only "file:line title"; prefer the real error from the body.
+    if (fail) failureMessage = fails.map(f => junitErrorDetail(f[4] ?? "") || xattr(f[2], "message") || (f[4] ? decodeXml(f[4].trim()) : "") || "Failed").join("\n\n");
     const t = xattr(attrs, "time");
     cases.push({ name: xattr(attrs, "name") ?? "case", classname: xattr(attrs, "classname"), time: t ? Number(t) : undefined, ok: !fail && !skipped, failureMessage, skipped });
   }
@@ -206,6 +311,39 @@ function adaptAgentEval(xml) {
     error_message: c.ok ? null : c.failureMessage ?? "Agent eval failed",
     discipline: "agent", engine: "llm-eval",
   }));
+}
+function isAgentSuiteEndpointError(r) {
+  if (r.success === true) return false;
+  if (r.failureReason === 2) return true;
+  return r.response?.output == null && Boolean(r.error || r.response?.error);
+}
+function suiteSlug(s) { return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80) || "case"; }
+function adaptAgentSuite(report, path) {
+  const byCase = new Map();
+  for (const r of report?.results?.results ?? []) {
+    const key = r.testCase?.description || (r.vars ? JSON.stringify(r.vars) : `case ${r.testIdx ?? byCase.size}`);
+    (byCase.get(key) ?? byCase.set(key, []).get(key)).push(r);
+  }
+  return [...byCase.entries()].map(([name, runs]) => {
+    const f = runs.find((r) => r.success !== true);
+    let error_message = null;
+    if (f) {
+      if (isAgentSuiteEndpointError(f)) {
+        const status = f.response?.metadata?.http?.status;
+        error_message = `Endpoint error${status ? ` (HTTP ${status})` : ""}: ${f.error || f.response?.error || "no reply"}`;
+      } else {
+        error_message = f.gradingResult?.reason || f.error || "Agent eval failed";
+        const out = f.response?.output;
+        if (out != null) { const t = typeof out === "string" ? out : JSON.stringify(out); error_message += `\nReply: ${t.length > 300 ? `${t.slice(0, 300)}…` : t}`; }
+      }
+    }
+    const lat = runs.map((r) => r.latencyMs).filter((n) => typeof n === "number");
+    return {
+      spec_path: `${path}#${suiteSlug(name)}`, name, attempts: runs.map((r) => r.success === true),
+      duration_ms: lat.length ? Math.round(lat.reduce((a, b) => a + b, 0) / lat.length) : undefined,
+      error_message, discipline: "agent", engine: "llm-eval",
+    };
+  });
 }
 function adaptSchemathesis(xml) {
   return parseJUnit(xml).filter((c) => !c.skipped).map((c) => {
@@ -312,11 +450,14 @@ function adaptLighthouse(lhr, t) {
 
 /* ----------------------- build + post payload ---------------------- */
 // Run the underlying tool (unless a --report was supplied), then adapt.
-reportPath = runEngine();
+// Agent merges its two optional sources itself (and checks its own evidence).
+const agentResults = engine === "agent" ? runAgent() : null;
+if (engine !== "agent") reportPath = runEngine();
 
 // A missing/empty/error report is an execution failure, never a clean scan.
-const evidence = readReport();
-if (["visual", "agent", "contract"].includes(engine)) {
+const evidence = engine === "agent" ? "" : readReport();
+if (engine === "agent") { /* evidence checked in runAgent */ }
+else if (["visual", "contract"].includes(engine)) {
   if (!parseJUnit(evidence).some(c => !c.skipped)) throw new Error("No executed test cases in engine report.");
 } else {
   const report = JSON.parse(evidence);
@@ -348,7 +489,7 @@ switch (engine) {
     break;
   }
   case "agent": {
-    const results = adaptAgentEval(readReport());
+    const results = agentResults;
     payload = { ...basePayload, discipline: "agent", results };
     label = `Agent (AI) — ${results.length} eval(s)`;
     break;

@@ -57,6 +57,21 @@ function attr(tag: string, name: string): string | undefined {
  * (`--junit-xml`) and the agent-eval runner. A `<testcase>` is a failure if it
  * contains a `<failure>` or `<error>` child; skipped if it contains `<skipped>`.
  */
+/**
+ * Extract the assertion error from a JUnit failure body: unwrap CDATA, drop ANSI
+ * colour codes, and keep everything from the first "Error:" line. Returns null
+ * when the body carries no such line (the message attribute is used instead).
+ */
+export function junitErrorDetail(body: string): string | null {
+  const text = decodeXmlEntities(body.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1"))
+    // eslint-disable-next-line no-control-regex
+    .replace(/\u001b\[[0-9;]*m/g, "");
+  const i = text.search(/^\s*Error:/m);
+  if (i === -1) return null;
+  const detail = text.slice(i).trim();
+  return detail.length > 2000 ? `${detail.slice(0, 2000)}…` : detail;
+}
+
 export function parseJUnit(xml: string): JUnitCase[] {
   const cases: JUnitCase[] = [];
   if (!xml) return cases;
@@ -66,14 +81,22 @@ export function parseJUnit(xml: string): JUnitCase[] {
   while ((m = re.exec(xml)) !== null) {
     const attrs = m[1];
     const body = m[3] ?? "";
-    const failMatch = body.match(/<(failure|error)\b([^>]*)(\/>|>([\s\S]*?)<\/(?:failure|error)>)/i);
+    // A case can carry several <failure>s (Schemathesis emits one per distinct
+    // problem on an operation); keep them all, not just the first.
+    const fails = [...body.matchAll(/<(failure|error)\b([^>]*)(\/>|>([\s\S]*?)<\/(?:failure|error)>)/gi)];
+    const failMatch = fails[0];
     const skipped = /<skipped\b/i.test(body);
     let failureMessage: string | null = null;
     if (failMatch) {
-      failureMessage =
-        attr(failMatch[2], "message") ||
-        (failMatch[4] ? decodeXmlEntities(failMatch[4].trim()) : "") ||
-        "Failed";
+      // Playwright's message attribute is only "file:line title"; the real
+      // assertion error lives in the (CDATA) body. Prefer it when present.
+      failureMessage = fails
+        .map((f) =>
+          junitErrorDetail(f[4] ?? "") ||
+          attr(f[2], "message") ||
+          (f[4] ? decodeXmlEntities(f[4].trim()) : "") ||
+          "Failed")
+        .join("\n\n");
     }
     const timeStr = attr(attrs, "time");
     cases.push({
@@ -181,6 +204,77 @@ export function adaptVisual(junitXml: string): UnifiedResult[] {
  * other test. The runner emits JUnit so this mirrors the other pass/fail
  * adapters; the case name is the eval's title.
  */
+/** One row of the eval-suite engine's JSON output (only the fields we read). */
+export interface AgentSuiteRow {
+  success?: boolean;
+  failureReason?: number; // 0 none · 1 assertion · 2 error
+  error?: string | null;
+  latencyMs?: number;
+  testIdx?: number;
+  testCase?: { description?: string };
+  vars?: Record<string, unknown>;
+  response?: { output?: unknown; error?: string; metadata?: { http?: { status?: number } } } | null;
+  gradingResult?: { pass?: boolean; reason?: string } | null;
+}
+
+/**
+ * True when a suite row never got a usable reply (endpoint down, 401, timeout):
+ * an execution failure, not a verdict on the model.
+ */
+export function isAgentSuiteEndpointError(r: AgentSuiteRow): boolean {
+  if (r.success === true) return false;
+  if (r.failureReason === 2) return true;
+  return r.response?.output == null && Boolean(r.error || r.response?.error);
+}
+
+function suiteSlug(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80) || "case";
+}
+
+/**
+ * 2b. AGENT EVAL SUITE — eval-suite JSON → agent UnifiedResult[].
+ * Repeats of the same case (the engine's --repeat) become that case's
+ * attempts[], so an inconsistent model reads as flaky through the existing
+ * flake model. spec_path is `<suite file>#<case slug>` — stable per case.
+ */
+export function adaptAgentSuite(report: unknown, suitePath = "tests/verity/agent/verity.evals.yaml"): UnifiedResult[] {
+  const rows: AgentSuiteRow[] = (report as { results?: { results?: AgentSuiteRow[] } })?.results?.results ?? [];
+  const byCase = new Map<string, AgentSuiteRow[]>();
+  for (const r of rows) {
+    const key = r.testCase?.description || (r.vars ? JSON.stringify(r.vars) : `case ${r.testIdx ?? byCase.size}`);
+    const list = byCase.get(key);
+    if (list) list.push(r);
+    else byCase.set(key, [r]);
+  }
+  return [...byCase.entries()].map(([name, runs]) => {
+    const firstFail = runs.find((r) => r.success !== true);
+    let error_message: string | null = null;
+    if (firstFail) {
+      if (isAgentSuiteEndpointError(firstFail)) {
+        const status = firstFail.response?.metadata?.http?.status;
+        error_message = `Endpoint error${status ? ` (HTTP ${status})` : ""}: ${firstFail.error || firstFail.response?.error || "no reply"}`;
+      } else {
+        error_message = firstFail.gradingResult?.reason || firstFail.error || "Agent eval failed";
+        const out = firstFail.response?.output;
+        if (out != null) {
+          const text = typeof out === "string" ? out : JSON.stringify(out);
+          error_message += `\nReply: ${text.length > 300 ? `${text.slice(0, 300)}…` : text}`;
+        }
+      }
+    }
+    const lat = runs.map((r) => r.latencyMs).filter((n): n is number => typeof n === "number");
+    return {
+      spec_path: `${suitePath}#${suiteSlug(name)}`,
+      name,
+      attempts: runs.map((r) => r.success === true),
+      duration_ms: lat.length ? Math.round(lat.reduce((a, b) => a + b, 0) / lat.length) : undefined,
+      error_message,
+      discipline: "agent" as const,
+      engine: "llm-eval" as const,
+    };
+  });
+}
+
 export function adaptAgentEval(junitXml: string): UnifiedResult[] {
   return parseJUnit(junitXml)
     .filter((c) => !c.skipped)

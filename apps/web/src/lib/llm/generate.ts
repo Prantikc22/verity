@@ -8,6 +8,7 @@ import {
   VISUAL_GENERATION_SYSTEM,
   AGENT_PROPOSAL_SYSTEM,
   AGENT_GENERATION_SYSTEM,
+  AGENT_SUITE_SYSTEM,
   ARTILLERY_GENERATION_SYSTEM,
   K6_GENERATION_SYSTEM,
   buildK6GenerationPrompt,
@@ -23,6 +24,9 @@ import {
   buildVisualGenerationPrompt,
   buildAgentProposalPrompt,
   buildAgentGenerationPrompt,
+  buildAgentSuitePrompt,
+  buildAgentEvalSuite,
+  sanitizeSuiteCases,
   buildArtilleryGenerationPrompt,
   hardenSpec,
   type GenerateTestParams,
@@ -33,6 +37,7 @@ import {
   type VisualGenerateParams,
   type AgentProposeParams,
   type AgentGenerateParams,
+  type AgentSuiteParams,
   type ArtilleryGenerateParams,
 } from "@qashift/verity-core";
 import { complete, llmConfig } from "./provider";
@@ -390,6 +395,40 @@ export async function generateAgentEval(params: AgentGenerateParams): Promise<Ge
   const assertionCount = (specContent.match(/expect\s*\(/g) ?? []).length;
   requireExecutableSpec(specContent, /expect\s*\(/, "Agent");
   return { specContent, plan, model: llmConfig().model, assertionCount, usedLiveContext: false };
+}
+
+/**
+ * Generate the scored agent eval SUITE: the AI writes only the cases; the
+ * endpoint wiring + built-in adversarial pack are deterministic (core).
+ */
+export async function generateAgentEvalSuite(
+  params: AgentSuiteParams & { requestField?: string; responsePath?: string },
+): Promise<GeneratedTest & { caseCount: number }> {
+  const raw = await complete({
+    system: AGENT_SUITE_SYSTEM,
+    user: buildAgentSuitePrompt(params),
+    temperature: 0.2,
+    json: true,
+  });
+  let parsed: { cases?: unknown } = {};
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw new Error("Eval suite generation returned invalid JSON. No suite was saved.");
+  }
+  const cases = sanitizeSuiteCases(parsed.cases)
+    .filter((c) => params.allowGrader || c.assert.every((a) => a.type !== "llm-rubric"))
+    .slice(0, params.max);
+  if (cases.length === 0) throw new Error("Couldn't write eval cases from that description — add more detail about what the AI feature does.");
+  const specContent = buildAgentEvalSuite({ cases, requestField: params.requestField, responsePath: params.responsePath });
+  return {
+    specContent,
+    plan: cases.map((c) => c.description),
+    model: llmConfig().model,
+    assertionCount: cases.reduce((n, c) => n + c.assert.length, 0),
+    usedLiveContext: false,
+    caseCount: cases.length,
+  };
 }
 
 /* ------------------------------------------------------------------ *

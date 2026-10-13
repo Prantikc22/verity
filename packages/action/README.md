@@ -64,7 +64,12 @@ Because baselines live in your repo and run in your CI, visual coverage is unlim
 
 ### 🤖 Agent (AI-feature evals)
 
-Runs AI-generated **Playwright API evals** (in `tests/verity/agent/`) against the HTTP endpoint behind your **own** AI feature (a chatbot, RAG assistant, or tool-using agent). Each eval asserts a *property* of the reply — grounding (no hallucination), prompt-injection resistance, correct tool-use, safety/PII, valid format, or clean refusal — never an exact string, since model output varies.
+Runs AI-generated evals against the HTTP endpoint behind your **own** AI feature (a chatbot, RAG assistant, or tool-using agent). Each eval asserts a *property* of the reply — grounding (no hallucination), prompt-injection resistance, correct tool-use, safety/PII, valid format, or clean refusal — never an exact string, since model output varies. Two formats, both optional and merged into one agent run:
+
+- **Scored eval suite** — `tests/verity/agent/verity.evals.yaml`. A built-in adversarial pack (prompt injection via direct, pasted-data, role-play and encoded instructions; PII echo) plus cases written for your feature. On Full regression each case is asked **3×**, so an inconsistent answer shows as flaky rather than hiding behind one lucky run. Rubric (AI-graded) checks need `grader-api-key`; without it the run stops instead of passing silently.
+- **Playwright API evals** — `tests/verity/agent/*.spec.ts`, for exact code-level checks (tool calls, JSON schemas).
+
+If the endpoint never replies (down, 401/403/404) the run fails with the reason instead of reporting a verdict on the model.
 
 ```yaml
 - uses: qashift/verity-action@v1
@@ -80,7 +85,10 @@ Runs AI-generated **Playwright API evals** (in `tests/verity/agent/`) against th
 | Input | Default | Description |
 |---|---|---|
 | `agent-endpoint` | — | Reachable HTTP endpoint of your AI feature. |
-| `agent-token` | — | Secret token used to authenticate eval calls to the endpoint. |
+| `agent-token` | — | Secret token used to authenticate eval calls to the endpoint (exposed to evals as `AI_API_TOKEN`). |
+| `grader-api-key` | — | Key for AI-graded suite checks (any OpenAI-compatible provider). |
+| `grader-base-url` | OpenAI | Base URL of an OpenAI-compatible grader API. |
+| `grader-model` | `gpt-4o-mini` | Model that grades rubric checks. |
 
 > **Mobile app testing** is available as a **human-run (non-AI) service** through QAShift — the Verity AI agent does not author mobile flows, because it cannot reach a device/emulator the way it reaches a URL or an API. Talk to us if you need native mobile coverage.
 

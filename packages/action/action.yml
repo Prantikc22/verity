@@ -44,6 +44,18 @@ inputs:
     description: "Secret token used to authenticate eval calls to the AI endpoint."
     required: false
     default: ""
+  grader-api-key:
+    description: "API key for AI-graded eval checks (any OpenAI-compatible provider). Only needed if your eval suite uses rubric checks."
+    required: false
+    default: ""
+  grader-base-url:
+    description: "Base URL of the OpenAI-compatible grader API. Empty = OpenAI."
+    required: false
+    default: ""
+  grader-model:
+    description: "Model that grades rubric checks."
+    required: false
+    default: "gpt-4o-mini"
   # ---- performance (k6 named profiles / Lighthouse) ----
   perf-config:
     description: "Path to the AI-generated load-test script (one script, every profile)."
@@ -101,7 +113,9 @@ runs:
         node "${{ github.action_path }}/verity-engines.mjs" visual --tier "${{ inputs.tier }}"
 
     # ============================ AGENT (LLM / AI-feature evals) =================
-    # Playwright API evals that assert a property of your AI endpoint's reply.
+    # Playwright API evals (tests/verity/agent/*.spec.ts) and/or the scored eval
+    # suite (tests/verity/agent/verity.evals.yaml) — merged into one agent run.
+    # Full regression asks each suite case 3x so inconsistent answers read as flaky.
     - name: "Verity — Agent (AI) evals"
       if: contains(inputs.engines, 'agent')
       shell: bash
@@ -112,6 +126,9 @@ runs:
         AGENT_ENDPOINT: ${{ inputs.agent-endpoint }}
         AI_API_TOKEN: ${{ inputs.agent-token }}
         VERITY_AGENT_EVALS_DIR: tests/verity/agent
+        VERITY_GRADER_API_KEY: ${{ inputs.grader-api-key }}
+        VERITY_GRADER_BASE_URL: ${{ inputs.grader-base-url }}
+        VERITY_GRADER_MODEL: ${{ inputs.grader-model }}
       run: |
         set -e
         node "${{ github.action_path }}/verity-engines.mjs" agent --tier "${{ inputs.tier }}"

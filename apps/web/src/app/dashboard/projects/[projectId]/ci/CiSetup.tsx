@@ -164,6 +164,8 @@ export function CiSetup({ defaultApiUrl, defaultBranch }: { defaultApiUrl: strin
                   <Field label="AI endpoint (reachable from CI)" value={c.agent.endpoint} onChange={(v) => setAgent("endpoint", v)} placeholder="https://api.example.com/chat" />
                   <Field label="Token secret name" value={c.agent.authTokenSecret} onChange={(v) => setAgent("authTokenSecret", v)} mono />
                   <p className="text-[10px] text-amber-600">Store the token as a CI secret under this name — never in the config.</p>
+                  <label className="flex items-center gap-2"><input type="checkbox" checked={c.agent.aiGrading} onChange={(e) => setAgent("aiGrading", e.target.checked)} /> <span><strong>AI-graded checks</strong> <span className="text-neutral-400">— if your eval suite scores replies against a rubric</span></span></label>
+                  {c.agent.aiGrading && <p className="pl-6 text-[10px] text-neutral-500">Add <code className="font-mono">VERITY_GRADER_API_KEY</code> as a CI secret (any OpenAI-compatible key). Without it, rubric checks stop the run instead of passing silently.</p>}
                 </div>
               </div>
             )}

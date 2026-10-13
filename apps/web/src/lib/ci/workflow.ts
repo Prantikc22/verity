@@ -43,6 +43,7 @@ export interface CiConfig {
   agent: {
     endpoint: string; // the customer's AI feature endpoint under eval
     authTokenSecret: string; // name of the CI secret holding the endpoint token
+    aiGrading: boolean; // eval suite has AI-graded checks ⇒ needs a grader key secret
   };
   contract: {
     openapiSpec: string;
@@ -57,7 +58,7 @@ export const DEFAULT_CONFIG: CiConfig = {
   perf: { smoke: true, fullLoad: true, profile: "load", arrivalRate: 10, durationSec: 120, lighthouse: false, lighthouseUrl: "" },
   security: { sast: true, dast: false, dastTarget: "", dastDepth: "baseline", },
   visual: { snapshotsDir: "tests/verity/visual", maxDiffPixelRatio: 0.01 },
-  agent: { endpoint: "", authTokenSecret: "AI_API_TOKEN" },
+  agent: { endpoint: "", authTokenSecret: "AI_API_TOKEN", aiGrading: false },
   contract: { openapiSpec: "openapi.yaml", apiBaseUrl: "" },
 };
 
@@ -116,6 +117,8 @@ export const CAPABILITIES: Capability[] = [
 ];
 
 const RAW = "https://raw.githubusercontent.com/qashift/verity-action/v1";
+/** CI secret holding the key for AI-graded agent evals (any OpenAI-compatible API). */
+export const GRADER_SECRET = "VERITY_GRADER_API_KEY";
 
 /* ---------------------------- GitHub Actions ---------------------------- */
 function githubWith(c: CiConfig, tier: "fast" | "full"): string {
@@ -132,6 +135,7 @@ function githubWith(c: CiConfig, tier: "fast" | "full"): string {
   if (c.engines.agent && c.agent.endpoint) {
     lines.push(`      agent-endpoint: ${c.agent.endpoint}`);
     lines.push(`      agent-token: \${{ secrets.${c.agent.authTokenSecret} }}`);
+    if (c.agent.aiGrading) lines.push(`      grader-api-key: \${{ secrets.${GRADER_SECRET} }}`);
   }
   if (c.engines.perf) {
     lines.push(`      perf-config: tests/verity/perf/verity.k6.js`);
@@ -189,7 +193,7 @@ ${githubWith(c, "full")}
 }
 
 /* ------------------------------- GitLab CI ------------------------------ */
-function runnerCmds(c: CiConfig, tier: "fast" | "full", indent: string): string[] {
+function runnerCmds(c: CiConfig, tier: "fast" | "full", indent: string, provider: "gitlab" | "jenkins"): string[] {
   const out: string[] = [];
   out.push(`${indent}export VERITY_API_URL="${c.apiUrl}"`);
   out.push(`${indent}curl -Ls ${RAW}/verity.mjs -o verity.mjs`);
@@ -206,6 +210,11 @@ function runnerCmds(c: CiConfig, tier: "fast" | "full", indent: string): string[
     out.push(`${indent}node verity-engines.mjs visual --tier ${tier} --snapshots-dir ${c.visual.snapshotsDir}`);
   }
   if (c.engines.agent && c.agent.endpoint) {
+    // The runner reads the endpoint token from AI_API_TOKEN (and the grader key
+    // from VERITY_GRADER_API_KEY); map a differently-named CI secret onto it.
+    if (provider === "gitlab" && c.agent.authTokenSecret !== "AI_API_TOKEN") {
+      out.push(`${indent}export AI_API_TOKEN="$${c.agent.authTokenSecret}"`);
+    }
     out.push(`${indent}node verity-engines.mjs agent --tier ${tier} --endpoint ${c.agent.endpoint}`);
   }
   if (c.engines.perf) {
@@ -231,8 +240,8 @@ function runnerCmds(c: CiConfig, tier: "fast" | "full", indent: string): string[
 
 export function gitlabWorkflow(c: CiConfig): string {
   const img = "mcr.microsoft.com/playwright:v1.49.1-noble";
-  const fast = runnerCmds(c, "fast", "    - ");
-  const full = runnerCmds(c, "full", "    - ");
+  const fast = runnerCmds(c, "fast", "    - ", "gitlab");
+  const full = runnerCmds(c, "full", "    - ", "gitlab");
   return `# .gitlab-ci.yml  — store VERITY_INGEST_TOKEN as a masked CI/CD variable
 stages: [verity]
 
@@ -256,13 +265,20 @@ ${full.join("\n")}
 
 /* ------------------------------- Jenkins -------------------------------- */
 export function jenkinsWorkflow(c: CiConfig): string {
-  const fast = runnerCmds(c, "fast", "          ").map((l) => l.trimStart());
-  const full = runnerCmds(c, "full", "          ").map((l) => l.trimStart());
+  const fast = runnerCmds(c, "fast", "          ", "jenkins").map((l) => l.trimStart());
+  const full = runnerCmds(c, "full", "          ", "jenkins").map((l) => l.trimStart());
+  const env = [`VERITY_INGEST_TOKEN = credentials('verity-ingest-token')`];
+  if (c.engines.agent && c.agent.endpoint) {
+    env.push(`AI_API_TOKEN = credentials('${c.agent.authTokenSecret}')`);
+    if (c.agent.aiGrading) env.push(`${GRADER_SECRET} = credentials('${GRADER_SECRET}')`);
+  }
   const block = (cmds: string[]) => cmds.map((l) => `          ${l}`).join("\n");
   return `// Jenkinsfile — add VERITY_INGEST_TOKEN as a Jenkins credential (secret text)
 pipeline {
   agent { docker { image 'mcr.microsoft.com/playwright:v1.49.1-noble'; args '-v /var/run/docker.sock:/var/run/docker.sock' } }
-  environment { VERITY_INGEST_TOKEN = credentials('verity-ingest-token') }
+  environment {
+${env.map((e) => `    ${e}`).join("\n")}
+  }
   stages {
     stage('Verity — PR (fast)') {
       when { changeRequest() }
@@ -293,5 +309,6 @@ export function workflowFor(provider: Provider, c: CiConfig): string {
 export function requiredSecrets(c: CiConfig): { name: string; why: string }[] {
   const s = [{ name: "VERITY_INGEST_TOKEN", why: "Links runs to this project (from Settings)." }];
   if (c.engines.agent && c.agent.endpoint) s.push({ name: c.agent.authTokenSecret, why: "Auth token used to call your AI endpoint during evals." });
+  if (c.engines.agent && c.agent.endpoint && c.agent.aiGrading) s.push({ name: GRADER_SECRET, why: "API key for AI-graded eval checks (any OpenAI-compatible provider)." });
   return s;
 }
