@@ -43,56 +43,54 @@ interface Tier {
   highlight?: boolean;
 }
 
+/** Every plan writes all six test types; plans differ by volume, self-healing, PR checks and projects. Must match lib/plans.ts. */
+export const ALL_TYPES = "UI, API, visual, AI-agent, load & security tests";
+
 const TIERS: Tier[] = [
   {
-    name: "Cloud Sandbox",
-    blurb: "Get the feel instantly in our cloud sandbox — no card.",
+    name: "Free",
+    blurb: "Everything you need to see it work on your own app. No card.",
     usd: 0, inr: 0,
-    cap: "AI UI tests — 15/month",
+    cap: "15 AI-written tests / month",
     features: [
-      "AI test generation, UI — 15/month",
-      "Try it instantly in our cloud sandbox",
-      "Unlimited CI runs once you wire your pipeline",
+      ALL_TYPES,
+      "Unlimited runs in your CI — GitHub, GitLab or Jenkins",
+      "Flaky vs. real failures, on every run",
+      "10 cloud runs / month to try it before wiring CI",
+      "1 project",
     ],
     missing: [
-      "Self-healing locators — broken tests stay broken",
-      "Flake detection & confidence scoring",
-      "API, visual & agent (AI) tests",
-      "Regression & deploy-confidence predictions",
-      "More than 1 project",
+      "Self-healing when the UI changes",
+      "Results posted on pull requests",
     ],
     cta: { label: "Start free", href: "/login?next=/dashboard" },
   },
   {
-    name: "Self-Serve Pro",
-    blurb: "The full engine, self-driven. No engineer, no call.",
+    name: "Pro",
+    blurb: "For a team shipping one or a few products every week.",
     usd: 49, inr: 2999,
-    cap: "AI UI + API tests — 200/month",
+    cap: "200 AI-written tests / month",
     features: [
-      "AI test generation, UI + API — 200/month",
-      "Every generated test self-heals its locators + flake detection",
-      "Unlimited CI runs",
-      "3 projects",
+      "Everything in Free",
+      "Self-healing: selector fixes as reviewable diffs",
+      "Checks + comments on every pull request",
+      "3 projects · up to 50 tests each",
+      "15 cloud runs / month",
     ],
-    missing: [
-      "A forward-deployed engineer who owns your suite",
-      "Merge-blocking PR gates + full predictions",
-      "Visual, agent (AI), performance & security",
-    ],
-    cta: { label: "Start Self-Serve Pro", href: "/login?next=/pricing" },
+    cta: { label: "Start Pro", href: "/login?next=/pricing" },
     paidTier: "pro",
     highlight: true,
   },
   {
     name: "Team",
-    blurb: "Self-serve, scaled for a whole team.",
+    blurb: "For several products, squads or services.",
     usd: 149, inr: 9999,
-    cap: "AI UI + API tests — 750/month",
+    cap: "750 AI-written tests / month",
     features: [
-      "AI test generation, UI + API — 750/month",
-      "Every generated test self-heals its locators + flake detection",
-      "Unlimited CI runs · 10 projects",
-      "Priority support — still no engineer, no call",
+      "Everything in Pro",
+      "10 projects · up to 150 tests each",
+      "40 cloud runs / month",
+      "Priority support",
     ],
     cta: { label: "Start Team", href: "/login?next=/pricing" },
     paidTier: "team",
@@ -120,7 +118,7 @@ export function VeritySelfServeCards({}: { inIndia: boolean }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const tierName = (t: string) => ({ pro: "Self-Serve Pro", team: "Team", starter: "Starter", growth: "Growth", scale: "Scale" }[t] ?? t);
+  const tierName = (t: string) => ({ pro: "Pro", team: "Team", starter: "Starter", growth: "Growth", scale: "Scale" }[t] ?? t);
 
   // Paid tier → Razorpay checkout. If not signed in, bounce to login and come
   // back to /pricing so the user can complete the purchase.
@@ -219,7 +217,7 @@ export function VeritySelfServeCards({}: { inIndia: boolean }) {
             {t.highlight && (
               <div className={styles.popular}>MOST POPULAR</div>
             )}
-            <div className={styles.tierKind}>SELF-SERVE · NO FDE</div>
+            <div className={styles.tierKind}>SELF-SERVE</div>
             <h3>{t.name}</h3>
             <p className={styles.blurb}>{t.blurb}</p>
             <div className={styles.price}>
@@ -258,13 +256,13 @@ export function VeritySelfServeCards({}: { inIndia: boolean }) {
 
         <div className={styles.fdeTier}>
           <div>
-            <div className={styles.fdeKind}>FDE MANAGED TESTING · STARTER AND UP</div>
+            <div className={styles.fdeKind}>MANAGED TESTING · FROM $499/MO</div>
             <h3>Want an engineer accountable for the suite?</h3>
-            <p>A forward-deployed engineer works inside your release rhythm and owns the full-discipline verification system with your team.</p>
+            <p>A forward-deployed QAShift engineer builds, maintains and triages your suite inside your release rhythm — you get the outcome, not another tool to run.</p>
           </div>
           <div className={styles.fdeRight}>
             <ul>
-              {["Visual (screenshot) regression", "Agent (AI) test generation", "Performance & load testing", "Dynamic + static security scanning", "Regression & deploy-confidence predictions"].map((f) => (
+              {["An engineer who owns strategy, coverage and upkeep", "Failure triage on every run", "Merge-blocking on full regression", "Regression & deploy-confidence predictions", "Unlimited AI-written tests"].map((f) => (
                 <li key={f}>{f}</li>
               ))}
             </ul>

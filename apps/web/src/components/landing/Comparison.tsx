@@ -6,13 +6,14 @@ const COLS = ["Verity", "DIY Playwright", "AI per-test tools", "Managed QA agenc
 
 const ROWS: { label: string; cells: (boolean | string)[] }[] = [
   { label: "AI generates the tests", cells: [true, false, true, "manual"] },
-  { label: "Self-healing locators", cells: [true, false, "some", "manual"] },
+  { label: "UI, API, visual, AI-agent, load & security", cells: [true, false, "usually UI + API", "varies"] },
+  { label: "Self-healing locators", cells: ["from Pro", false, "some", "manual"] },
   { label: "Flaky ≠ broken (auto-triage)", cells: [true, false, "rare", "manual"] },
   { label: "Runs in your own CI", cells: [true, true, "sometimes", false] },
-  { label: "Regression & risk predictions", cells: [true, false, false, false] },
-  { label: "A human engineer owns the suite", cells: ["from Starter", false, false, true] },
-  { label: "Flat pricing, unlimited runs", cells: [true, "free but DIY", "per-test meter", "retainer"] },
-  { label: "You own the code (POM, MIT core)", cells: [true, true, "lock-in", "varies"] },
+  { label: "Regression & risk predictions", cells: ["managed plans", false, false, false] },
+  { label: "A human engineer owns the suite", cells: ["managed plans", false, false, true] },
+  { label: "Unlimited runs in your CI", cells: [true, "free but DIY", "credits per run", "retainer"] },
+  { label: "You own the code", cells: [true, true, "varies", "varies"] },
 ];
 
 function Cell({ v }: { v: boolean | string }) {

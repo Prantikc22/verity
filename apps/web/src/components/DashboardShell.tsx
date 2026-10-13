@@ -17,51 +17,38 @@ const NAV = [
   { href: "/dashboard/github", label: "GitHub App", icon: "M9 19c-5 1.5-5-2.5-7-3m14 6v-3.9a3.4 3.4 0 00-.9-2.6c3-.3 6.2-1.5 6.2-6.7A5.2 5.2 0 0019 4.8 4.9 4.9 0 0018.9 1S17.7.6 15 2.5a13.4 13.4 0 00-7 0C5.3.6 4.1 1 4.1 1A4.9 4.9 0 004 4.8a5.2 5.2 0 00-1.4 3.6c0 5.2 3.2 6.4 6.2 6.7A3.4 3.4 0 008 17.7V22" },
   { href: "/dashboard/team", label: "Team", icon: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100 8 4 4 0 000-8zM23 21v-2a4 4 0 00-3-3.9M16 3.1a4 4 0 010 7.8" },
 ];
-const DOCS = [
-  { href: "/docs", label: "Documentation" },
-  { href: "/docs#github", label: "GitHub Action" },
-  { href: "/docs#cli", label: "CLI" },
-  { href: "/docs#predictions", label: "Predictions" },
-];
-
-// Project sub-sections, shown in the sidebar when inside a project.
-// Project nav, grouped so UI testing and API testing never blur together.
-const PROJECT_GROUPS: { heading?: string; badge?: string; items: { seg: string; label: string; icon: string }[] }[] = [
+// Project nav, grouped by what you are doing (not by test type), so it stays
+// short. Each item also owns the sub-pages listed in `also`, which keep it
+// highlighted — e.g. every generator lives under "Create tests".
+type ProjectItem = { seg: string; label: string; icon: string; also?: string[] };
+const PROJECT_GROUPS: { heading?: string; items: ProjectItem[] }[] = [
   { items: [
     { seg: "", label: "Overview", icon: "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" },
-    { seg: "tests", label: "Test Library", icon: "M4 4h5v16H4zM10 4h4v16h-4zM16 5l3.5 15 1-16z" },
-    { seg: "predictions", label: "Predictions", icon: "M3 17l6-6 4 4 8-8M14 7h7v7" },
+    { seg: "create", label: "Create tests", icon: "M12 5v14M5 12h14", also: ["generate", "api/generate", "visual", "agent", "performance/configure"] },
+    { seg: "tests", label: "Test library", icon: "M4 4h5v16H4zM10 4h4v16h-4zM16 5l3.5 15 1-16z", also: ["api/tests"] },
+    { seg: "runs", label: "Runs & healing", icon: "M12 8v4l3 3M21 12a9 9 0 11-18 0 9 9 0 0118 0z", also: ["cloud", "api/run"] },
   ] },
-  { heading: "UI testing", items: [
-    { seg: "generate", label: "Generate", icon: "M12 2v20M2 12h20" },
-    { seg: "cloud", label: "Cloud run", icon: "M6 16a4 4 0 010-8 5 5 0 019.6-1.6A4.5 4.5 0 1118 16z" },
+  { heading: "Results", items: [
+    { seg: "performance", label: "Performance", icon: "M3 17l6-6 4 4 8-8M14 7h7v7" },
+    { seg: "security", label: "Security", icon: "M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z" },
+    { seg: "api/results", label: "API coverage", icon: "M3 12h4l3 8 4-16 3 8h4" },
+    { seg: "predictions", label: "Predictions", icon: "M9 18h6M10 22h4M12 2a7 7 0 00-4 12.7V17h8v-2.3A7 7 0 0012 2z" },
   ] },
-  { heading: "API testing", items: [
-    { seg: "api/generate", label: "Generate", icon: "M12 2v20M2 12h20" },
-    { seg: "api/tests", label: "Tests", icon: "M4 7h16M4 12h16M4 17h10" },
-    { seg: "api/run", label: "Cloud run", icon: "M6 16a4 4 0 010-8 5 5 0 019.6-1.6A4.5 4.5 0 1118 16z" },
-    { seg: "api/results", label: "Coverage & results", icon: "M3 12h4l3 8 4-16 3 8h4" },
-  ] },
-  { heading: "Visual testing", items: [
-    { seg: "visual", label: "Snapshots", icon: "M4 5h16v14H4zM4 15l4-4 3 3 5-5 4 4" },
-  ] },
-  { heading: "Agent (AI) testing", badge: "beta", items: [
-    { seg: "agent", label: "Evals", icon: "M12 2a3 3 0 013 3v1a3 3 0 01-1 6H10a3 3 0 01-1-6V5a3 3 0 013-3zM8 14h8v6H8z" },
-  ] },
-  { heading: "Performance", items: [
-    { seg: "performance", label: "Results", icon: "M3 17l6-6 4 4 8-8M14 7h7v7" },
-    { seg: "performance/configure", label: "Configure", icon: "M4 6h16M4 12h16M4 18h16M8 3v3M8 15v3M16 9v3" },
-  ] },
-  { heading: "Security", items: [
-    { seg: "security", label: "Findings", icon: "M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z" },
-  ] },
-  { heading: "Shared", items: [
-    { seg: "ci", label: "CI Setup", icon: "M4 6h16M4 12h16M4 18h16M8 3v3M8 15v3M16 9v3" },
+  { heading: "Setup", items: [
+    { seg: "ci", label: "CI setup", icon: "M4 6h16M4 12h16M4 18h16M8 3v3M8 15v3M16 9v3" },
     { seg: "mcp", label: "Local / MCP", icon: "M4 17l6-6-6-6M12 19h8" },
-    { seg: "runs", label: "Runs & healing", icon: "M12 8v4l3 3M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
     { seg: "settings", label: "Settings", icon: "M12 15a3 3 0 100-6 3 3 0 000 6zM19 12a7 7 0 00-.1-1l2-1.6-2-3.4-2.4 1a7 7 0 00-1.7-1L14 2h-4l-.8 2.6a7 7 0 00-1.7 1l-2.4-1-2 3.4 2 1.6a7 7 0 000 2l-2 1.6 2 3.4 2.4-1a7 7 0 001.7 1L10 22h4l.8-2.6a7 7 0 001.7-1l2.4 1 2-3.4-2-1.6c.1-.3.1-.7.1-1z" },
   ] },
 ];
+
+/** Is `item` the current page (or one of the sub-pages it owns)? Exact segment match, so /performance never claims /performance/configure. */
+function isActiveItem(pathname: string, projectId: string, item: ProjectItem): boolean {
+  const base = `/dashboard/projects/${projectId}`;
+  const rest = pathname === base ? "" : pathname.startsWith(`${base}/`) ? pathname.slice(base.length + 1) : null;
+  if (rest === null) return false;
+  if (item.seg === "") return rest === "";
+  return [item.seg, ...(item.also ?? [])].some((seg) => rest === seg || (seg === "runs" && rest.startsWith("runs/")));
+}
 
 export function DashboardShell({
   org,
@@ -78,18 +65,6 @@ export function DashboardShell({
   const projectId = pathname.match(/^\/dashboard\/projects\/([^/]+)/)?.[1] ?? null;
   const [open, setOpen] = useState(false);
   const [projectName, setProjectName] = useState<string | null>(null);
-  // Collapsible nav groups. Default: UI testing + Shared (key actions) open;
-  // the other disciplines collapsed so the rail isn't overwhelming. The group
-  // matching the current page auto-opens regardless.
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({
-    "API testing": true,
-    "Visual testing": true,
-    "Agent (AI) testing": true,
-    "Performance": true,
-    "Security": true,
-  });
-  const toggleGroup = (key: string) => setCollapsed((p) => ({ ...p, [key]: !p[key] }));
-
   useEffect(() => {
     if (!projectId) return;
     let active = true;
@@ -118,80 +93,67 @@ export function DashboardShell({
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4">
-        <div className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-wide text-neutral-400">Workspace</div>
-        <nav className="space-y-1">
-          {NAV.map((n) => {
-            const active = pathname === n.href;
-            return (
-              <Link
-                key={n.href}
-                href={n.href}
-                onClick={() => setOpen(false)}
-                className={`flex items-center gap-2.5 px-3 py-2 text-sm transition ${active ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900" : "text-neutral-600 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-900"}`}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={n.icon} /></svg>
-                {n.label}
-              </Link>
-            );
-          })}
-        </nav>
-
-        {projectId && (
+        {projectId ? (
+          <Link href="/dashboard" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-1.5 text-xs text-neutral-500 hover:text-neutral-900 dark:hover:text-white">
+            ← All projects
+          </Link>
+        ) : (
           <>
-            <div className="flex items-center justify-between px-2 pb-2 pt-6">
-              <span className="truncate text-[11px] font-semibold uppercase tracking-wide text-indigo-500" title={projectName ?? undefined}>{projectName ?? "Project"}</span>
-              <Link href="/dashboard" className="text-[10px] text-neutral-400 hover:text-neutral-600">switch</Link>
-            </div>
-            {PROJECT_GROUPS.map((group, gi) => {
-              const key = group.heading ?? `g${gi}`;
-              // Groups with a heading are collapsible; the ungrouped top items
-              // (Overview/Predictions) always show. A group is open when any of
-              // its routes is active, regardless of the manual toggle.
-              const hasActive = group.items.some((n) => pathname === `/dashboard/projects/${projectId}${n.seg ? `/${n.seg}` : ""}`);
-              const isOpen = !group.heading || !collapsed[key] || hasActive;
-              return (
-                <nav key={gi} className="mt-2 space-y-1">
-                  {group.heading && (
-                    <button
-                      onClick={() => toggleGroup(key)}
-                      className="flex w-full items-center justify-between px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wide text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200"
-                    >
-                      <span className="flex items-center gap-1.5">
-                        {group.heading}
-                        {group.badge && <span className="border border-amber-400 px-1 text-[9px] font-semibold lowercase text-amber-600 dark:text-amber-400">{group.badge}</span>}
-                      </span>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`transition-transform ${isOpen ? "" : "-rotate-90"}`}><path d="M6 9l6 6 6-6" /></svg>
-                    </button>
-                  )}
-                  {isOpen && group.items.map((n) => {
-                    const href = `/dashboard/projects/${projectId}${n.seg ? `/${n.seg}` : ""}`;
-                    const active = pathname === href;
-                    return (
-                      <Link
-                        key={n.seg || "overview"}
-                        href={href}
-                        onClick={() => setOpen(false)}
-                        className={`flex items-center gap-2.5 px-3 py-2 text-sm transition ${active ? "bg-indigo-600 text-white" : "text-neutral-600 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-900"}`}
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={n.icon} /></svg>
-                        {n.label}
-                      </Link>
-                    );
-                  })}
-                </nav>
-              );
-            })}
+            <div className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-wide text-neutral-400">Workspace</div>
+            <nav className="space-y-1">
+              {NAV.map((n) => {
+                const active = pathname === n.href;
+                return (
+                  <Link
+                    key={n.href}
+                    href={n.href}
+                    onClick={() => setOpen(false)}
+                    className={`flex items-center gap-2.5 px-3 py-2 text-sm transition ${active ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900" : "text-neutral-600 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-900"}`}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={n.icon} /></svg>
+                    {n.label}
+                  </Link>
+                );
+              })}
+            </nav>
           </>
         )}
 
-        <div className="px-2 pb-2 pt-6 text-[11px] font-semibold uppercase tracking-wide text-neutral-400">Docs</div>
-        <nav className="space-y-1">
-          {DOCS.map((d) => (
-            <Link key={d.href} href={d.href} onClick={() => setOpen(false)} className="block px-3 py-1.5 text-sm text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white">
-              {d.label}
-            </Link>
-          ))}
-        </nav>
+        {projectId && (
+          <>
+            <div className="px-3 pb-2 pt-4">
+              <span className="block truncate text-sm font-semibold" title={projectName ?? undefined}>{projectName ?? "Project"}</span>
+            </div>
+            {PROJECT_GROUPS.map((group, gi) => (
+              <nav key={gi} className={`space-y-0.5 ${gi ? "mt-4" : ""}`} aria-label={group.heading ?? "Project"}>
+                {group.heading && (
+                  <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wide text-neutral-400">{group.heading}</div>
+                )}
+                {group.items.map((n) => {
+                  const href = `/dashboard/projects/${projectId}${n.seg ? `/${n.seg}` : ""}`;
+                  const active = isActiveItem(pathname, projectId, n);
+                  return (
+                    <Link
+                      key={n.seg || "overview"}
+                      href={href}
+                      onClick={() => setOpen(false)}
+                      aria-current={active ? "page" : undefined}
+                      className={`flex items-center gap-2.5 px-3 py-2 text-sm transition ${active ? "bg-indigo-600 text-white" : "text-neutral-600 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-900"}`}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={n.icon} /></svg>
+                      {n.label}
+                    </Link>
+                  );
+                })}
+              </nav>
+            ))}
+          </>
+        )}
+
+        <Link href="/docs" onClick={() => setOpen(false)} className="mt-6 flex items-center gap-2.5 px-3 py-2 text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-white">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20V3H6.5A2.5 2.5 0 004 5.5v14zM20 17v4H6.5" /></svg>
+          Docs
+        </Link>
       </div>
 
       <div className="mt-auto border-t border-neutral-200 p-4 dark:border-neutral-800">

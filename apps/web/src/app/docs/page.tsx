@@ -27,7 +27,7 @@ const SECTIONS: DocSection[] = [
   { id: "predictions", label: "Predictions", group: "How it works" },
   { id: "ingestion", label: "Ingestion API", group: "How it works" },
   { id: "team", label: "Roles & team", group: "Account" },
-  { id: "cloud-trial", label: "Cloud Sandbox", group: "Account" },
+  { id: "cloud-trial", label: "Cloud trial", group: "Account" },
   { id: "licenses", label: "Licenses & OSS", group: "Account" },
 ];
 
@@ -212,7 +212,7 @@ Authorization: Bearer $VERITY_INGEST_TOKEN
           </section>
 
           <section>
-            <H id="cloud-trial" n="16">Cloud Sandbox</H>
+            <H id="cloud-trial" n="16">Cloud trial</H>
             <P>To get the feel without wiring CI, generation and a capped number of runs execute on our infra. It&apos;s intentionally limited — the product lives in your CI, where runs are unlimited.</P>
           </section>
 

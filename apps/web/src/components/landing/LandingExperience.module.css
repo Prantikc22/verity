@@ -550,6 +550,11 @@
 .footerBottom { min-height: 72px; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--line); color: #6f7179; font: 10px var(--font-geist-mono), monospace; letter-spacing: .09em; }
 
 
+/* Whole coverage row is clickable via the heading link. */
+.coverageRows article { position: relative; }
+.coverageLink { color: inherit; }
+.coverageLink::after { content: ""; position: absolute; inset: 0; }
+
 /* ---- URL start (primary conversion) ---- */
 .srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 .urlStart { margin-top: 36px; max-width: 640px; }

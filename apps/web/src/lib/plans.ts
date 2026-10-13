@@ -46,7 +46,7 @@ export interface PlanLimits {
 export const PLANS: Record<PlanTier, PlanLimits> = {
   free: {
     tier: "free",
-    name: "Cloud Sandbox",
+    name: "Free",
     tagline: "Get the feel — free, no card.",
     priceUsd: 0,
     priceInr: 0,
@@ -68,15 +68,15 @@ export const PLANS: Record<PlanTier, PlanLimits> = {
     fde: false,
     pomConversion: false,
     highlights: [
-      "15 AI test generations / mo · keep up to 15 tests",
-      "Run a few times in the cloud to try it",
-      "Unlimited runs once you wire your CI",
-      "1 project · self-serve",
+      "15 AI-written tests / mo — UI, API, visual, AI-agent, load & security",
+      "Unlimited runs in your CI · flake detection",
+      "10 cloud runs / mo to try it",
+      "1 project",
     ],
   },
   pro: {
     tier: "pro",
-    name: "Self-Serve Pro",
+    name: "Pro",
     tagline: "The full engine, self-driven. No engineer, no call.",
     priceUsd: 49,
     priceInr: 2999,
@@ -98,8 +98,8 @@ export const PLANS: Record<PlanTier, PlanLimits> = {
     fde: false,
     pomConversion: false,
     highlights: [
-      "AI test generation, UI + API (200 / mo)",
-      "Self-healing locators + flake detection",
+      "200 AI-written tests / mo, every test type",
+      "Self-healing + pull-request checks",
       "Unlimited CI runs · 3 projects",
       "Self-serve — no engineer, no call",
     ],
@@ -126,10 +126,10 @@ export const PLANS: Record<PlanTier, PlanLimits> = {
     fde: false,
     pomConversion: false,
     highlights: [
-      "AI test generation, UI + API (750 / mo)",
-      "Self-healing locators + flake detection",
+      "750 AI-written tests / mo, every test type",
+      "Self-healing + pull-request checks",
       "Unlimited CI runs · 10 projects",
-      "Priority support · still self-serve, no call",
+      "Priority support",
     ],
   },
   starter: {

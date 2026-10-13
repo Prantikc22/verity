@@ -65,7 +65,7 @@ export default async function ProjectOverview({ params }: { params: Promise<{ pr
           <Link href="/dashboard/trends" className="text-xs text-indigo-600 hover:underline">All trends →</Link>
         </div>
         {r.length < 2 ? (
-          <p className="mt-3 text-sm text-neutral-500">Not enough completed runs yet to chart. Wire your CI (Settings) to start recording.</p>
+          <p className="mt-3 text-sm text-neutral-500">Not enough completed runs yet to chart. <Link href={`/dashboard/projects/${projectId}/ci`} className="text-indigo-600 hover:underline">Set up CI</Link> to start recording.</p>
         ) : (
           <ProjectTrend
             pass={r.map((x) => (x.total ? x.passed / x.total : 0))}
@@ -77,13 +77,13 @@ export default async function ProjectOverview({ params }: { params: Promise<{ pr
 
       {/* Quick actions */}
       <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Link href={`/dashboard/projects/${projectId}/ci`} className="group v-card border border-indigo-300 bg-indigo-50/40 p-5 hover:border-indigo-500 dark:border-indigo-800 dark:bg-indigo-950/20">
-          <div className="text-sm font-semibold">⚙️ CI Setup</div>
-          <p className="mt-1 text-xs text-neutral-500">Turn UI, API, visual, agent, performance &amp; security on/off and get your pipeline config.</p>
+        <Link href={`/dashboard/projects/${projectId}/create`} className="group v-card border border-indigo-300 bg-indigo-50/40 p-5 hover:border-indigo-500 dark:border-indigo-800 dark:bg-indigo-950/20">
+          <div className="text-sm font-semibold">＋ Create tests</div>
+          <p className="mt-1 text-xs text-neutral-500">UI, API, visual, AI agent, performance or security — pick a type and Verity writes the test.</p>
         </Link>
-        <Link href={`/dashboard/projects/${projectId}/generate`} className="group v-card border border-neutral-200 p-5 hover:border-indigo-400 dark:border-neutral-800">
-          <div className="text-sm font-semibold">＋ Generate tests</div>
-          <p className="mt-1 text-xs text-neutral-500">Give a URL + PRD; Verity proposes tests and you pick which to add.</p>
+        <Link href={`/dashboard/projects/${projectId}/ci`} className="group v-card border border-neutral-200 p-5 hover:border-indigo-400 dark:border-neutral-800">
+          <div className="text-sm font-semibold">⚙️ Set up CI</div>
+          <p className="mt-1 text-xs text-neutral-500">Get the workflow file for GitHub, GitLab or Jenkins. Runs in your CI are unlimited.</p>
         </Link>
         <Link href={`/dashboard/projects/${projectId}/cloud`} className="group v-card border border-neutral-200 p-5 hover:border-indigo-400 dark:border-neutral-800">
           <div className="text-sm font-semibold">▶ Run in cloud</div>

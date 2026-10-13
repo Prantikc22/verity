@@ -30,6 +30,6 @@ export const LANDING_FAQ = [
   },
   {
     q: "How much does Verity cost?",
-    a: "There is a free plan for one project with 15 AI test generations a month and unlimited CI runs — no credit card. Paid self-serve plans start at $49 a month, and QAShift also offers managed testing with a dedicated engineer.",
+    a: "Free covers one project with 15 AI-written tests a month — of every type — plus unlimited CI runs, no credit card. Pro is $49 a month (200 tests, self-healing, pull-request checks) and Team is $149. You never pay for runs in your own CI. QAShift also offers managed testing with a dedicated engineer from $499 a month.",
   },
 ] as const;

@@ -63,7 +63,7 @@ export function welcomeEmail(name?: string): { subject: string; html: string } {
        <p style="margin-top:22px;">
          <a href="${url}/dashboard" style="display:inline-block;background:#4f46e5;color:#fff;text-decoration:none;font-weight:700;padding:11px 22px;">Open your dashboard →</a>
        </p>
-       <p style="margin-top:20px;font-size:0.88rem;color:#6b7280;">On the free Cloud Sandbox you get 15 AI test generations a month. Need self-healing, API tests and 3 projects? <a href="${url}/pricing" style="color:#4f46e5;">Self-Serve Pro is $49/mo</a>.</p>`,
+       <p style="margin-top:20px;font-size:0.88rem;color:#6b7280;">On the Free plan you get 15 AI-written tests a month, of every type. Need self-healing, pull-request checks and 3 projects? <a href="${url}/pricing" style="color:#4f46e5;">Pro is $49/mo</a>.</p>`,
     ),
   };
 }

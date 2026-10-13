@@ -23,7 +23,7 @@ export function GettingStarted({ projectId, hasTests, hasRuns }: { projectId: st
     // Goal-gradient: creating a workspace already counts, so users start with
     // visible progress instead of an empty 0%.
     { done: true, title: "Workspace created", body: "Your project is live — you're already underway.", href: base, cta: "" },
-    { done: hasTests, title: "Generate your first tests", body: "Point Verity at a URL or your OpenAPI spec — it proposes tests and you pick which to keep.", href: `${base}/generate`, cta: "Generate" },
+    { done: hasTests, title: "Create your first tests", body: "Pick a type — UI, API, visual, AI agent or performance. Verity proposes tests and you keep the ones you want.", href: `${base}/create`, cta: "Create tests" },
     { done: hasRuns, title: "Run them in your CI", body: "Pick the tests you want, copy the config for GitHub / GitLab / Jenkins. Runs are unlimited in your CI.", href: `${base}/ci`, cta: "CI Setup" },
     { done: false, title: "Invite your team", body: "Add teammates so they can see results. They join automatically when they sign in.", href: `/dashboard/team`, cta: "Invite" },
   ];

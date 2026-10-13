@@ -62,12 +62,12 @@ const SYSTEM_STEPS = [
 ] as const;
 
 const COVERAGE = [
-  ["01", "UI functional", "Real browser journeys across roles, states and devices", "PLAYWRIGHT"],
-  ["02", "API integration", "Contracts, schemas, authentication and full request chains", "REST · OPENAPI"],
-  ["03", "Visual", "Meaningful interface drift across stable product states", "SCREENSHOT DIFF"],
-  ["04", "Agent & AI", "Grounding, tool use, safety and output guarantees", "EVALS"],
-  ["05", "Performance", "Load, soak, latency budgets and release regressions", "LOAD · CWV"],
-  ["06", "Security", "Dynamic and static scanning for common release risks", "OWASP"],
+  ["01", "UI functional", "Real browser journeys across roles, states and devices", "PLAYWRIGHT", "/solutions/playwright-test-generator"],
+  ["02", "API integration", "Contracts, schemas, authentication and full request chains", "REST · OPENAPI", "/solutions/api-testing"],
+  ["03", "Visual", "Meaningful interface drift across stable product states", "SCREENSHOT DIFF", "/solutions/visual-regression-testing"],
+  ["04", "Agent & AI", "Grounding, tool use, safety and output guarantees", "EVALS", "/solutions/llm-evals"],
+  ["05", "Performance", "Load, soak, latency budgets and release regressions", "LOAD · CWV", "/solutions/load-testing"],
+  ["06", "Security", "Dynamic and static scanning for common release risks", "OWASP", "/solutions/security-testing"],
 ] as const;
 
 const TESTIMONIALS = [
@@ -120,7 +120,7 @@ const NAV_MENUS = {
   Solutions: [
     ["Agentic coding", "Give every AI-authored change an independent verifier.", "/#gap"],
     ["How it works", "From a URL to a merge gate in four steps.", "/#how"],
-    ["Coverage", "UI, API, visual, agent, performance and security.", "/#coverage"],
+    ["Coverage", "UI, API, visual, agent, performance and security.", "/solutions"],
     ["Self-healing", "Repair selector drift without hiding product failures.", "/#healing"],
   ],
   Developers: [
@@ -176,7 +176,7 @@ function toUrl(raw: string): string | null {
 }
 
 /** The primary conversion: paste a URL → sign in → first generated test (/start). */
-function UrlStart({ id, centered = false }: { id: string; centered?: boolean }) {
+export function UrlStart({ id, centered = false }: { id: string; centered?: boolean }) {
   const router = useRouter();
   const [value, setValue] = useState("");
   const [error, setError] = useState(false);
@@ -595,9 +595,9 @@ function CoverageSection() {
           <p>No stitched-together vendor stack. Every discipline maps into one run history, one risk model, and one verdict your team can understand.</p>
         </RevealBlock>
         <div className={styles.coverageRows}>
-          {COVERAGE.map(([number, name, copy, tool], index) => (
+          {COVERAGE.map(([number, name, copy, tool, href], index) => (
             <motion.article key={number} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: .5 }} transition={{ delay: index * .05 }}>
-              <span>{number}</span><h3>{name}</h3><p>{copy}</p><b>{tool}</b><Arrow />
+              <span>{number}</span><h3><Link href={href} className={styles.coverageLink}>{name}</Link></h3><p>{copy}</p><b>{tool}</b><Arrow />
             </motion.article>
           ))}
         </div>
@@ -821,7 +821,7 @@ export function LandingFooter() {
           </div>
           <div className={styles.footerLinks}>
             <div><span>PRODUCTS</span><Link href="/#system">Verity Self-Serve</Link><a href="https://qashifthq.com/managed-testing">FDE Managed Testing</a><Link href="/#runtime">Verity Cloud</Link><Link href="/pricing">Pricing</Link></div>
-            <div><span>SOLUTIONS</span><Link href="/#always-on">Always On</Link><Link href="/#coverage">Coverage</Link><Link href="/#gap">Agentic coding</Link><Link href="/#healing">Self-healing</Link></div>
+            <div><span>SOLUTIONS</span><Link href="/solutions/playwright-test-generator">AI Playwright tests</Link><Link href="/solutions/api-testing">API testing</Link><Link href="/solutions/visual-regression-testing">Visual regression</Link><Link href="/solutions/llm-evals">LLM evals</Link><Link href="/solutions/load-testing">Load testing</Link><Link href="/solutions/security-testing">Security testing</Link><Link href="/compare/testsprite">Verity vs TestSprite</Link></div>
             <div><span>DEVELOPERS</span><Link href="/docs">Documentation</Link><Link href="/mcp">MCP server</Link><Link href="/github">GitHub App</Link><Link href="/#stack">Integrations</Link></div>
             <div><span>QASHIFT</span><a href="https://qashifthq.com/about">About</a><a href="https://qashifthq.com/about#careers">Careers</a><a href="https://qashifthq.com/contact">Contact</a><a href="https://qashifthq.com/security">Security</a><a href="https://qashifthq.com/insights">Insights</a></div>
           </div>

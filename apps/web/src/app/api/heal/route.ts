@@ -46,11 +46,11 @@ export async function POST(req: NextRequest) {
 
   // Plan gate — self-healing is a paid feature. Reject BEFORE any LLM call so
   // free-tier CI can't burn our token budget. Generated tests self-heal from
-  // Self-Serve Pro up (see lib/plans.ts).
+  // Pro up (see lib/plans.ts).
   const { data: org } = await admin.from("orgs").select("plan").eq("id", project.org_id).maybeSingle();
   if (!planFor(org?.plan).selfHealing) {
     return NextResponse.json(
-      { error: "Self-healing is a paid feature — it's included from Self-Serve Pro. Upgrade to enable locator healing in CI.", healed: false, upgrade: true },
+      { error: "Self-healing is a paid feature — it's included from Pro. Upgrade to enable locator healing in CI.", healed: false, upgrade: true },
       { status: 402 },
     );
   }
