@@ -54,11 +54,11 @@ const SYSTEM_STEPS = [
 
 const COVERAGE = [
   ["01", "UI functional", "Real browser journeys across roles, states and devices", "PLAYWRIGHT"],
-  ["02", "API integration", "Contracts, schemas, authentication and full request chains", "REST · GRAPHQL"],
-  ["03", "Visual", "Meaningful interface drift across stable product states", "PIXEL + DOM"],
+  ["02", "API integration", "Contracts, schemas, authentication and full request chains", "REST · OPENAPI"],
+  ["03", "Visual", "Meaningful interface drift across stable product states", "SCREENSHOT DIFF"],
   ["04", "Agent & AI", "Grounding, tool use, safety and output guarantees", "EVALS"],
-  ["05", "Performance", "Load, soak, latency budgets and release regressions", "K6"],
-  ["06", "Security", "DAST, SAST, dependency and common release risks", "OWASP"],
+  ["05", "Performance", "Load, soak, latency budgets and release regressions", "LOAD · CWV"],
+  ["06", "Security", "Dynamic and static scanning for common release risks", "OWASP"],
 ] as const;
 
 const TESTIMONIALS = [
@@ -133,15 +133,13 @@ const APP_LOGOS: Record<string, string> = {
   Cursor: "M11.503.131 1.891 5.678a.84.84 0 0 0-.42.726v11.188c0 .3.162.575.42.724l9.609 5.55a1 1 0 0 0 .998 0l9.61-5.55a.84.84 0 0 0 .42-.724V6.404a.84.84 0 0 0-.42-.726L12.497.131a1.01 1.01 0 0 0-.996 0M2.657 6.338h18.55c.263 0 .43.287.297.515L12.23 22.918c-.062.107-.229.064-.229-.06V12.335a.59.59 0 0 0-.295-.51l-9.11-5.257c-.109-.063-.064-.23.061-.23",
   GitHub: "M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12",
   GitLab: "m23.6004 9.5927-.0337-.0862L20.3.9814a.851.851 0 0 0-.3362-.405.8748.8748 0 0 0-.9997.0539.8748.8748 0 0 0-.29.4399l-2.2055 6.748H7.5375l-2.2057-6.748a.8573.8573 0 0 0-.29-.4412.8748.8748 0 0 0-.9997-.0537.8585.8585 0 0 0-.3362.4049L.4332 9.5015l-.0325.0862a6.0657 6.0657 0 0 0 2.0119 7.0105l.0113.0087.03.0213 4.976 3.7264 2.462 1.8633 1.4995 1.1321a1.0085 1.0085 0 0 0 1.2197 0l1.4995-1.1321 2.4619-1.8633 5.006-3.7489.0125-.01a6.0682 6.0682 0 0 0 2.0094-7.003z",
-  Slack: "M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z",
-  Jira: "M11.571 11.513H0a5.218 5.218 0 0 0 5.232 5.215h2.13v2.057A5.215 5.215 0 0 0 12.575 24V12.518a1.005 1.005 0 0 0-1.005-1.005zm5.723-5.756H5.736a5.215 5.215 0 0 0 5.215 5.214h2.129v2.058a5.218 5.218 0 0 0 5.215 5.214V6.758a1.001 1.001 0 0 0-1.001-1.001zM23.013 0H11.455a5.215 5.215 0 0 0 5.215 5.215h2.129v2.057A5.215 5.215 0 0 0 24 12.483V1.005A1.001 1.001 0 0 0 23.013 0Z",
   Playwright: "M23.996 7.462c-.056.837-.257 2.135-.716 3.85-.995 3.715-4.27 10.874-10.42 9.227-6.15-1.65-5.407-9.487-4.412-13.201.46-1.716.934-2.94 1.305-3.694.42-.853.846-.289 1.815.523.684.573 2.41 1.791 5.011 2.488 2.601.697 4.706.506 5.583.352 1.245-.219 1.897-.494 1.834.455Zm-9.807 3.863s-.127-1.819-1.773-2.286c-1.644-.467-2.613 1.04-2.613 1.04Zm4.058 4.539-7.769-2.172s.446 2.306 3.338 3.153c2.862.836 4.43-.98 4.43-.981Zm2.701-2.51s-.13-1.818-1.773-2.286c-1.644-.469-2.612 1.038-2.612 1.038ZM8.57 18.23c-4.749 1.279-7.261-4.224-8.021-7.08C.197 9.831.044 8.832.003 8.188c-.047-.73.455-.52 1.415-.354.677.118 2.3.261 4.308-.28a11.28 11.28 0 0 0 2.41-.956c-.058.197-.114.4-.17.61-.433 1.618-.827 4.055-.632 6.426-1.976.732-2.267 2.423-2.267 2.423l2.524-.715c.227 1.002.6 1.987 1.15 2.838a5.914 5.914 0 0 1-.171.049Zm-4.188-6.298c1.265-.333 1.363-1.631 1.363-1.631l-3.374.888s.745 1.076 2.01.743Z",
   "Any MCP client": "M13.85 0a4.16 4.16 0 0 0-2.95 1.217L1.456 10.66a.835.835 0 0 0 0 1.18.835.835 0 0 0 1.18 0l9.442-9.442a2.49 2.49 0 0 1 3.541 0 2.49 2.49 0 0 1 0 3.541L8.59 12.97l-.1.1a.835.835 0 0 0 0 1.18.835.835 0 0 0 1.18 0l.1-.098 7.03-7.034a2.49 2.49 0 0 1 3.542 0l.049.05a2.49 2.49 0 0 1 0 3.54l-8.54 8.54a1.96 1.96 0 0 0 0 2.755l1.753 1.753a.835.835 0 0 0 1.18 0 .835.835 0 0 0 0-1.18l-1.753-1.753a.266.266 0 0 1 0-.394l8.54-8.54a4.185 4.185 0 0 0 0-5.9l-.05-.05a4.16 4.16 0 0 0-2.95-1.218c-.2 0-.401.02-.6.048a4.17 4.17 0 0 0-1.17-3.552A4.16 4.16 0 0 0 13.85 0m0 3.333a.84.84 0 0 0-.59.245L6.275 10.56a4.186 4.186 0 0 0 0 5.902 4.186 4.186 0 0 0 5.902 0L19.16 9.48a.835.835 0 0 0 0-1.18.835.835 0 0 0-1.18 0l-6.985 6.984a2.49 2.49 0 0 1-3.54 0 2.49 2.49 0 0 1 0-3.54l6.983-6.985a.835.835 0 0 0 0-1.18.84.84 0 0 0-.59-.245",
 };
 
 const APP_COLORS: Record<string, string> = {
   "VS Code": "#23a8f2", Cursor: "#f5f5f0", GitHub: "#f5f5f0", GitLab: "#fc6d26",
-  Slack: "#e01e5a", Jira: "#2684ff", Playwright: "#45ba63", "Any MCP client": "#f5f5f0",
+  Playwright: "#45ba63", "Any MCP client": "#f5f5f0",
 };
 
 function AppLogo({ name }: { name: string }) {
@@ -569,7 +567,10 @@ function AlwaysOnSection() {
 }
 
 function StackSection() {
-  const integrations = ["VS Code", "Cursor", "GitHub", "GitLab", "Slack", "Jira", "Playwright", "Any MCP client"];
+  const integrations = [
+    ["VS Code", "MCP"], ["Cursor", "MCP"], ["GitHub", "PR GATE"],
+    ["GitLab", "CI CONFIG"], ["Playwright", "YOUR CODE"], ["Any MCP client", "MCP"],
+  ] as const;
 
   return (
     <section id="stack" className={styles.stackSection}>
@@ -586,17 +587,17 @@ function StackSection() {
   "mcpServers": {
     "verity": {
       "command": "npx",
-      "args": ["-y", "@verity/mcp"],
-      "env": { "VERITY_API_KEY": "your_key" }
+      "args": ["-y", "@qashifthq/verity-mcp"],
+      "env": { "VERITY_TOKEN": "your_project_token" }
     }
   }
 }`}</code></pre>
             <div className={styles.mcpPrompt}><span>›</span><p>Verify checkout against the current branch and return release evidence.</p><b>RUNNING</b></div>
           </RevealBlock>
           <RevealBlock className={styles.integrationPanel} delay={.1}>
-            <div className={styles.integrationTop}><span>Works where your team works</span><b>08 CONNECTORS</b></div>
+            <div className={styles.integrationTop}><span>Works where your team works</span><b>{String(integrations.length).padStart(2, "0")} CONNECTORS</b></div>
             <div className={styles.integrationGrid}>
-              {integrations.map((name, index) => <div key={name}><AppLogo name={name} /><strong>{name}</strong><span>{index < 4 ? "AUTHOR" : "REPORT"}</span></div>)}
+              {integrations.map(([name, role]) => <div key={name}><AppLogo name={name} /><strong>{name}</strong><span>{role}</span></div>)}
             </div>
           </RevealBlock>
         </div>
