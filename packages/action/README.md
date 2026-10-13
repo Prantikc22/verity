@@ -60,7 +60,9 @@ Because baselines live in your repo and run in your CI, visual coverage is unlim
 | Input | Default | Description |
 |---|---|---|
 | `visual-snapshots-dir` | `tests/verity/visual` | Directory of Playwright visual specs + committed baselines. |
-| `visual-max-diff-ratio` | `0.01` | Allowed pixel drift (0–1) before a snapshot counts as changed. |
+| `visual-max-diff-ratio` | `0.01` | Allowed pixel drift (0–1) before a snapshot counts as changed. Applied as the suite-wide default; a per-assertion value in a spec still wins. |
+
+**First run of a new visual test:** there is no baseline yet, so the runner captures one, reports it as a pass (not a regression), and uploads the images as a `verity-visual-baselines-…` artifact. Download it and commit the files next to the spec — capture on the same OS as CI (Linux on GitHub-hosted runners), since fonts render differently per platform.
 
 ### 🤖 Agent (AI-feature evals)
 
@@ -104,6 +106,10 @@ For distributed load, run the generated k6 script in your own k6/Grafana executi
 | Input | Default | Description |
 |---|---|---|
 | `perf-config` | `tests/verity/perf/verity.k6.js` | k6 script to run. |
+| `perf-profile` | from tier | `smoke`, `load`, `stress`, `spike`, `soak` or `breakpoint`. Empty ⇒ fast = smoke, full = load. |
+| `perf-vus` | script default | Peak concurrency for the profile. |
+| `perf-duration` | script default | Steady-phase length, e.g. `2m`. |
+| `perf-load` | `true` | `false` runs only Core Web Vitals (with `lighthouse-url`). |
 | `lighthouse-url` | — | If set, also run Lighthouse CI for Core Web Vitals. |
 
 ### 🔐 Security (ZAP DAST + Semgrep SAST)
@@ -118,6 +124,11 @@ Findings are surfaced as severity-ranked **Security issues** in the dashboard �
 | Input | Default | Description |
 |---|---|---|
 | `security-target-url` | — | Reachable preview/staging URL for the ZAP DAST scan. |
+| `security-sast` | `true` | `false` skips the static code scan (dynamic scan only). |
+| `security-dast-depth` | from tier | `baseline` (passive) or `full` (active). Empty ⇒ fast = baseline, full = full. |
+| `security-dast-max-minutes` | `30` | Time limit for the full active scan. |
+
+Every selected engine runs even if an earlier one fails; the final **Verity — result** step fails the job and names the checks that did not pass.
 
 ### 🔁 API contract (Schemathesis)
 
