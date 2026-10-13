@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: "MCP Server — Generate & run tests from your IDE",
   description:
     "Install the Verity MCP server in VS Code, Cursor, Claude Code, or Windsurf. Generate, propose, and run Playwright tests against your localhost — right from your AI coding agent.",
-  alternates: { canonical: "https://verity.qashifthq.com/mcp" },
+  alternates: { canonical: "/mcp" },
   openGraph: {
     title: "Verity MCP Server",
     description: "Generate, propose, and run tests from your IDE — Cursor, VS Code, Claude Code, Windsurf.",

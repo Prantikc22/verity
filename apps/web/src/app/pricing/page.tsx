@@ -7,7 +7,8 @@ import { isIndia } from "@/lib/geo";
 import styles from "./PricingPage.module.css";
 
 export const metadata: Metadata = {
-  title: "Pricing",
+  title: "Pricing — free plan, unlimited CI runs",
+  alternates: { canonical: "/pricing" },
   description: "Start Verity free, run without limits in your CI, or add a forward-deployed engineer to own product verification with your team.",
 };
 

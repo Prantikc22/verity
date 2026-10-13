@@ -7,7 +7,9 @@
   --cyan: #45d5ff;
   --green: #79f2a6;
   min-height: 100vh;
-  overflow: clip;
+  /* No overflow clip here: on a page taller than the GPU texture limit (16384px,
+     e.g. phones) a clipped wrapper renders black in Chromium. Sections that
+     overflow sideways clip themselves instead. */
   background: var(--ink);
   color: #f7f7f3;
 }
@@ -97,6 +99,7 @@
   padding: 132px max(24px, calc((100vw - 1440px) / 2 + 24px)) 72px;
   border-bottom: 1px solid var(--line);
   isolation: isolate;
+  overflow-x: clip;
 }
 
 .hero::before {
@@ -149,8 +152,8 @@
 .hero h1 {
   margin: 0;
   max-width: 760px;
-  font-size: clamp(58px, 6.4vw, 108px);
-  line-height: .88;
+  font-size: clamp(54px, 5.7vw, 98px);
+  line-height: .9;
   letter-spacing: -.072em;
   font-weight: 770;
 }
@@ -492,7 +495,7 @@
 .runtimeCard > a { width: max-content; margin-top: auto; display: inline-flex; align-items: center; gap: 12px; color: var(--green); font-size: 13px; font-weight: 700; }
 .runtimeCloud > a { color: #b2a5ff; }
 
-.proofSection { padding: 145px 0; border-bottom: 1px solid var(--line); background: #08090c; }
+.proofSection { padding: 145px 0; border-bottom: 1px solid var(--line); background: #08090c; overflow-x: clip; }
 .proofHeading { display: grid; grid-template-columns: 1fr .42fr; gap: 60px; align-items: end; }
 .proofHeading > p { margin: 0; color: #777982; font: 10px var(--font-geist-mono), monospace; letter-spacing: .08em; }
 .testimonialGrid { margin-top: 80px; display: grid; grid-template-columns: 1.25fr .75fr; border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
@@ -546,6 +549,51 @@
 .footerWordmark { height: clamp(180px, 22vw, 320px); overflow: hidden; display: flex; align-items: center; justify-content: center; border-top: 1px solid var(--line); color: transparent; -webkit-text-stroke: 1.5px rgba(255,255,255,.62); text-align: center; font-size: clamp(145px, 22vw, 320px); line-height: .8; letter-spacing: -.095em; font-weight: 780; user-select: none; }
 .footerBottom { min-height: 72px; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--line); color: #6f7179; font: 10px var(--font-geist-mono), monospace; letter-spacing: .09em; }
 
+
+/* ---- URL start (primary conversion) ---- */
+.srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+.urlStart { margin-top: 36px; max-width: 640px; }
+.urlStartCentered { margin: 40px auto 0; }
+.urlField { display: flex; align-items: stretch; border: 1px solid rgba(255,255,255,.22); background: rgba(255,255,255,.04); transition: border-color .18s ease, background .18s ease; }
+.urlField:focus-within { border-color: rgba(121,242,166,.7); background: rgba(255,255,255,.06); }
+.urlFieldError { border-color: #ff7a7a; }
+.urlField > span { display: flex; align-items: center; padding-left: 18px; color: #6f7179; font: 500 14px var(--font-geist-mono), monospace; }
+.urlField input { flex: 1; min-width: 0; padding: 0 12px 0 2px; border: 0; background: transparent; color: white; font: 500 15px var(--font-geist-mono), monospace; outline: none; }
+.urlField input::placeholder { color: #5d5f67; }
+.urlField .primaryCta { border-width: 0 0 0 1px; white-space: nowrap; }
+.urlNote { margin: 12px 0 0; color: #8b8d95; font: 600 10.5px/1.5 var(--font-geist-mono), monospace; letter-spacing: .06em; }
+.urlStartCentered .urlNote { text-align: center; }
+.urlFieldError + .urlNote { color: #ff9b9b; }
+.heroHow { margin-top: 26px; }
+.eyebrow { display: inline-block; margin-bottom: 22px; color: var(--green); font: 600 11px/1.2 var(--font-geist-mono), monospace; letter-spacing: .14em; }
+
+/* ---- How it works ---- */
+.howSection { padding: 128px 0 120px; border-bottom: 1px solid var(--line); background: #07080b; }
+.howHeading h2 { margin: 0; font-size: clamp(44px, 5.4vw, 84px); line-height: .94; letter-spacing: -.06em; font-weight: 760; }
+.howHeading h2 span { color: var(--green); }
+.howGrid { margin: 72px 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(4, 1fr); border-left: 1px solid var(--line); border-top: 1px solid var(--line); }
+.howGrid li { min-height: 300px; padding: 32px 30px; display: flex; flex-direction: column; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: linear-gradient(180deg, rgba(255,255,255,.025), transparent 60%); }
+.howGrid li span { color: var(--cyan); font: 600 11px var(--font-geist-mono), monospace; letter-spacing: .1em; }
+.howGrid li h3 { margin: 56px 0 14px; font-size: 25px; line-height: 1.1; letter-spacing: -.035em; font-weight: 700; }
+.howGrid li p { margin: 0; color: #9a9ca4; font-size: 15px; line-height: 1.65; }
+.howCta { margin-top: 44px; display: flex; align-items: center; gap: 28px; }
+
+/* ---- FAQ ---- */
+.faqSection { padding: 128px 0; border-bottom: 1px solid var(--line); background: var(--ink); }
+.faqGrid { display: grid; grid-template-columns: .8fr 1.2fr; gap: 7vw; align-items: start; }
+.faqHeading { position: sticky; top: 120px; }
+.faqHeading h2 { margin: 0; font-size: clamp(40px, 4.4vw, 68px); line-height: .96; letter-spacing: -.055em; font-weight: 760; }
+.faqHeading p { margin: 26px 0 0; color: #9a9ca4; font-size: 16px; line-height: 1.7; }
+.faqHeading a { color: white; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(255,255,255,.35); }
+.faqList { border-top: 1px solid var(--line); }
+.faqList details { border-bottom: 1px solid var(--line); }
+.faqList summary { list-style: none; min-height: 84px; padding: 22px 0; display: flex; align-items: center; justify-content: space-between; gap: 24px; cursor: pointer; }
+.faqList summary::-webkit-details-marker { display: none; }
+.faqList summary h3 { margin: 0; font-size: 20px; line-height: 1.3; letter-spacing: -.025em; font-weight: 650; }
+.faqList summary span { flex: none; color: var(--green); font: 400 26px var(--font-geist-mono), monospace; transition: transform .2s ease; }
+.faqList details[open] summary span { transform: rotate(45deg); }
+.faqList details p { margin: 0; padding: 0 64px 28px 0; color: #a3a5ad; font-size: 16px; line-height: 1.75; }
+
 @media (max-width: 1100px) {
   .hero { grid-template-columns: 1fr; height: auto; min-height: 1100px; padding-top: 150px; padding-bottom: 120px; }
   .heroCopy { max-width: 850px; }
@@ -562,6 +610,9 @@
   .stackGrid { grid-template-columns: .95fr 1.05fr; }
   .footerTop { grid-template-columns: .62fr 1.38fr; gap: 50px; }
   .footerLinks { grid-template-columns: 1fr 1fr; }
+  .howGrid { grid-template-columns: 1fr 1fr; }
+  .faqGrid { grid-template-columns: 1fr; gap: 48px; }
+  .faqHeading { position: static; }
 }
 
 @media (max-width: 760px) {
@@ -575,13 +626,24 @@
   .mobileMenu { display: flex; padding: 20px 18px 28px; flex-direction: column; gap: 0; }
   .mobileMenu a { min-height: 48px; display: flex; align-items: center; border-bottom: 1px solid var(--line); color: #d8d9dd; font-size: 16px; }
   .hero { min-height: 1000px; padding: 120px 18px 104px; gap: 58px; }
-  .hero h1 { font-size: clamp(52px, 16vw, 78px); }
+  .hero h1 { font-size: clamp(40px, 11.5vw, 56px); }
   .heroCopy > p { font-size: 17px; }
   .heroActions { align-items: stretch; flex-direction: column; gap: 18px; }
   .primaryCta { width: 100%; }
   .textCta { justify-content: center; }
   .heroFootnotes { gap: 12px; justify-content: space-between; }
   .heroFootnotes span:nth-child(2) { display: none; }
+  .urlField { flex-wrap: wrap; }
+  .urlField > span { min-height: 54px; }
+  .urlField input { min-height: 54px; }
+  .urlField .primaryCta { width: 100%; border-width: 1px 0 0; }
+  .howSection, .faqSection { padding: 100px 0; }
+  .howGrid { margin-top: 52px; grid-template-columns: 1fr; }
+  .howGrid li { min-height: 230px; padding: 28px 22px; }
+  .howCta { flex-direction: column; align-items: stretch; gap: 18px; }
+  .howCta .textCta { justify-content: center; }
+  .faqList summary h3 { font-size: 17px; }
+  .faqList details p { padding-right: 0; font-size: 15px; }
   .consoleBody { grid-template-columns: 1fr; min-height: 470px; }
   .consoleRail { display: none; }
   .consoleMain { padding: 22px 18px 70px; }

@@ -6,7 +6,8 @@ import { Reveal } from "@/components/Reveal";
 import { GithubInstallVisual } from "@/components/GithubInstallVisual";
 
 export const metadata: Metadata = {
-  title: "GitHub App",
+  title: "GitHub App — Playwright tests and PR checks",
+  alternates: { canonical: "/github" },
   description: "Install Verity on your repositories to automatically generate, run, and gate Playwright tests on every pull request.",
 };
 

@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useMotionValueEvent, useScroll, useSpring, useTransform } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { Logo } from "@/components/Logo";
 import { createClient } from "@/lib/supabase/client";
 import styles from "./LandingExperience.module.css";
+import { LANDING_FAQ } from "./faq";
 
 const SIGNALS = [
   ["01", "Live product opened", "checkout / production mirror", "cyan"],
@@ -29,6 +31,13 @@ const STATS = [
   ["<5 min", "To run 200 checks across the stack"],
   ["40+", "Engineering teams shipping with QAShift"],
   ["1.2M", "Checks moving through customer pipelines monthly"],
+] as const;
+
+const HOW_STEPS = [
+  ["01", "Paste your app's URL", "Verity opens it in a real browser and maps the journeys, forms and endpoints worth testing. Add an OpenAPI spec or PRD for deeper coverage."],
+  ["02", "Review readable tests", "Playwright specs for UI and API, plus visual, AI-agent, load and security checks. Edit anything — every line is yours."],
+  ["03", "Commit one workflow file", "CI Setup writes it for GitHub Actions, GitLab or Jenkins. Tests run on your runners, against your environments, with no run limit."],
+  ["04", "Get a verdict on every PR", "A Quick check on pull requests and a Full regression on merge. Flakes are split from real failures, and failures arrive with the error and a proposed fix."],
 ] as const;
 
 const SYSTEM_STEPS = [
@@ -110,7 +119,7 @@ const NAV_MENUS = {
   ],
   Solutions: [
     ["Agentic coding", "Give every AI-authored change an independent verifier.", "/#gap"],
-    ["Always On", "Merge gates, schedules and a complete run history.", "/#always-on"],
+    ["How it works", "From a URL to a merge gate in four steps.", "/#how"],
     ["Coverage", "UI, API, visual, agent, performance and security.", "/#coverage"],
     ["Self-healing", "Repair selector drift without hiding product failures.", "/#healing"],
   ],
@@ -151,6 +160,57 @@ function Arrow({ down = false }: { down?: boolean }) {
     <svg viewBox="0 0 20 20" aria-hidden className={down ? styles.arrowDown : styles.arrow}>
       <path d={down ? "M10 3v13m0 0 5-5m-5 5-5-5" : "M3 10h13m0 0-5-5m5 5-5 5"} />
     </svg>
+  );
+}
+
+/** Normalize what someone pastes into a URL we can open (adds https:// when missing). */
+function toUrl(raw: string): string | null {
+  const v = raw.trim();
+  if (!v) return null;
+  try {
+    const u = new URL(/^https?:\/\//i.test(v) ? v : `https://${v}`);
+    return u.hostname.includes(".") || u.hostname === "localhost" ? u.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
+/** The primary conversion: paste a URL → sign in → first generated test (/start). */
+function UrlStart({ id, centered = false }: { id: string; centered?: boolean }) {
+  const router = useRouter();
+  const [value, setValue] = useState("");
+  const [error, setError] = useState(false);
+  return (
+    <form
+      className={`${styles.urlStart} ${centered ? styles.urlStartCentered : ""}`}
+      onSubmit={(e) => {
+        e.preventDefault();
+        const url = toUrl(value);
+        if (!url) { setError(true); return; }
+        router.push(`/start?input=${encodeURIComponent(url)}`);
+      }}
+    >
+      <label htmlFor={id} className={styles.srOnly}>Your app&apos;s URL</label>
+      <div className={`${styles.urlField} ${error ? styles.urlFieldError : ""}`}>
+        <span aria-hidden>https://</span>
+        <input
+          id={id}
+          type="text"
+          inputMode="url"
+          autoComplete="url"
+          spellCheck={false}
+          placeholder="your-app.com"
+          value={value}
+          aria-invalid={error}
+          aria-describedby={`${id}-note`}
+          onChange={(e) => { setValue(e.target.value.replace(/^https?:\/\//i, "")); setError(false); }}
+        />
+        <button type="submit" className={styles.primaryCta}>Generate my first test <Arrow /></button>
+      </div>
+      <p id={`${id}-note`} className={styles.urlNote}>
+        {error ? "Enter a public URL, like staging.your-app.com." : "Free plan · no credit card · 15 AI tests a month · unlimited CI runs"}
+      </p>
+    </form>
   );
 }
 
@@ -284,6 +344,7 @@ export function LandingNav() {
       <AnimatePresence>
         {mobileOpen && (
           <motion.div className={styles.mobileMenu} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
+            <Link href="/#how" onClick={() => setMobileOpen(false)}>How it works</Link>
             <Link href="/#system" onClick={() => setMobileOpen(false)}>Product</Link>
             <Link href="/#gap" onClick={() => setMobileOpen(false)}>Solutions</Link>
             <Link href="/#stack" onClick={() => setMobileOpen(false)}>Developers</Link>
@@ -339,9 +400,9 @@ function GapSection() {
   ] as const;
 
   const costs = [
-    ["01", "The tests that would catch it do not exist.", "End-to-end coverage is the work that loses to the next feature. The code ships faster; confidence falls further behind."],
-    ["02", "“Done” is not evidence.", "A closed ticket, a green unit suite, or an agent summary cannot prove that a real customer journey still works."],
-    ["03", "One change breaks what worked yesterday.", "Verity replays the running product so regressions surface in the release—not in a customer support queue."],
+    ["01", "Nobody has a sprint to spare for end-to-end tests.", "So the riskiest paths — sign-up, checkout, billing — ship with the least coverage, and the gap widens with every release."],
+    ["02", "A green unit suite is not a working checkout.", "Mocks pass while the real page breaks. Only something that drives the running product can say a customer journey still works."],
+    ["03", "AI-written changes need an independent check.", "When an agent writes the code, Verity is the second pair of eyes: it runs the real flows on every pull request, so regressions surface before a customer finds them."],
   ] as const;
 
   return (
@@ -374,15 +435,63 @@ function GapSection() {
   );
 }
 
+function HowItWorks() {
+  return (
+    <section id="how" className={styles.howSection} aria-labelledby="how-title">
+      <div className={styles.sectionShell}>
+        <RevealBlock className={styles.howHeading}>
+          <span className={styles.eyebrow}>HOW IT WORKS</span>
+          <h2 id="how-title">From a URL to a merge gate<br /><span>in four steps.</span></h2>
+        </RevealBlock>
+        <ol className={styles.howGrid}>
+          {HOW_STEPS.map(([number, title, copy], index) => (
+            <motion.li key={number} initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: .4 }} transition={{ delay: index * .07 }}>
+              <span>{number}</span><h3>{title}</h3><p>{copy}</p>
+            </motion.li>
+          ))}
+        </ol>
+        <div className={styles.howCta}>
+          <Link href="/login?next=/dashboard" className={styles.primaryCta}>Start free <Arrow /></Link>
+          <Link href="/docs" className={styles.textCta}>Read the setup guide <Arrow /></Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FaqSection() {
+  return (
+    <section id="faq" className={styles.faqSection} aria-labelledby="faq-title">
+      <div className={styles.sectionShell}>
+        <div className={styles.faqGrid}>
+          <RevealBlock className={styles.faqHeading}>
+            <span className={styles.eyebrow}>FAQ</span>
+            <h2 id="faq-title">Questions teams ask before they switch.</h2>
+            <p>Still deciding? <Link href="/docs">Read the docs</Link> or <a href="https://qashifthq.com/contact">talk to an engineer</a>.</p>
+          </RevealBlock>
+          <div className={styles.faqList}>
+            {LANDING_FAQ.map((item, index) => (
+              <details key={item.q} open={index === 0}>
+                <summary><h3>{item.q}</h3><span aria-hidden>+</span></summary>
+                <p>{item.a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function StatsSection() {
   return (
     <section id="numbers" className={styles.statsSection}>
       <div className={styles.sectionShell}>
         <RevealBlock className={styles.statsHeader}>
           <div>
-            <h2>Three weeks,<br /><span>or ten minutes.</span></h2>
+            <h2>Coverage in minutes,<br /><span>not sprints.</span></h2>
           </div>
-          <p>Verification should move at the speed of the team writing the code. Verity turns live behavior into a suite, then keeps that suite moving with every release.</p>
+          <p>Hand-writing an end-to-end suite takes weeks. Verity drafts it from your live app in minutes, and your engineers spend their time reviewing tests instead of typing selectors.</p>
         </RevealBlock>
         <div className={styles.statsGrid}>
           {STATS.map(([value, label], index) => (
@@ -529,20 +638,20 @@ function AlwaysOnSection() {
   const modes = [
     {
       title: "Every merge",
-      headline: "A gate, not a report.",
-      copy: "Every pull request is checked against the journeys it can affect. The verdict lands where the review already happens.",
+      headline: "The verdict lands on the pull request.",
+      copy: "A Quick check runs on every PR and a Full regression on merge. Results post as a check and a comment, right where the review happens.",
       visual: <div className={styles.mergeVisual}><span>PR #1284 · checkout-refactor</span><strong><i /> Verity verified 42 journeys</strong><small>Required check · ready to merge</small></div>,
     },
     {
       title: "Every night",
-      headline: "Re-verified on your cadence.",
-      copy: "Run hourly, nightly, weekly, or before a release. Quiet breakage surfaces on its own instead of during the demo.",
+      headline: "Scheduled runs catch silent breakage.",
+      copy: "Add a nightly or weekly schedule to the same workflow. Breakage from a dependency, a config change or a third party shows up without a code change.",
       visual: <div className={styles.cadenceVisual}>{["M", "T", "W", "T", "F", "S", "S"].map((day, index) => <span className={index < 5 ? styles.dayActive : ""} key={`${day}-${index}`}>{day}</span>)}<b>02:00 / nightly</b></div>,
     },
     {
       title: "Every run kept",
-      headline: "History that does not disappear.",
-      copy: "Verdict, replay and trigger are retained together, so you can see exactly when a journey changed and why.",
+      headline: "Trends, not just today's result.",
+      copy: "Flake rates and regression history are tracked per test, so you can see which journeys are getting less reliable before they start failing.",
       visual: <div className={styles.historyVisual}><span><i /> Release 1284 <b>VERIFIED</b></span><span><i /> Nightly 06 Sep <b>VERIFIED</b></span><span><i /> PR #1278 <b>REPAIRED</b></span></div>,
     },
   ];
@@ -551,8 +660,8 @@ function AlwaysOnSection() {
     <section id="always-on" className={styles.alwaysSection}>
       <div className={styles.sectionShell}>
         <RevealBlock className={styles.alwaysHeading}>
-          <h2>It keeps running<br /><span>after you close the tab.</span></h2>
-          <p>A verifier that runs only when someone remembers protects nothing. Give Verity a schedule and a merge gate.</p>
+          <h2>Wired into every merge,<br /><span>not anyone&apos;s memory.</span></h2>
+          <p>Tests only protect you when they run without someone remembering to start them. Verity lives in your pipeline.</p>
         </RevealBlock>
         <div className={styles.alwaysGrid}>
           {modes.map((mode, index) => (
@@ -685,9 +794,10 @@ function FinalCta() {
         <RevealBlock className={styles.finalInner}>
           <h2>Show Verity the product.<br /><span>Get the test and the proof.</span></h2>
           <p>Start with a URL. Keep the Playwright. Know what changed before a customer has to tell you.</p>
+          <UrlStart id="final-url" centered />
           <div className={styles.finalActions}>
-            <Link href="/login?next=/dashboard" className={styles.primaryCta}>Start free <Arrow /></Link>
             <Link href="/pricing" className={styles.outlineCta}>See pricing <Arrow /></Link>
+            <a href="https://qashifthq.com/contact" className={styles.outlineCta}>Talk to an engineer <Arrow /></a>
           </div>
         </RevealBlock>
       </div>
@@ -740,29 +850,30 @@ export function LandingExperience() {
           <div className={styles.heroNoise} aria-hidden />
           <div className={styles.heroBeam} aria-hidden />
           <motion.div className={styles.heroCopy} style={{ y: copyY, opacity }}>
+            {/* Hero text is visible on first paint (no opacity:0 start): it is the LCP element. */}
+            <div className={styles.kicker}><span>●</span> AI TEST GENERATION · PLAYWRIGHT YOU OWN</div>
             <motion.h1
-              initial={{ opacity: 0, y: 34 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ y: 26 }}
+              animate={{ y: 0 }}
               transition={{ duration: 0.75, delay: 0.08, ease: [0.2, 0.8, 0.2, 1] }}
             >
-              Ship the change.
-              <span>Keep the proof.</span>
+              AI writes the tests.
+              <span>Your CI keeps the proof.</span>
             </motion.h1>
             <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ y: 16 }}
+              animate={{ y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
-              Verity verifies the whole product—UI journeys, APIs, visual states, AI agents, performance, and security—then returns evidence your team can act on. Playwright you own. No proprietary lock-in.
+              Paste a URL. Verity opens your live app, writes readable Playwright tests for UI and API flows — plus visual, AI-agent, load and security checks — and runs them in your own CI on every pull request. Failures come back with evidence, and you keep every line of code.
             </motion.p>
             <motion.div
-              className={styles.heroActions}
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ y: 14 }}
+              animate={{ y: 0 }}
               transition={{ duration: 0.55, delay: 0.3 }}
             >
-              <Link href="/login?next=/dashboard" className={styles.primaryCta}>Run your first verification <Arrow /></Link>
-              <a href="#system" className={styles.textCta}>See the system <Arrow down /></a>
+              <UrlStart id="hero-url" />
+              <a href="#how" className={`${styles.textCta} ${styles.heroHow}`}>See how it works <Arrow down /></a>
             </motion.div>
             <motion.div
               className={styles.heroFootnotes}
@@ -783,6 +894,7 @@ export function LandingExperience() {
           </div>
         </section>
         <CustomerRail />
+        <HowItWorks />
         <GapSection />
         <StatsSection />
         <SystemStory />
@@ -792,6 +904,7 @@ export function LandingExperience() {
         <StackSection />
         <RuntimeSection />
         <CustomerProof />
+        <FaqSection />
         <FinalCta />
       </main>
       <LandingFooter />

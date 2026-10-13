@@ -16,16 +16,16 @@ const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
   title: {
-    default: "Verity — Ship the change. Keep the proof.",
+    default: "Verity — AI test generation for Playwright, API & CI",
     template: "%s · Verity",
   },
   description:
-    "Verity opens the real product, writes the Playwright suite, runs every critical path, and returns evidence your team can act on. A QAShift product.",
+    "Verity writes Playwright end-to-end and API tests from your live app, plus visual, AI-agent, load and security checks, and runs them in your own CI. A QAShift product.",
   openGraph: {
     siteName: "Verity",
     type: "website",
     url: appUrl,
-    images: [{ url: `${appUrl}/og.png`, width: 1200, height: 630, alt: "Verity — Ship with proof. Not hope." }],
+    images: [{ url: `${appUrl}/og.png`, width: 1200, height: 630, alt: "Verity — AI writes the tests. Your CI keeps the proof." }],
   },
   twitter: {
     card: "summary_large_image",
