@@ -572,13 +572,17 @@
 .heroHow { margin-top: 26px; }
 .eyebrow { display: inline-block; margin-bottom: 22px; color: var(--green); font: 600 11px/1.2 var(--font-geist-mono), monospace; letter-spacing: .14em; }
 
-/* ---- Demo video ---- */
-.demoSection { padding: 120px 0; border-bottom: 1px solid var(--line); background: #050608; }
-.demoHeading h2 { margin: 0; font-size: clamp(40px, 4.8vw, 76px); line-height: .96; letter-spacing: -.055em; font-weight: 760; }
-.demoHeading h2 span { color: var(--green); }
-.demoFrame { margin-top: 56px; border: 1px solid var(--line); background: #0a0c10; aspect-ratio: 16 / 9; }
+/* ---- Demo video: copy left, compact video right (never a full-bleed wall) ---- */
+.demoSection { padding: 96px 0; border-bottom: 1px solid var(--line); background: #050608; }
+.demoGrid { display: grid; grid-template-columns: minmax(300px, .78fr) minmax(0, 1.22fr); gap: 64px; align-items: center; }
+.demoCopy h2 { margin: 0; font-size: clamp(36px, 3.6vw, 56px); line-height: .98; letter-spacing: -.05em; font-weight: 760; }
+.demoCopy h2 span { color: var(--green); }
+.demoCopy ul { margin: 32px 0 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+.demoCopy li { display: flex; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--line); color: #b8b9c0; font-size: 15px; line-height: 1.55; }
+.demoCopy li b { flex: none; color: var(--cyan); font: 600 11px/2 var(--font-geist-mono), monospace; letter-spacing: .1em; }
+.demoCopy > p { margin: 18px 0 0; color: #8b8d95; font: 600 10.5px/1.5 var(--font-geist-mono), monospace; letter-spacing: .06em; text-transform: uppercase; }
+.demoFrame { max-width: 820px; width: 100%; justify-self: end; border: 1px solid var(--line); background: #0a0c10; aspect-ratio: 16 / 9; }
 .demoFrame video { display: block; width: 100%; height: 100%; object-fit: cover; }
-.demoNote { margin: 18px 0 0; color: #8b8d95; font-size: 14px; line-height: 1.6; }
 
 /* ---- How it works ---- */
 .howSection { padding: 128px 0 120px; border-bottom: 1px solid var(--line); background: #07080b; }
@@ -624,6 +628,8 @@
   .footerTop { grid-template-columns: .62fr 1.38fr; gap: 50px; }
   .footerLinks { grid-template-columns: 1fr 1fr; }
   .howGrid { grid-template-columns: 1fr 1fr; }
+  .demoGrid { grid-template-columns: 1fr; gap: 40px; }
+  .demoFrame { justify-self: stretch; max-width: none; }
   .faqGrid { grid-template-columns: 1fr; gap: 48px; }
   .faqHeading { position: static; }
 }
@@ -651,7 +657,6 @@
   .urlField input { min-height: 54px; }
   .urlField .primaryCta { width: 100%; border-width: 1px 0 0; }
   .howSection, .faqSection, .demoSection { padding: 100px 0; }
-  .demoFrame { margin-top: 36px; }
   .howGrid { margin-top: 52px; grid-template-columns: 1fr; }
   .howGrid li { min-height: 230px; padding: 28px 22px; }
   .howCta { flex-direction: column; align-items: stretch; gap: 18px; }

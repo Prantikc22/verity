@@ -438,10 +438,16 @@ function GapSection() {
 function DemoSection() {
   return (
     <section id="demo" className={styles.demoSection} aria-labelledby="demo-title">
-      <div className={styles.sectionShell}>
-        <RevealBlock className={styles.demoHeading}>
+      <div className={`${styles.sectionShell} ${styles.demoGrid}`}>
+        <RevealBlock className={styles.demoCopy}>
           <span className={styles.eyebrow}>SEE IT WORK · 48 SECONDS</span>
-          <h2 id="demo-title">From a URL to a verdict<br /><span>on every pull request.</span></h2>
+          <h2 id="demo-title">Watch it catch<br /><span>a real bug.</span></h2>
+          <ul>
+            <li><b>01</b>AI writes readable Playwright from a live page.</li>
+            <li><b>02</b>One workflow file runs it in your CI.</li>
+            <li><b>03</b>The pull request gets a verdict — flaky told apart from broken, with a curl to reproduce.</li>
+          </ul>
+          <p>Every screen is real Verity output.</p>
         </RevealBlock>
         <div className={styles.demoFrame}>
           <video
@@ -454,7 +460,6 @@ function DemoSection() {
             <source src="/demo/verity-demo.mp4" type="video/mp4" />
           </video>
         </div>
-        <p className={styles.demoNote}>Real output from Verity — the generated Playwright, the CI workflow, and a pull request&apos;s verdict with a flaky test told apart from a real failure.</p>
       </div>
     </section>
   );
