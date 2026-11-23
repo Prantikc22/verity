@@ -14,7 +14,7 @@ export default async function CiSetupPage({ params }: { params: Promise<{ projec
   const supabase = await createClient();
   const { data: project } = await supabase
     .from("projects")
-    .select("ingest_token, default_branch")
+    .select("id, name, ingest_token, default_branch")
     .eq("id", projectId)
     .maybeSingle();
   if (!project) notFound();
@@ -30,7 +30,7 @@ export default async function CiSetupPage({ params }: { params: Promise<{ projec
       </div>
 
       {/* Reporting only: the fastest path, no agents needed. */}
-      <ReporterSetup apiUrl={APP} />
+      <ReporterSetup apiUrl={APP} projects={project.ingest_token ? [{ id: project.id, name: project.name, token: project.ingest_token }] : []} />
 
       {/* The two-tier mental model, visualized. */}
       <section className="border border-neutral-200 p-5 dark:border-neutral-800">

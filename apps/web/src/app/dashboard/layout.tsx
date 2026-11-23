@@ -30,7 +30,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
     const credits = { limit: plan.creditsPerMonth, used, unlimited: plan.creditsPerMonth >= UNLIMITED_CREDITS };
     const mode = workspaceModeOf(orgCtx?.org);
     const reportsKey = orgCtx?.org.reports_plan;
-    const label = mode === "reports" ? (isReportsKey(reportsKey) ? REPORTS[reportsKey].name : "Reports Free") : plan.label;
+    // Reports-only teams see their Reports plan; anyone on a paid plan keeps seeing it.
+    const label = mode === "reports" ? (isReportsKey(reportsKey) ? REPORTS[reportsKey].name : plan.label === "Free" ? "Reports Free" : plan.label) : plan.label;
     return (
       <QAShiftShell org={orgCtx?.org.name ?? "Your org"} plan={label} email={user.email ?? ""} credits={credits} mode={mode}>
         {children}

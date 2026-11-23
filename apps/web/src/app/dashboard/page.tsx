@@ -56,12 +56,14 @@ export default async function OverviewPage() {
     <>
       <PageHeader title="Overview" lead="Everything that ran across your projects in the last 30 days." action={<Button href="/dashboard/runs" variant="secondary">All runs</Button>} />
 
-      <KpiStrip items={[
+      {list.length === 0 && <GetStarted projectId={projects[projects.length - 1].id} />}
+
+      {list.length > 0 && <KpiStrip items={[
         { label: "Test results", value: results.toLocaleString(), sub: `${done.length} runs` },
         { label: "Pass rate", value: results ? `${((passed / results) * 100).toFixed(1)}%` : "—", tone: results && passed / results >= 0.95 ? "ok" : results ? "warn" : undefined, sub: `${failedRuns} failing run${failedRuns === 1 ? "" : "s"}` },
         { label: "Flaky results", value: flaky.toLocaleString(), tone: flaky ? "warn" : undefined, sub: results ? `${((flaky / results) * 100).toFixed(1)}% of results` : undefined },
         { label: "Median run time", value: fmtDuration(median), sub: "completed runs" },
-      ]} />
+      ]} />}
 
       <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 space-y-5">
@@ -72,7 +74,7 @@ export default async function OverviewPage() {
             </Panel>
           )}
           <Panel title="Recent runs" action={<Link href="/dashboard/runs" className="hover:text-neutral-900">View all →</Link>} flush>
-            {list.length ? <RunsTable runs={list.slice(0, 8)} projectNames={names} /> : <p className="p-4 text-[13px] text-neutral-500">No runs in the last 30 days. Add the CI step from a project&apos;s CI setup to start reporting.</p>}
+            {list.length ? <RunsTable runs={list.slice(0, 8)} projectNames={names} /> : <p className="p-4 text-[13px] text-neutral-500">No runs in the last 30 days. Runs show up here as soon as your tests report in.</p>}
           </Panel>
         </div>
 
@@ -118,4 +120,38 @@ export default async function OverviewPage() {
 
 function Legend({ c, l }: { c: string; l: string }) {
   return <span className="inline-flex items-center gap-1"><span className={`h-2 w-2 rounded-sm ${c}`} />{l}</span>;
+}
+
+/** First-run choice: two plain-English ways to start. */
+function GetStarted({ projectId }: { projectId: string }) {
+  const paths = [
+    {
+      href: `/dashboard/projects/${projectId}/create`, cta: "Create tests",
+      title: "Let AI agents write tests", body: "Paste your app's address. Agents explore it and propose a test plan; you keep the tests you want.",
+      meta: "No code needed · 2 credits per UI test",
+    },
+    {
+      href: "/dashboard/reports", cta: "Connect my tests",
+      title: "Connect tests you already have", body: "Already run Playwright, Jest, pytest or Cypress? See every run, flaky tests and failures in one place.",
+      meta: "About two minutes · free",
+    },
+  ];
+  return (
+    <section aria-label="Get started" className="mb-5 rounded-xl border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
+      <h2 className="text-[15px] font-semibold">Get started</h2>
+      <p className="mt-0.5 text-[13px] text-neutral-500">Pick one. You can do both later.</p>
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
+        {paths.map((p) => (
+          <Link key={p.href} href={p.href} className="group flex flex-col rounded-lg border border-neutral-200 p-4 transition hover:border-neutral-400 hover:shadow-sm dark:border-neutral-800 dark:hover:border-neutral-600">
+            <span className="text-[14px] font-medium">{p.title}</span>
+            <span className="mt-1 text-[13px] leading-relaxed text-neutral-500">{p.body}</span>
+            <span className="mt-3 flex items-center justify-between gap-3">
+              <span className="text-[12px] text-neutral-400">{p.meta}</span>
+              <span className="shrink-0 whitespace-nowrap rounded-md bg-neutral-900 px-3 py-1.5 text-[12.5px] font-medium text-white group-hover:bg-neutral-700 dark:bg-white dark:text-neutral-900">{p.cta} →</span>
+            </span>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
 }

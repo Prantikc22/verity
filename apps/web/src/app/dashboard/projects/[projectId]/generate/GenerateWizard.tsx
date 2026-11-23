@@ -276,7 +276,10 @@ function Setup(props: {
       </div>
 
       {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
-      <button type="submit" className="mt-4 bg-indigo-600 px-5 py-2 text-sm font-medium text-white">Explore &amp; propose tests →</button>
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <button type="submit" className="bg-indigo-600 px-5 py-2 text-sm font-medium text-white">Explore &amp; propose tests →</button>
+        <span className="text-[12px] text-neutral-500">Free. You pick which tests to keep; each kept UI test uses 2 credits.</span>
+      </div>
     </form>
   );
 }

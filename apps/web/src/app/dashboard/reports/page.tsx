@@ -7,7 +7,7 @@ import { buildReport } from "@/lib/reports/build";
 import { ReportView } from "@/components/reports/ReportView";
 import { ReporterSetup } from "@/components/shell/ReporterSetup";
 import { ShareReport } from "@/components/reports/ShareReport";
-import { Empty, PageHeader, Panel } from "@/components/shell/ui";
+import { PageHeader, Panel } from "@/components/shell/ui";
 
 export const metadata: Metadata = { title: "Reports", robots: { index: false } };
 
@@ -22,10 +22,11 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   const ent = entitlementsFor(orgCtx?.org);
   const supabase = await createClient();
 
-  const { data: projects } = orgId ? await supabase.from("projects").select("id, name").eq("org_id", orgId).order("name") : { data: [] };
+  const { data: projects } = orgId ? await supabase.from("projects").select("id, name, ingest_token").eq("org_id", orgId).order("name") : { data: [] };
   const projectIds = (projects ?? []).map((p) => p.id).filter((id) => !sp.project || id === sp.project);
   const pName = new Map((projects ?? []).map((p) => [p.id, p.name]));
   const data = await buildReport(supabase, projectIds, pName, days);
+  const tokens = (projects ?? []).filter((p) => p.ingest_token && (!sp.project || p.id === sp.project)).map((p) => ({ id: p.id, name: p.name, token: p.ingest_token as string }));
   const historyDays = ent.reports?.historyDays ?? ent.maxRunHistory;
 
   const q = (o: { project?: string; days?: number }) => {
@@ -57,13 +58,12 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
 
       {data.runs === 0 ? (
         <div className="space-y-4">
-          <Empty title="No results in this range yet" body="Connect the tests you already run. Your token is under Projects → your project → CI setup." href="/dashboard/projects" cta="Find my project token" />
-          <ReporterSetup apiUrl={API_URL} />
+          <ReporterSetup apiUrl={API_URL} projects={tokens} />
         </div>
       ) : (
         <ReportView data={data} days={days}
           usage={ent.reports ? <p className="mt-2 text-[12px] text-neutral-500">Reports plan: {data.total.toLocaleString()} of {ent.reports.resultsPerMonth.toLocaleString()} monthly results used in this window.</p> : null}
-          extraPanel={<Panel title="Connect more suites"><ReporterSetup apiUrl={API_URL} compact /></Panel>} />
+          extraPanel={<Panel title="Connect more suites"><ReporterSetup apiUrl={API_URL} compact projects={tokens} /></Panel>} />
       )}
     </>
   );

@@ -1,6 +1,17 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
+import { CREDIT_COSTS } from "@/lib/catalog";
+
+/** What each card costs, in plain words. Security runs in your CI, so it's free. */
+const COST: Record<string, string> = {
+  ui: `${CREDIT_COSTS.uiJourneyGeneration} credits per test`,
+  api: `${CREDIT_COSTS.apiEndpointGroupGeneration} credit per test`,
+  visual: `${CREDIT_COSTS.visualBaselinePer20Screens} credit per check`,
+  agent: `${CREDIT_COSTS.aiFeatureEvalGeneration} credit per eval`,
+  performance: `${CREDIT_COSTS.performanceScriptGeneration} credit per script`,
+  security: "Free in your CI",
+};
 
 export const metadata: Metadata = { title: "Create tests", robots: { index: false } };
 
@@ -92,6 +103,7 @@ export default async function CreateTests({ params }: { params: Promise<{ projec
               </div>
               <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">{t.checks}</p>
               <p className="mt-3 text-xs text-neutral-500"><span className="font-medium text-neutral-700 dark:text-neutral-300">You need:</span> {t.needs}</p>
+              {COST[t.key] && <p className="mt-1 text-xs text-neutral-500"><span className="font-medium text-neutral-700 dark:text-neutral-300">Cost:</span> {COST[t.key]}{t.key === "security" ? "" : ". Proposals are free"}.</p>}
               <div className="mt-auto pt-5">
                 <Link href={`${base}/${t.primary.seg}`} className="inline-block bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500">
                   {t.primary.label} →

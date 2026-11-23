@@ -22,7 +22,7 @@ export default async function RunsPage() {
     <>
       <PageHeader title="Test Runs" lead="The latest 100 runs across every project and agent. Open a run for failures, traces and flaky-test detail." />
       {!runs || runs.length === 0 ? (
-        <Empty title="No runs yet" body="Runs appear here once a project posts results from CI, the CLI, or a cloud run." href="/dashboard/projects" cta="Go to projects" />
+        <Empty title="No runs yet" body="Runs appear here as soon as your tests report in, from CI, your laptop or a cloud run. Connecting takes about two minutes." href="/dashboard/reports" cta="Connect my tests" />
       ) : (
         <Panel flush><RunsTable runs={runs as RunRow[]} projectNames={new Map((projects ?? []).map((p) => [p.id, p.name]))} /></Panel>
       )}

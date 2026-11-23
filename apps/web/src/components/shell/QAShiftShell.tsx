@@ -201,7 +201,7 @@ export function QAShiftShell({ org, plan, email, credits, mode = "full", childre
             <span className="truncate text-[13px] text-neutral-500">{projectId ? <><Link href="/dashboard/projects" className="hover:text-neutral-900">Projects</Link><span className="mx-1.5 text-neutral-300">/</span></> : null}<span className="font-medium text-neutral-900 dark:text-white">{title}</span></span>
           </div>
           <div className="flex items-center gap-2">
-            <Link href="/docs" className="hidden h-8 items-center rounded-md px-2.5 text-[13px] text-neutral-600 hover:bg-neutral-900/[0.04] sm:inline-flex">Docs</Link>
+            <Link href="/docs" className="hidden h-8 items-center rounded-md px-2.5 text-[13px] text-neutral-600 hover:bg-neutral-900/[0.04] hover:text-neutral-950 sm:inline-flex dark:text-neutral-300 dark:hover:bg-white/5 dark:hover:text-white">Docs</Link>
             <Link href="/dashboard/projects" className="inline-flex h-8 items-center gap-1.5 rounded-md bg-neutral-950 px-3 text-[13px] font-medium text-white hover:bg-neutral-800 dark:bg-white dark:text-neutral-950">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>New project
             </Link>
