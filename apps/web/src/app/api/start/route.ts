@@ -5,6 +5,7 @@ import { llmConfig } from "@/lib/llm/provider";
 import { getUser, getPrimaryOrg, ensureOrgForCurrentUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { entitlementsFor } from "@/lib/entitlements";
+import { reserveCredits, CREDITS } from "@/lib/credits";
 import type { Json } from "@/lib/supabase/database.types";
 
 export const runtime = "nodejs";
@@ -67,10 +68,14 @@ export async function POST(req: NextRequest) {
     proj = ins.data;
   }
 
+  const hold = await reserveCredits({ orgId: org.org.id, plan, cost: CREDITS.uiTest, agent: "ui", projectId: proj.id, ref: "ui-test:start" });
+  if (!hold.ok) return hold.response;
+
   let gen;
   try {
     gen = await generateTest({ input, isUrl, baseUrl: isUrl ? input.trim() : undefined });
   } catch (err) {
+    await hold.refund();
     return NextResponse.json({ error: err instanceof Error ? err.message : "generation failed" }, { status: 500 });
   }
 
@@ -95,7 +100,7 @@ export async function POST(req: NextRequest) {
     })
     .select("id")
     .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { await hold.refund(); return NextResponse.json({ error: error.message }, { status: 500 }); }
 
   return NextResponse.json({ ok: true, projectId: proj.id, testId: test.id });
 }

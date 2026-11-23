@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { generateK6Script } from "@/lib/llm/generate";
 import { llmConfig } from "@/lib/llm/provider";
 import { entitlementsFor } from "@/lib/entitlements";
+import { reserveCredits, CREDITS } from "@/lib/credits";
 import { PERF_PROFILE_NAMES } from "@qashift/verity-core";
 import type { Json } from "@/lib/supabase/database.types";
 
@@ -60,6 +61,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
     if (!spec) return NextResponse.json({ error: "Couldn't fetch that spec URL. Paste the spec text instead." }, { status: 400 });
   }
 
+  const hold = await reserveCredits({ orgId: project.org_id, plan, cost: CREDITS.perfScript, agent: "performance", projectId: project.id, ref: "perf-script" });
+  if (!hold.ok) return hold.response;
+
   const saved: { name: string; spec_path: string }[] = [];
   try {
     const gen = await generateK6Script({
@@ -75,9 +79,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
       source_url: parsed.data.baseUrl, spec_path: K6_PATH, spec_content: gen.specContent,
       plan: gen.plan as unknown as Json, source_files: [], generated_model: gen.model, critical_path: false, status: "active",
     });
-    if (error) { const status = error.code === "42501" ? 403 : 500; return NextResponse.json({ error: error.message }, { status }); }
+    if (error) { await hold.refund(); const status = error.code === "42501" ? 403 : 500; return NextResponse.json({ error: error.message }, { status }); }
     saved.push({ name, spec_path: K6_PATH });
   } catch (err) {
+    await hold.refund();
     return NextResponse.json({ error: err instanceof Error ? err.message : "generation failed" }, { status: 500 });
   }
   return NextResponse.json({ ok: true, saved, profiles: PERF_PROFILE_NAMES });

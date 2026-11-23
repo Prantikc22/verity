@@ -1,6 +1,6 @@
 import { planFor, type PlanLimits, type PlanTier } from "@/lib/plans";
 import {
-  AUTONOMOUS, REPORTS, MANAGED, AGENTS,
+  AUTONOMOUS, REPORTS, MANAGED, AGENTS, CREDIT_COSTS,
   isAutonomousKey, isReportsKey, isManagedKey,
   type AgentKey, type GateLimits,
 } from "@/lib/catalog";
@@ -88,9 +88,13 @@ export function entitlementsFor(org: OrgPlanRow | null | undefined): Entitlement
     labels.push(r.name);
   }
 
-  // Legacy orgs had no credit pool; give them the closest new-plan equivalent
-  // so the usage meter has something honest to show.
-  if (credits === 0) credits = legacyCreditEquivalent(legacy.tier);
+  // Legacy orgs had no credit pool. Paying legacy customers keep at least the
+  // AI generation volume they already had (each UI generation = 2 credits), so
+  // credit metering never takes anything away from them.
+  if (legacy.tier !== "free") {
+    credits = Math.max(credits, legacyCreditEquivalent(legacy.tier), legacy.testGensPerMonth * CREDIT_COSTS.uiJourneyGeneration);
+  }
+  if (credits === 0) credits = AUTONOMOUS.free.creditsPerMonth;
 
   return {
     ...gates,

@@ -1,7 +1,7 @@
 {
   "name": "@qashifthq/verity",
-  "version": "0.3.0",
-  "description": "Verity CLI — run your Playwright suite (fast/full tier), detect flakes via reruns, and report to Verity.",
+  "version": "0.3.1",
+  "description": "QAShift CLI: run your Playwright suite, separate flaky from broken tests with reruns, and upload Playwright or JUnit XML results to QAShift Reports.",
   "license": "MIT",
   "type": "module",
   "bin": {

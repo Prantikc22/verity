@@ -1067,6 +1067,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      consume_credits: {
+        Args: { p_org: string; p_amount: number; p_limit: number; p_agent?: string | null; p_project?: string | null; p_ref?: string | null }
+        Returns: { ok: boolean; used: number; ledger_id: number | null }[]
+      }
+      credits_used_this_month: { Args: { p_org: string }; Returns: number }
       ensure_personal_org: { Args: { p_name: string }; Returns: string }
       is_org_admin: { Args: { target_org: string }; Returns: boolean }
       is_org_member: { Args: { target_org: string }; Returns: boolean }

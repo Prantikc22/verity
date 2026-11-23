@@ -13,7 +13,7 @@
  *   --token $VERITY_INGEST_TOKEN   (or set VERITY_INGEST_TOKEN)
  *   --base  origin/main            (fast tier diff base, for `run`)
  * Env:
- *   VERITY_API_URL      defaults to https://verity.qashifthq.com
+ *   QASHIFT_API_URL     defaults to https://verity.qashifthq.com (VERITY_API_URL also accepted)
  *   VERITY_INGEST_TOKEN alternative to --token
  *   VERITY_RERUNS       default 3 (for `run`)
  */
@@ -30,11 +30,11 @@ function arg(name, fallback) {
 function flag(name) { return process.argv.includes(`--${name}`); }
 
 const cmd = process.argv[2];
-const token = arg("token", process.env.VERITY_INGEST_TOKEN);
-const apiUrl = (process.env.VERITY_API_URL ?? "https://verity.qashifthq.com").replace(/\/$/, "");
+const token = arg("token", process.env.QASHIFT_TOKEN ?? process.env.VERITY_INGEST_TOKEN);
+const apiUrl = (process.env.QASHIFT_API_URL ?? process.env.VERITY_API_URL ?? "https://verity.qashifthq.com").replace(/\/$/, "");
 
 function git(args) {
-  try { return execSync(`git ${args}`, { encoding: "utf8" }).trim(); } catch { return ""; }
+  try { return execSync(`git ${args}`, { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim(); } catch { return ""; }
 }
 const env = process.env;
 // CI checkouts are often detached, so prefer the CI's own commit/branch variables.

@@ -6,6 +6,7 @@ import { llmConfig } from "@/lib/llm/provider";
 import { projectFromToken } from "@/lib/mcp-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { entitlementsFor } from "@/lib/entitlements";
+import { affordable, CREDITS } from "@/lib/credits";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -52,7 +53,8 @@ export async function POST(req: NextRequest) {
     admin.from("tests").select("id", { count: "exact", head: true }).eq("org_id", project.org_id).gte("created_at", monthStart.toISOString()),
     admin.from("tests").select("id", { count: "exact", head: true }).eq("project_id", project.id).neq("status", "archived"),
   ]);
-  const headroom = Math.max(0, Math.min(plan.testGensPerMonth - (gensThisMonth ?? 0), plan.maxTests - (testsInProject ?? 0)));
+  const creditsFor = await affordable(project.org_id, plan, CREDITS.uiTest);
+  const headroom = Math.max(0, Math.min(plan.testGensPerMonth - (gensThisMonth ?? 0), plan.maxTests - (testsInProject ?? 0), creditsFor));
   const max = Math.min(Math.max(headroom, 1), PROPOSAL_CEILING);
 
   // Prefer page context the MCP extracted from the user's machine (localhost is

@@ -6,6 +6,7 @@ import { proposeAgentEvals, generateAgentEval, generateAgentEvalSuite } from "@/
 import { AGENT_SUITE_PATH, AGENT_REDTEAM_PACK } from "@qashift/verity-core";
 import { llmConfig } from "@/lib/llm/provider";
 import { entitlementsFor } from "@/lib/entitlements";
+import { reserveCredits, CREDITS } from "@/lib/credits";
 import type { Json } from "@/lib/supabase/database.types";
 
 export const runtime = "nodejs";
@@ -64,6 +65,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
   const toGenerate = Math.min(max, headroom);
 
   if (mode === "suite") {
+    // One maintained eval file = one credit.
+    const hold = await reserveCredits({ orgId: project.org_id, plan, cost: CREDITS.aiEval, agent: null, projectId: project.id, ref: "ai-eval:suite" });
+    if (!hold.ok) return hold.response;
     try {
       // The suite is ONE maintained file (one generation), upserted by path.
       const gen = await generateAgentEvalSuite({
@@ -78,9 +82,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
         source_url: endpoint ?? null, spec_path: AGENT_SUITE_PATH, spec_content: gen.specContent,
         plan: gen.plan as unknown as Json, source_files: [], generated_model: gen.model, critical_path: false, status: "draft",
       });
-      if (error) { const status = error.code === "42501" ? 403 : 500; return NextResponse.json({ error: error.message }, { status }); }
+      if (error) { await hold.refund(); const status = error.code === "42501" ? 403 : 500; return NextResponse.json({ error: error.message }, { status }); }
       return NextResponse.json({ ok: true, saved: [{ name, spec_path: AGENT_SUITE_PATH }], cases: gen.caseCount + AGENT_REDTEAM_PACK.length });
     } catch (err) {
+      await hold.refund();
       return NextResponse.json({ error: err instanceof Error ? err.message : "generation failed" }, { status: 500 });
     }
   }
@@ -90,9 +95,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
     if (candidates.length === 0) return NextResponse.json({ error: "Couldn't propose evals from that description — add more detail about what the AI feature does." }, { status: 422 });
 
     const saved: { name: string; spec_path: string }[] = [];
+    let stoppedForCredits: string | null = null;
     for (const c of candidates.slice(0, toGenerate)) {
       const description = `${c.title}\nIntent: ${c.intent}\nSteps:\n- ${c.plan.join("\n- ")}`;
-      const gen = await generateAgentEval({ description, endpoint, auth });
+      // One credit per eval file, reserved just before it is written.
+      const hold = await reserveCredits({ orgId: project.org_id, plan, cost: CREDITS.aiEval, agent: null, projectId: project.id, ref: "ai-eval" });
+      if (!hold.ok) {
+        if (saved.length === 0) return hold.response;
+        stoppedForCredits = "Stopped early: you're out of credits for this month.";
+        break;
+      }
+      let gen;
+      try { gen = await generateAgentEval({ description, endpoint, auth }); } catch (e) { await hold.refund(); throw e; }
       const specPath = specPathFor(c.title);
       const { error } = await supabase.from("tests").insert({
         project_id: project.id, org_id: project.org_id, kind: "agent",
@@ -100,10 +114,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
         source_url: endpoint ?? null, spec_path: specPath, spec_content: gen.specContent,
         plan: gen.plan as unknown as Json, source_files: [], generated_model: gen.model, critical_path: false, status: "draft",
       });
-      if (error) { const status = error.code === "42501" ? 403 : 500; return NextResponse.json({ error: error.message }, { status }); }
+      if (error) { await hold.refund(); const status = error.code === "42501" ? 403 : 500; return NextResponse.json({ error: error.message }, { status }); }
       saved.push({ name: c.title, spec_path: specPath });
     }
-    return NextResponse.json({ ok: true, saved });
+    return NextResponse.json({ ok: true, saved, ...(stoppedForCredits ? { note: stoppedForCredits } : {}) });
   } catch (err) {
     return NextResponse.json({ error: err instanceof Error ? err.message : "generation failed" }, { status: 500 });
   }

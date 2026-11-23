@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { proposeTests } from "@/lib/llm/generate";
 import { llmConfig } from "@/lib/llm/provider";
 import { entitlementsFor } from "@/lib/entitlements";
+import { affordable, outOfCreditsMessage, creditsUsed, CREDITS } from "@/lib/credits";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -50,7 +51,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
   ]);
   const gensLeft = Math.max(0, plan.testGensPerMonth - (gensThisMonth ?? 0));
   const slotsLeft = Math.max(0, plan.maxTests - (testsInProject ?? 0));
-  const headroom = Math.min(gensLeft, slotsLeft);
+  const creditsFor = await affordable(project.org_id, plan, CREDITS.uiTest);
+  if (creditsFor <= 0) {
+    return NextResponse.json({ error: outOfCreditsMessage(plan, await creditsUsed(project.org_id), CREDITS.uiTest), code: "OUT_OF_CREDITS" }, { status: 402 });
+  }
+  const headroom = Math.min(gensLeft, slotsLeft, creditsFor);
   if (headroom <= 0) {
     return NextResponse.json(
       { error: gensLeft <= 0
@@ -69,7 +74,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
       ok: true,
       candidates,
       used_live_context: usedLiveContext,
-      headroom: { max, gensLeft, slotsLeft, plan: plan.name },
+      headroom: { max, gensLeft, slotsLeft, creditsFor, creditsEach: CREDITS.uiTest, plan: plan.name },
     });
   } catch (err) {
     return NextResponse.json({ error: err instanceof Error ? err.message : "proposal failed" }, { status: 500 });

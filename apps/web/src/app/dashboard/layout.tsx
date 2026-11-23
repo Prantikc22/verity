@@ -6,6 +6,7 @@ import { FUNNEL_EVENTS } from "@/lib/analytics/events";
 import { DashboardShell } from "@/components/DashboardShell";
 import { QAShiftShell } from "@/components/shell/QAShiftShell";
 import { qashiftShellEnabled } from "@/lib/flags";
+import { creditsUsed, UNLIMITED_CREDITS } from "@/lib/credits";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const user = await getUser();
@@ -21,8 +22,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const plan = entitlementsFor(orgCtx?.org);
 
   if (await qashiftShellEnabled()) {
+    // Credits left this month for the sidebar meter. Never block the page on it.
+    let used: number | undefined;
+    if (orgCtx?.org.id) { try { used = await creditsUsed(orgCtx.org.id); } catch { used = undefined; } }
+    const credits = { limit: plan.creditsPerMonth, used, unlimited: plan.creditsPerMonth >= UNLIMITED_CREDITS };
     return (
-      <QAShiftShell org={orgCtx?.org.name ?? "Your org"} plan={plan.label} email={user.email ?? ""} credits={plan.creditsPerMonth}>
+      <QAShiftShell org={orgCtx?.org.name ?? "Your org"} plan={plan.label} email={user.email ?? ""} credits={credits}>
         {children}
       </QAShiftShell>
     );

@@ -6,6 +6,7 @@ import { generateTest } from "@/lib/llm/generate";
 import { extractPageContext } from "@/lib/llm/page-context";
 import { llmConfig } from "@/lib/llm/provider";
 import { entitlementsFor } from "@/lib/entitlements";
+import { reserveCredits, CREDITS } from "@/lib/credits";
 import { projectFromToken } from "@/lib/mcp-auth";
 import type { Json } from "@/lib/supabase/database.types";
 
@@ -63,10 +64,14 @@ export async function POST(req: NextRequest) {
   // can't reach their localhost).
   const pageContext = parsed.data.pageHtml && url ? extractPageContext(parsed.data.pageHtml, url)?.summary : undefined;
 
+  const hold = await reserveCredits({ orgId: project.org_id, plan, cost: CREDITS.uiTest, agent: "ui", projectId: project.id, ref: "ui-test:mcp" });
+  if (!hold.ok) return hold.response;
+
   let gen;
   try {
     gen = await generateTest({ input: genInput, isUrl, baseUrl: url, prd, needsAuth, pageContext });
   } catch (err) {
+    await hold.refund();
     return NextResponse.json({ error: err instanceof Error ? err.message : "generation failed" }, { status: 500 });
   }
 
@@ -90,7 +95,7 @@ export async function POST(req: NextRequest) {
     })
     .select("id")
     .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { await hold.refund(); return NextResponse.json({ error: error.message }, { status: 500 }); }
 
   return NextResponse.json({
     ok: true,

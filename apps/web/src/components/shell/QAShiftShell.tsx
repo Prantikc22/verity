@@ -51,7 +51,7 @@ function Mark() {
   );
 }
 
-export function QAShiftShell({ org, plan, email, credits, children }: { org: string; plan: string; email: string; credits?: number; children: React.ReactNode }) {
+export function QAShiftShell({ org, plan, email, credits, children }: { org: string; plan: string; email: string; credits?: { limit: number; used?: number; unlimited: boolean }; children: React.ReactNode }) {
   const pathname = usePathname();
   const projectId = pathname.match(/^\/dashboard\/projects\/([^/]+)/)?.[1] ?? null;
   const [open, setOpen] = useState(false);
@@ -126,7 +126,21 @@ export function QAShiftShell({ org, plan, email, credits, children }: { org: str
       <div className="border-t border-neutral-200 p-3 dark:border-neutral-800">
         <Link href="/dashboard/usage" className="block rounded-md px-2.5 py-2 hover:bg-neutral-900/[0.04] dark:hover:bg-white/5">
           <div className="flex items-center justify-between text-[12px]"><span className="font-medium text-neutral-900 dark:text-neutral-100">{plan}</span><span className="text-neutral-400">Plan</span></div>
-          {credits !== undefined && <div className="mt-1 text-[11.5px] text-neutral-500">{credits.toLocaleString()} agent credits / month</div>}
+          {credits && (credits.unlimited ? (
+            <div className="mt-1 text-[11.5px] text-neutral-500">Unlimited agent credits</div>
+          ) : credits.used === undefined ? (
+            <div className="mt-1 text-[11.5px] text-neutral-500">{credits.limit.toLocaleString()} agent credits / month</div>
+          ) : (
+            <>
+              <div className="mt-1 flex items-baseline justify-between text-[11.5px] text-neutral-500">
+                <span><b className="tnum font-medium text-neutral-800 dark:text-neutral-200">{Math.max(0, credits.limit - credits.used).toLocaleString()}</b> credits left</span>
+                <span className="tnum">of {credits.limit.toLocaleString()}</span>
+              </div>
+              <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800">
+                <div className={`h-full rounded-full ${credits.used / Math.max(1, credits.limit) >= 0.9 ? "bg-red-500" : credits.used / Math.max(1, credits.limit) >= 0.7 ? "bg-amber-500" : "bg-indigo-500"}`} style={{ width: `${Math.min(100, Math.round((credits.used / Math.max(1, credits.limit)) * 100))}%` }} />
+              </div>
+            </>
+          ))}
         </Link>
         <div className="mt-1 flex items-center justify-between gap-2 px-2.5 pt-1">
           <span className="truncate text-[12px] text-neutral-500" title={email}>{email}</span>

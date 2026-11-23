@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { healSelector } from "@/lib/llm/generate";
 import { llmConfig } from "@/lib/llm/provider";
 import { entitlementsFor } from "@/lib/entitlements";
+import { reserveCredits, CREDITS } from "@/lib/credits";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -48,7 +49,8 @@ export async function POST(req: NextRequest) {
   // free-tier CI can't burn our token budget. Generated tests self-heal from
   // Pro up (see lib/plans.ts).
   const { data: org } = await admin.from("orgs").select("*").eq("id", project.org_id).maybeSingle();
-  if (!entitlementsFor(org).selfHealing) {
+  const plan = entitlementsFor(org);
+  if (!plan.selfHealing) {
     return NextResponse.json(
       { error: "Self-healing is a paid feature — it's included from Pro. Upgrade to enable locator healing in CI.", healed: false, upgrade: true },
       { status: 402 },
@@ -61,16 +63,21 @@ export async function POST(req: NextRequest) {
   }
   const { oldSelector, domContext, intent, testId, runId } = parsed.data;
 
+  const hold = await reserveCredits({ orgId: project.org_id, plan, cost: CREDITS.investigate, agent: "investigator", projectId: project.id, ref: "heal" });
+  if (!hold.ok) return hold.response;
+
   let suggestion;
   try {
     suggestion = await healSelector({ oldSelector, domContext, intent });
   } catch (err) {
+    await hold.refund();
     const message = err instanceof Error ? err.message : "heal failed";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 
   // Low confidence or empty → no credible fix; record nothing, tell the runner.
   if (!suggestion.selector || suggestion.confidence < 0.3) {
+    await hold.refund(); // no usable fix, no charge
     return NextResponse.json({
       ok: true,
       healed: false,

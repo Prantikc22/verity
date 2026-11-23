@@ -32,7 +32,7 @@ export function GenerateWizard({ projectId }: { projectId: string }) {
   // results
   const [error, setError] = useState("");
   const [live, setLive] = useState(false);
-  const [headroom, setHeadroom] = useState<{ max: number; plan: string } | null>(null);
+  const [headroom, setHeadroom] = useState<{ max: number; plan: string; creditsEach?: number; creditsFor?: number } | null>(null);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [rows, setRows] = useState<GenRow[]>([]);
@@ -66,7 +66,7 @@ export function GenerateWizard({ projectId }: { projectId: string }) {
       const cands: Candidate[] = data.candidates ?? [];
       setCandidates(cands);
       setLive(!!data.used_live_context);
-      setHeadroom(data.headroom ? { max: data.headroom.max, plan: data.headroom.plan } : null);
+      setHeadroom(data.headroom ? { max: data.headroom.max, plan: data.headroom.plan, creditsEach: data.headroom.creditsEach, creditsFor: data.headroom.creditsFor } : null);
       setSelected(new Set(cands.map((_, i) => i))); // all selected — "all possible tests"
       setPhase("review");
     } catch (err) {
@@ -314,7 +314,7 @@ function Exploring({ url, step }: { url: string; step: number }) {
 /* ---------- review + generate + done ---------- */
 function Review(props: {
   phase: Phase; candidates: Candidate[]; selected: Set<number>; toggle: (i: number) => void;
-  live: boolean; headroom: { max: number; plan: string } | null;
+  live: boolean; headroom: { max: number; plan: string; creditsEach?: number; creditsFor?: number } | null;
   setName: string; setSetName: (s: string) => void; rows: GenRow[]; added: number; error: string;
   projectId: string; onSave: () => void; onReset: () => void;
 }) {
@@ -356,6 +356,11 @@ function Review(props: {
             <button onClick={onSave} disabled={selected.size === 0} className="bg-emerald-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
               Save {selected.size} to test plan →
             </button>
+            {headroom?.creditsEach ? (
+              <span className="text-[11.5px] text-neutral-500" title="Credits are only used when a test is written. Runs in your own CI are free.">
+                Uses {selected.size * headroom.creditsEach} credit{selected.size * headroom.creditsEach === 1 ? "" : "s"}
+              </span>
+            ) : null}
           </div>
         )}
       </div>

@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { generateVisualTest } from "@/lib/llm/generate";
 import { llmConfig } from "@/lib/llm/provider";
 import { entitlementsFor } from "@/lib/entitlements";
+import { reserveCredits, CREDITS } from "@/lib/credits";
 import type { Json } from "@/lib/supabase/database.types";
 
 export const runtime = "nodejs";
@@ -48,10 +49,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
   const { input, baseUrl, needsAuth } = parsed.data;
   const isUrl = /^https?:\/\//i.test(input.trim());
 
+  const hold = await reserveCredits({ orgId: project.org_id, plan, cost: CREDITS.visualTest, agent: "visual", projectId: project.id, ref: "visual-test" });
+  if (!hold.ok) return hold.response;
+
   let gen;
   try {
     gen = await generateVisualTest({ input, isUrl, baseUrl: baseUrl ?? (isUrl ? input.trim() : undefined), needsAuth });
   } catch (err) {
+    await hold.refund();
     return NextResponse.json({ error: err instanceof Error ? err.message : "generation failed" }, { status: 500 });
   }
 
@@ -66,7 +71,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
     source_url: isUrl ? input.trim() : baseUrl ?? null, spec_path: specPath, spec_content: gen.specContent,
     plan: gen.plan as unknown as Json, source_files: [], generated_model: gen.model, critical_path: false, status: "draft",
   }).select("id").single();
-  if (error) { const status = error.code === "42501" ? 403 : 500; return NextResponse.json({ error: error.message }, { status }); }
+  if (error) { await hold.refund(); const status = error.code === "42501" ? 403 : 500; return NextResponse.json({ error: error.message }, { status }); }
 
   return NextResponse.json({ ok: true, testId: test.id, name, spec_path: specPath, assertionCount: gen.assertionCount });
 }

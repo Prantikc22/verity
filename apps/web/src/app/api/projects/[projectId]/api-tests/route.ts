@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { generateApiTest } from "@/lib/llm/generate";
 import { llmConfig } from "@/lib/llm/provider";
 import { entitlementsFor } from "@/lib/entitlements";
+import { reserveCredits, CREDITS } from "@/lib/credits";
 import type { Json } from "@/lib/supabase/database.types";
 
 export const runtime = "nodejs";
@@ -53,10 +54,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
   const { description, baseUrl, spec, auth, criticalPath } = parsed.data;
   const name = (parsed.data.name ?? description.slice(0, 60)).slice(0, 60);
 
+  const hold = await reserveCredits({ orgId: project.org_id, plan, cost: CREDITS.apiTest, agent: "api", projectId: project.id, ref: "api-test" });
+  if (!hold.ok) return hold.response;
+
   let gen;
   try {
     gen = await generateApiTest({ description, baseUrl, spec, auth });
   } catch (err) {
+    await hold.refund();
     return NextResponse.json({ error: err instanceof Error ? err.message : "generation failed" }, { status: 500 });
   }
 
@@ -82,6 +87,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
     .single();
 
   if (error) {
+    await hold.refund();
     const status = error.code === "42501" ? 403 : 500;
     return NextResponse.json({ error: error.message }, { status });
   }

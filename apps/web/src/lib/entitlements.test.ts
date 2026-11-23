@@ -60,3 +60,14 @@ test("unknown plan keys are ignored, not trusted", () => {
   assert.equal(e.maxProjects, planFor("free").maxProjects);
   assert.deepEqual(e.sources, ["legacy:free"]);
 });
+
+test("paying legacy customers keep their AI generation volume as credits", () => {
+  // Legacy Pro: 200 generations/month → at least 400 credits (2 per UI test).
+  const e = entitlementsFor({ plan: "pro" });
+  assert.ok(e.creditsPerMonth >= planFor("pro").testGensPerMonth * 2);
+  // A free org gets exactly the published free pool.
+  assert.equal(entitlementsFor({ plan: "free" }).creditsPerMonth, AUTONOMOUS.free.creditsPerMonth);
+  // A legacy paid plan is never reduced by a smaller new plan.
+  const both = entitlementsFor({ plan: "team", autonomous_plan: "builder" });
+  assert.ok(both.creditsPerMonth >= planFor("team").testGensPerMonth * 2);
+});

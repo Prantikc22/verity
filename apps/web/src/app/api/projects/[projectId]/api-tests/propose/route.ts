@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { proposeApiTests } from "@/lib/llm/generate";
 import { llmConfig } from "@/lib/llm/provider";
 import { entitlementsFor } from "@/lib/entitlements";
+import { affordable, outOfCreditsMessage, creditsUsed, CREDITS } from "@/lib/credits";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -57,7 +58,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
     supabase.from("tests").select("id", { count: "exact", head: true }).eq("org_id", project.org_id).gte("created_at", monthStart.toISOString()),
     supabase.from("tests").select("id", { count: "exact", head: true }).eq("project_id", projectId).eq("kind", "api").neq("status", "archived"),
   ]);
-  const headroom = Math.max(0, Math.min(plan.testGensPerMonth - (gensThisMonth ?? 0), plan.maxTests - (apiTests ?? 0)));
+  const creditsFor = await affordable(project.org_id, plan, CREDITS.apiTest);
+  if (creditsFor <= 0) {
+    return NextResponse.json({ error: outOfCreditsMessage(plan, await creditsUsed(project.org_id), CREDITS.apiTest), code: "OUT_OF_CREDITS" }, { status: 402 });
+  }
+  const headroom = Math.max(0, Math.min(plan.testGensPerMonth - (gensThisMonth ?? 0), plan.maxTests - (apiTests ?? 0), creditsFor));
   if (headroom <= 0) return NextResponse.json({ error: `You've hit your ${plan.name} plan limit this month. Upgrade for more.` }, { status: 402 });
   const max = Math.min(headroom, PROPOSAL_CEILING);
 

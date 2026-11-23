@@ -110,11 +110,16 @@ export const MANAGED: Record<ManagedPlanKey, ManagedPlan> = {
   enterprise: { key: "enterprise", name: "Enterprise", priceUsd: null, engineerHours: null, namedLead: true, includes: "scale" },
 };
 
-/** Draft credit debits per action. Shown as an estimate before a run. */
+/**
+ * Credit debits per action, charged by lib/credits.ts. Must match the table on
+ * the marketing /pricing page (qashift/lib/catalog.ts CREDIT_COSTS).
+ */
 export const CREDIT_COSTS = {
   ciRun: 0,
   uiJourneyGeneration: 2,
   apiEndpointGroupGeneration: 1,
+  performanceScriptGeneration: 1,
+  aiFeatureEvalGeneration: 1,
   failureInvestigation: 1,
   accessibilityScanPer10Pages: 1,
   visualBaselinePer20Screens: 1,

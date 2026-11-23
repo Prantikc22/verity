@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { generateTest } from "@/lib/llm/generate";
 import { llmConfig } from "@/lib/llm/provider";
 import { entitlementsFor } from "@/lib/entitlements";
+import { reserveCredits, CREDITS } from "@/lib/credits";
 import type { Json } from "@/lib/supabase/database.types";
 
 export const runtime = "nodejs";
@@ -98,10 +99,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
     ? { username: parsed.data.username, password: parsed.data.password }
     : undefined;
 
+  const hold = await reserveCredits({ orgId: project.org_id, plan, cost: CREDITS.uiTest, agent: "ui", projectId: project.id, ref: "ui-test" });
+  if (!hold.ok) return hold.response;
+
   let gen;
   try {
     gen = await generateTest({ input: genInput, isUrl, baseUrl: url, prd, needsAuth, credentials });
   } catch (err) {
+    await hold.refund();
     const message = err instanceof Error ? err.message : "generation failed";
     return NextResponse.json({ error: message }, { status: 500 });
   }
@@ -130,6 +135,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
     .single();
 
   if (error) {
+    await hold.refund();
     // 42501 = RLS violation (not an admin/owner of this org).
     const status = error.code === "42501" ? 403 : 500;
     return NextResponse.json({ error: error.message }, { status });

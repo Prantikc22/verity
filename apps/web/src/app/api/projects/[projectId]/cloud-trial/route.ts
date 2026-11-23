@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { recordRun } from "@/lib/ingest";
 import { entitlementsFor } from "@/lib/entitlements";
+import { reserveCredits, CREDITS } from "@/lib/credits";
 import { isPublicHttpUrl, runPerfTrial, runSecurityTrial } from "@/lib/cloud-trial";
 
 export const runtime = "nodejs";
@@ -46,6 +47,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
     );
   }
 
+  const perfRun = parsed.data.discipline === "performance";
+  const hold = await reserveCredits({
+    orgId: project.org_id, plan, projectId: project.id,
+    cost: perfRun ? CREDITS.perfCloud : CREDITS.securityCloud,
+    agent: perfRun ? "performance" : "security", ref: perfRun ? "cloud:perf-smoke" : "cloud:security-baseline",
+  });
+  if (!hold.ok) return hold.response;
+
   try {
     const sha = `cloud-trial-${Date.now()}`;
     if (parsed.data.discipline === "performance") {
@@ -58,6 +67,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
       return NextResponse.json({ ok: true, run_id: result.runId, discipline: "security", findings: result.findings });
     }
   } catch (err) {
+    await hold.refund();
     return NextResponse.json({ error: err instanceof Error ? err.message : "Trial failed." }, { status: 500 });
   }
 }
