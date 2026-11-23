@@ -35,14 +35,14 @@ export default async function AgentPage({ params }: { params: Promise<{ projectI
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <h2 className="text-lg font-semibold tracking-tight">Agent (AI) testing</h2>
-          <p className="text-xs text-neutral-500">Evals for your <strong>own</strong> AI features — chatbots, RAG assistants, and tool-using agents. Verity sends adversarial and grounding inputs to your endpoint and asserts a <em>property</em> of the reply, not an exact string.</p>
+          <p className="text-xs text-neutral-500">Evals for your <strong>own</strong> AI features — chatbots, RAG assistants, and tool-using agents. QAShift sends adversarial and grounding inputs to your endpoint and asserts a <em>property</em> of the reply, not an exact string.</p>
         </div>
         <span className="shrink-0 border border-amber-400 px-2 py-1 text-[11px] font-semibold text-amber-600 dark:text-amber-400">Early access</span>
       </div>
 
       <section className="border border-neutral-200 p-5 dark:border-neutral-800">
         <p className="text-sm text-neutral-600 dark:text-neutral-300">
-          Point Verity at the HTTP endpoint behind your AI feature. It generates a scored eval suite (or Playwright API evals) that runs in your CI on every deploy — so a prompt change, a model swap, or a new retrieval source can&apos;t quietly break grounding, safety, or tool-calling. Because output varies, every assertion checks a robust property (a substring, a refusal, valid JSON, an absent secret) rather than a fixed answer.
+          Point QAShift at the HTTP endpoint behind your AI feature. It generates a scored eval suite (or Playwright API evals) that runs in your CI on every deploy — so a prompt change, a model swap, or a new retrieval source can&apos;t quietly break grounding, safety, or tool-calling. Because output varies, every assertion checks a robust property (a substring, a refusal, valid JSON, an absent secret) rather than a fixed answer.
         </p>
         <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {CATEGORIES.map((c) => (

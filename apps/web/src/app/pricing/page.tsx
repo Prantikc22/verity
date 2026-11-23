@@ -7,26 +7,26 @@ import { isIndia } from "@/lib/geo";
 import styles from "./PricingPage.module.css";
 
 const DESCRIPTION =
-  "Verity pricing: free forever for one project, Pro at $49/mo, Team at $149/mo. Every plan writes UI, API, visual, AI-agent, load and security tests, with unlimited runs in your own CI.";
+  "QAShift pricing: free forever for one project, Pro at $49/mo, Team at $149/mo. Every plan writes UI, API, visual, AI-agent, load and security tests, with unlimited runs in your own CI.";
 
 export const metadata: Metadata = {
   title: "Pricing — AI test generation from $0, unlimited CI runs",
   alternates: { canonical: "/pricing" },
   description: DESCRIPTION,
-  openGraph: { title: "Verity pricing — free plan, unlimited CI runs", description: DESCRIPTION, url: "/pricing" },
+  openGraph: { title: "QAShift pricing — free plan, unlimited CI runs", description: DESCRIPTION, url: "/pricing" },
 };
 
 const faqFor = (yearly: boolean) => [
-  { q: "What counts toward my monthly allowance?", a: "Only AI-written tests: each test Verity generates for you — UI, API, visual, AI-agent eval or load test — counts once. Running tests never counts, so your suite can run on every commit." },
-  { q: "Are CI runs really unlimited?", a: "Yes, on every plan including Free. Your CI provides the compute, so Verity never meters executions there. Cloud runs (our browsers, no CI needed) are capped per plan." },
+  { q: "What counts toward my monthly allowance?", a: "Only AI-written tests: each test QAShift generates for you — UI, API, visual, AI-agent eval or load test — counts once. Running tests never counts, so your suite can run on every commit." },
+  { q: "Are CI runs really unlimited?", a: "Yes, on every plan including Free. Your CI provides the compute, so QAShift never meters executions there. Cloud runs (our browsers, no CI needed) are capped per plan." },
   { q: "Which test types are on the Free plan?", a: "All of them: UI, API, visual, AI-agent, load and security. Paid plans add volume, self-healing, pull-request checks and more projects." },
-  { q: "How is this different from credit-based testing tools?", a: "Credit-based tools usually charge every time a test runs on their servers. Verity charges for writing tests and lets you run them free, forever, in your own pipeline — as plain Playwright code you own." },
+  { q: "How is this different from credit-based testing tools?", a: "Credit-based tools usually charge every time a test runs on their servers. QAShift charges for writing tests and lets you run them free, forever, in your own pipeline — as plain Playwright code you own." },
   { q: "Do we own the tests?", a: "Yes. Tests are readable Playwright (plus a load-test script and an eval YAML file) committed to your repository. If you cancel, they keep running." },
   { q: "Can I change or cancel my plan?", a: yearly
     ? "Yes. Pay monthly, or yearly to save 20%; there is no contract beyond the period you've paid for. Email hello@qashifthq.com to change or cancel. Your tests stay in your repo either way."
     : "Yes. Plans are month to month with no contract — email hello@qashifthq.com to change or cancel. Your tests stay in your repo either way." },
   { q: "When should we choose Managed Testing?", a: "When you want the outcome owned rather than another tool to operate. A QAShift engineer takes responsibility for strategy, coverage, maintenance, failure triage and release reporting." },
-  { q: "What about security and private code?", a: "Tests and scans run inside your CI, so code and secrets stay in your infrastructure; only results are sent to Verity." },
+  { q: "What about security and private code?", a: "Tests and scans run inside your CI, so code and secrets stay in your infrastructure; only results are sent to QAShift." },
 ];
 
 const jsonLdFor = (FAQ: { q: string; a: string }[]) => ({
@@ -34,7 +34,7 @@ const jsonLdFor = (FAQ: { q: string; a: string }[]) => ({
   "@graph": [
     {
       "@type": "Product",
-      name: "Verity",
+      name: "QAShift",
       description: DESCRIPTION,
       brand: { "@type": "Brand", name: "QAShift" },
       offers: [
@@ -77,7 +77,7 @@ export default async function PricingPage() {
           <div className={`${styles.shell} ${styles.heroInner}`}>
             <h1>Pay to write tests.<span>Run them free, forever.</span></h1>
             <div className={styles.heroCopy}>
-              <p>Every plan — including Free — writes UI, API, visual, AI-agent, load and security tests. You pay for the tests Verity writes, never for runs in your own CI. Add a QAShift engineer when you want the suite owned for you.</p>
+              <p>Every plan — including Free — writes UI, API, visual, AI-agent, load and security tests. You pay for the tests QAShift writes, never for runs in your own CI. Add a QAShift engineer when you want the suite owned for you.</p>
               <div className={styles.heroActions}>
                 <Link href="/login?next=/dashboard" className={styles.primary}>Start free →</Link>
                 <a href="https://qashifthq.com/managed-testing" className={styles.secondary}>Explore managed testing</a>
@@ -96,7 +96,7 @@ export default async function PricingPage() {
           <div className={styles.shell}>
             <header className={styles.sectionHeading}>
               <h2>Start free.<br /><span>Upgrade when it saves you time.</span></h2>
-              <p>Four self-serve plans, no sales call. Plans differ by how many tests Verity writes for you each month, self-healing, pull-request checks and projects.</p>
+              <p>Four self-serve plans, no sales call. Plans differ by how many tests QAShift writes for you each month, self-healing, pull-request checks and projects.</p>
             </header>
             <VeritySelfServeCards inIndia={inIndia} billing={billing} />
           </div>
@@ -106,7 +106,7 @@ export default async function PricingPage() {
           <div className={`${styles.shell} ${styles.managedGrid}`}>
             <div className={styles.managedCopy}>
               <h2>Software when you want control.<span>An engineer when you want ownership.</span></h2>
-              <p>Managed Testing pairs Verity with a forward-deployed engineer who works inside your release rhythm. They do not hand you reports; they keep the verification system useful.</p>
+              <p>Managed Testing pairs QAShift with a forward-deployed engineer who works inside your release rhythm. They do not hand you reports; they keep the verification system useful.</p>
               <a href="https://qashifthq.com/managed-testing" className={styles.primary}>Explore FDE Managed Testing →</a>
             </div>
             <div className={styles.ownershipList}>
@@ -129,7 +129,7 @@ export default async function PricingPage() {
             <div className={styles.shield} aria-hidden>◇</div>
             <div>
               <h2>Your code and secrets can stay in your CI.</h2>
-              <p>Self-hosted execution keeps sensitive application access within your infrastructure, while Verity returns the verdict and retained evidence your team needs.</p>
+              <p>Self-hosted execution keeps sensitive application access within your infrastructure, while QAShift returns the verdict and retained evidence your team needs.</p>
             </div>
             <a href="https://qashifthq.com/security">Read security architecture →</a>
           </div>

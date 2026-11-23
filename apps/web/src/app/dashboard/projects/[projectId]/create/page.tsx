@@ -8,7 +8,7 @@ type Kind = "ui" | "api" | "visual" | "agent" | "performance";
 
 /**
  * One place to start any kind of test. Each card says what it checks, what
- * Verity needs from you, and links to the existing generator for that type —
+ * QAShift needs from you, and links to the existing generator for that type —
  * so the sidebar no longer needs a menu per discipline.
  */
 const TYPES: {
@@ -74,7 +74,7 @@ export default async function CreateTests({ params }: { params: Promise<{ projec
     <div>
       <h1 className="text-xl font-semibold">Create tests</h1>
       <p className="mt-1 max-w-2xl text-sm text-neutral-500">
-        Pick what you want to check. Verity writes the test, you review it, and it runs in your CI on every pull request.
+        Pick what you want to check. QAShift writes the test, you review it, and it runs in your CI on every pull request.
       </p>
 
       <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">

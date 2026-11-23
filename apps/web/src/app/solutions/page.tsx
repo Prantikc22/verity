@@ -8,7 +8,7 @@ import { SOLUTION_PAGES } from "@/lib/seo-pages";
 export const metadata: Metadata = {
   title: "Solutions — AI testing for UI, API, visual, AI agents, load and security",
   description:
-    "Every kind of test Verity writes and runs in your CI: AI-generated Playwright UI and API tests, visual regression, LLM evals, load testing and security scanning.",
+    "Every kind of test QAShift writes and runs in your CI: AI-generated Playwright UI and API tests, visual regression, LLM evals, load testing and security scanning.",
   alternates: { canonical: "/solutions" },
 };
 
@@ -21,7 +21,7 @@ export default function Solutions() {
           <div className={styles.shell}>
             <span className={styles.eyebrow}>SOLUTIONS</span>
             <h1>Every test your release needs.<span>One place to run them.</span></h1>
-            <p className={styles.intro}>Verity writes and runs six kinds of test from your live app and your API spec, all as code in your repository and all on your own CI runners.</p>
+            <p className={styles.intro}>QAShift writes and runs six kinds of test from your live app and your API spec, all as code in your repository and all on your own CI runners.</p>
           </div>
         </section>
         <section className={styles.section}>
@@ -30,7 +30,7 @@ export default function Solutions() {
               {SOLUTION_PAGES.map((p) => (
                 <Link key={p.slug} href={`/solutions/${p.slug}`}>{p.name}<small>{p.description.split(". ")[0]}.</small></Link>
               ))}
-              <Link href="/compare/testsprite">Verity vs TestSprite<small>Pricing models, test types and where each tool fits.</small></Link>
+              <Link href="/compare/testsprite">QAShift vs TestSprite<small>Pricing models, test types and where each tool fits.</small></Link>
             </div>
           </div>
         </section>

@@ -141,7 +141,7 @@ export function PredictionsShowcase() {
         <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
           <p className="text-sm font-medium text-indigo-400">The intelligence layer</p>
           <h2 className="mt-2 max-w-3xl text-3xl font-semibold tracking-tight sm:text-4xl">
-            Verity doesn&apos;t just run your tests. It tells you what&apos;s about to break.
+            QAShift doesn&apos;t just run your tests. It tells you what&apos;s about to break.
           </h2>
           <p className="mt-3 max-w-2xl text-neutral-400">
             Every run feeds a model of your codebase: which files regress, which tests lie, and how risk compounds.

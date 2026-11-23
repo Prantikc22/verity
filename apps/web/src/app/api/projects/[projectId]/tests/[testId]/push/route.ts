@@ -27,7 +27,7 @@ async function resolveInstallationId(repoOwner: string, explicit: number | null)
 /**
  * Push a generated test into the project's GitHub repo as a branch + PR. This is
  * how a test created in the dashboard becomes a file in your repo so CI runs it
- * (unlimited runs). Verity opens a PR rather than committing to your default
+ * (unlimited runs). QAShift opens a PR rather than committing to your default
  * branch — a human always reviews. Requires the GitHub App to have Contents:write.
  */
 export async function POST(_req: NextRequest, { params }: { params: Promise<{ projectId: string; testId: string }> }) {
@@ -57,7 +57,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ pr
 
   const installationId = await resolveInstallationId(repo.owner, project.github_installation_id);
   if (!installationId) {
-    return NextResponse.json({ error: "Install the Verity GitHub App on this repo first." }, { status: 400 });
+    return NextResponse.json({ error: "Install the QAShift GitHub App on this repo first." }, { status: 400 });
   }
   const octokit = await installationOctokit(installationId);
   if (!octokit) return NextResponse.json({ error: "GitHub App is not configured." }, { status: 503 });
@@ -90,15 +90,15 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ pr
 
     await octokit.request("PUT /repos/{owner}/{repo}/contents/{path}", {
       owner: repo.owner, repo: repo.repo, path: test.spec_path,
-      message: `Add Verity test: ${test.name}`,
+      message: `Add QAShift test: ${test.name}`,
       content: Buffer.from(test.spec_content, "utf8").toString("base64"),
       branch,
       ...(existingSha ? { sha: existingSha } : {}),
     });
 
     const pr = await octokit.request("POST /repos/{owner}/{repo}/pulls", {
-      owner: repo.owner, repo: repo.repo, title: `Verity: ${test.name}`, head: branch, base,
-      body: `This Playwright test was generated in [Verity](https://verity-kappa-ebon.vercel.app) and pushed here so your CI can run it.\n\n\`${test.spec_path}\`\n\nMerge to start running it on every PR (Quick check) and on merge (Full regression).`,
+      owner: repo.owner, repo: repo.repo, title: `QAShift: ${test.name}`, head: branch, base,
+      body: `This Playwright test was generated in [QAShift](https://verity-kappa-ebon.vercel.app) and pushed here so your CI can run it.\n\n\`${test.spec_path}\`\n\nMerge to start running it on every PR (Quick check) and on merge (Full regression).`,
     });
 
     return NextResponse.json({ ok: true, pr_url: (pr.data as { html_url: string }).html_url, branch });
@@ -114,7 +114,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ pr
         {
           error:
             "GitHub returned 403. If you just enabled 'Contents: write', the installation must re-accept it: " +
-            "go to GitHub → Settings → Applications → Verity by QAShift → the repo → and approve the updated permissions. " +
+            "go to GitHub → Settings → Applications → QAShift → the repo → and approve the updated permissions. " +
             "Then try again.",
           github_status: 403,
         },

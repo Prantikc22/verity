@@ -10,7 +10,7 @@ const TRACE = [
 
 export function HeroPanel() {
   return (
-    <div className="relative mx-auto min-h-[570px] w-full max-w-[640px] sm:min-h-[610px]" aria-label="Verity live test verification example">
+    <div className="relative mx-auto min-h-[570px] w-full max-w-[640px] sm:min-h-[610px]" aria-label="QAShift live test verification example">
       {/* The visual dissolves into the hero rather than sitting in one hard frame. */}
       <div className="absolute inset-[8%] rounded-full bg-indigo-500/20 blur-[90px]" aria-hidden />
       <div className="absolute left-[10%] top-[8%] h-[78%] w-[78%] rounded-full border border-indigo-300/[0.08]" aria-hidden />

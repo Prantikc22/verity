@@ -7,10 +7,10 @@ import { Reveal } from "@/components/Reveal";
 export const metadata: Metadata = {
   title: "MCP Server — Generate & run tests from your IDE",
   description:
-    "Install the Verity MCP server in VS Code, Cursor, Claude Code, or Windsurf. Generate, propose, and run Playwright tests against your localhost — right from your AI coding agent.",
+    "Install the QAShift MCP server in VS Code, Cursor, Claude Code, or Windsurf. Generate, propose, and run Playwright tests against your localhost — right from your AI coding agent.",
   alternates: { canonical: "/mcp" },
   openGraph: {
-    title: "Verity MCP Server",
+    title: "QAShift MCP Server",
     description: "Generate, propose, and run tests from your IDE — Cursor, VS Code, Claude Code, Windsurf.",
     type: "website",
     url: "https://verity.qashifthq.com/mcp",
@@ -31,7 +31,7 @@ export default function McpPage() {
               Generate &amp; run tests from your IDE.
             </h1>
             <p className="mt-4 max-w-2xl text-lg text-neutral-600 dark:text-neutral-300">
-              The Verity MCP server plugs into your AI coding agent — Cursor, VS Code, Claude Code, Windsurf — so you can
+              The QAShift MCP server plugs into your AI coding agent — Cursor, VS Code, Claude Code, Windsurf — so you can
               generate, propose, and run Playwright tests against your localhost without leaving the editor. One-click install below.
             </p>
           </Reveal>

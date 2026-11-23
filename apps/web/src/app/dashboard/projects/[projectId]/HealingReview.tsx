@@ -29,7 +29,7 @@ export function HealingReview({ projectId, events }: { projectId: string; events
   }
 
   if (items.length === 0) {
-    return <p className="mt-3 text-sm text-neutral-500">No locator healing suggestions yet. When a selector breaks during a run, Verity proposes a fix here for your review.</p>;
+    return <p className="mt-3 text-sm text-neutral-500">No locator healing suggestions yet. When a selector breaks during a run, QAShift proposes a fix here for your review.</p>;
   }
 
   return (
@@ -49,7 +49,7 @@ export function HealingReview({ projectId, events }: { projectId: string; events
             <div className="text-red-400">- {h.old_selector}</div>
             <div className="text-emerald-400">+ {h.new_selector}</div>
           </pre>
-          <p className="mt-2 text-[11px] text-neutral-500">Suggested only — Verity never writes this into your source. Apply the diff in your repo, then mark it here.</p>
+          <p className="mt-2 text-[11px] text-neutral-500">Suggested only — QAShift never writes this into your source. Apply the diff in your repo, then mark it here.</p>
           {h.status === "suggested" && (
             <div className="mt-3 flex gap-2">
               <button onClick={() => resolve(h.id, "applied")} disabled={pending} className="bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50">Mark applied</button>

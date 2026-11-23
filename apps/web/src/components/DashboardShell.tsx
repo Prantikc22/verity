@@ -84,7 +84,7 @@ export function DashboardShell({
       <div className="flex items-center justify-between border-b border-neutral-200 px-5 py-4 dark:border-neutral-800">
         <Link href="/" className="min-w-0">
           <Logo />
-          <span className="mt-0.5 block text-[10px] font-medium uppercase tracking-wide text-neutral-400">a QAShift product</span>
+          
         </Link>
         <div className="flex items-center gap-3">
           <StatusDot compact align="left" />

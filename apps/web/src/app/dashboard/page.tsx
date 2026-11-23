@@ -15,7 +15,7 @@ export default async function DashboardPage() {
   const orgId = orgCtx?.org.id;
 
   // Scope to the signed-in user's org — otherwise public projects (e.g. the
-  // Verity Demo) leak into every account's dashboard and inflate the count.
+  // QAShift Demo) leak into every account's dashboard and inflate the count.
   const { data: projects } = orgId
     ? await supabase
         .from("projects")

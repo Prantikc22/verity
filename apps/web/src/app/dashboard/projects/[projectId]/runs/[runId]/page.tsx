@@ -31,8 +31,8 @@ export default async function RunReportPage({ params }: { params: Promise<{ proj
   const rows = (results ?? []).map((r) => {
     const t = r.test_id ? testById.get(r.test_id) : null;
     const healed = r.test_id ? healedBy.get(r.test_id) : null;
-    // Prefer the linked Verity test's name; otherwise the result's own name /
-    // spec path (CI runs legitimately include specs not authored in Verity).
+    // Prefer the linked QAShift test's name; otherwise the result's own name /
+    // spec path (CI runs legitimately include specs not authored in QAShift).
     return {
       id: r.id,
       name: t?.name ?? r.name ?? (baseName(r.spec_path) || "Test"),

@@ -6,7 +6,7 @@
  */
 export function GithubInstallVisual({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 760 240" className={className} role="img" aria-label="How to install the Verity GitHub App: install it, pick your repositories, and it runs your tests on every pull request." xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 760 240" className={className} role="img" aria-label="How to install the QAShift GitHub App: install it, pick your repositories, and it runs your tests on every pull request." xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id="vg" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stopColor="#6366f1" />

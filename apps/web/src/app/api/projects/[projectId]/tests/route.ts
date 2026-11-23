@@ -11,7 +11,7 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const Body = z.object({
-  /** The page to test — Verity fetches it for real locators. */
+  /** The page to test — QAShift fetches it for real locators. */
   url: z.string().url().optional(),
   /** A natural-language flow description. */
   description: z.string().max(8000).optional(),

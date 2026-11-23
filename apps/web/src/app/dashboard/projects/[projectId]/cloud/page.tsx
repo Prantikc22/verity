@@ -23,7 +23,7 @@ export default async function CloudPage({ params }: { params: Promise<{ projectI
         <p className="text-xs text-neutral-500">
           Run your saved <strong>UI tests</strong> with real assertions in a real browser on our infra and get a report — or just open a page live to preview it.
           Capped per plan. For unlimited execution use your <Link href={`/dashboard/projects/${projectId}/settings`} className="text-indigo-600 underline">CI</Link>;
-          for <strong>localhost</strong>, the Verity MCP runs tests on your machine.
+          for <strong>localhost</strong>, the QAShift MCP runs tests on your machine.
         </p>
       </div>
 

@@ -43,12 +43,12 @@ export default async function AgentsPage() {
           return (
             <Card key={a.key} className="flex flex-col gap-3">
               <div className="flex items-center justify-between">
-                <h2 className="text-[16px] font-semibold tracking-tight">{a.name}</h2>
+                <h2 className="text-[16px] font-semibold tracking-tight">{a.codename} <span className="font-mono text-[11.5px] font-normal text-neutral-500">{a.name}</span></h2>
                 <StatusPill status={a.status} />
               </div>
               <p className="text-sm text-neutral-500">{a.summary}</p>
               <dl className="mt-auto grid grid-cols-2 gap-2 border-t border-[#E6E2D6] pt-3 text-xs dark:border-neutral-800">
-                <div><dt className="text-neutral-500">Runs, last 30 days</dt><dd className="tnum mt-0.5 text-sm font-medium">{a.key === "accessibility" ? "On Clearpath" : count}</dd></div>
+                <div><dt className="text-neutral-500">Runs, last 30 days</dt><dd className="tnum mt-0.5 text-sm font-medium">{a.key === "accessibility" ? "Separate workspace" : count}</dd></div>
                 <div><dt className="text-neutral-500">Last run</dt><dd className="mt-0.5 text-sm font-medium">{a.key === "accessibility" ? "—" : last ? timeAgo(last) : "Never"}</dd></div>
               </dl>
               <div className="flex items-center justify-between text-sm">
@@ -65,13 +65,13 @@ export default async function AgentsPage() {
       <Card className="mt-6 bg-[#0A0D18] text-slate-300 dark:bg-[#0A0D18]">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="max-w-2xl">
-            <div className="flex items-center gap-2 text-white"><span className="font-semibold">Failure Investigator</span><StatusPill status="live" /></div>
+            <div className="flex items-center gap-2 text-white"><span className="font-semibold">Tracer</span><span className="font-mono text-[11.5px] text-slate-400">Failure Investigator</span><StatusPill status="live" /></div>
             <p className="mt-1.5 text-sm">Classifies every failure across agents as a real failure or flaky, using automatic re-runs. Suggested test fixes (self-healing) are <span className="text-amber-300">beta</span>, shown as diffs, and never merged automatically.</p>
           </div>
         </div>
       </Card>
 
-      <p className="mt-6 text-xs text-neutral-500">The Accessibility Agent still runs on the Clearpath engine with its own sign-in. It moves into this workspace when Clearpath accounts are imported.</p>
+      <p className="mt-6 text-xs text-neutral-500">Lumen, the Accessibility Agent, still opens in its own workspace with a separate sign-in. It moves into this workspace when accessibility accounts are merged.</p>
     </div>
   );
 }

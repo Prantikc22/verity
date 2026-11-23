@@ -11,8 +11,8 @@ export default async function GeneratePage({ params }: { params: Promise<{ proje
       <div>
         <h2 className="text-lg font-semibold tracking-tight">Create tests</h2>
         <p className="text-xs text-neutral-500">
-          Test a <strong>live web app</strong> (Verity explores it and proposes a full plan) or <strong>locally via MCP</strong> from your IDE.
-          Verity generates as many tests as your plan allows and saves them to your test plan.
+          Test a <strong>live web app</strong> (QAShift explores it and proposes a full plan) or <strong>locally via MCP</strong> from your IDE.
+          QAShift generates as many tests as your plan allows and saves them to your test plan.
         </p>
       </div>
 

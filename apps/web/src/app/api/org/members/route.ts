@@ -31,7 +31,7 @@ function canManage(role: string) { return role === "owner" || role === "admin"; 
  */
 async function sendInviteEmail(email: string, orgId: string) {
   const key = process.env.RESEND_API_KEY;
-  const from = process.env.INVITE_FROM_EMAIL ?? "Verity <onboarding@qashift.com>";
+  const from = process.env.INVITE_FROM_EMAIL ?? "QAShift <onboarding@qashift.com>";
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://verity-kappa-ebon.vercel.app";
   if (!key) return;
   const admin = createAdminClient();
@@ -42,8 +42,8 @@ async function sendInviteEmail(email: string, orgId: string) {
     body: JSON.stringify({
       from,
       to: email,
-      subject: `You've been invited to ${org?.name ?? "a team"} on Verity`,
-      html: `<p>You've been invited to join <strong>${org?.name ?? "a team"}</strong> on Verity — AI-augmented testing.</p>
+      subject: `You've been invited to ${org?.name ?? "a team"} on QAShift`,
+      html: `<p>You've been invited to join <strong>${org?.name ?? "a team"}</strong> on QAShift — AI-augmented testing.</p>
 <p><a href="${appUrl}/login?next=/dashboard">Create your account</a> with this email and you'll join the team automatically.</p>`,
     }),
   });

@@ -35,7 +35,7 @@ export function SiteFooter() {
         <div>
           <Logo />
           <p className="mt-4 max-w-sm text-sm leading-relaxed text-neutral-500 dark:text-neutral-400">
-            Verification you can run, inspect, and own. Verity turns live product behavior into maintained Playwright evidence.
+            Verification you can run, inspect, and own. QAShift turns live product behavior into maintained Playwright evidence.
           </p>
           <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/5 px-3 py-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> All systems operational
@@ -64,7 +64,7 @@ export function SiteFooter() {
 
       <div className="border-t border-neutral-200 dark:border-neutral-800">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-6 py-5 text-xs text-neutral-400 sm:flex-row sm:items-center sm:justify-between">
-          <span>© {new Date().getFullYear()} Verity, a QAShift product.</span>
+          <span>© {new Date().getFullYear()} QAShift.</span>
           <span>AI writes · the live product proves · your team owns</span>
         </div>
       </div>

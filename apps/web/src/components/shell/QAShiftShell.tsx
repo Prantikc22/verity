@@ -11,7 +11,7 @@ import { createClient } from "@/lib/supabase/client";
 /*
  * QAShift 2.0 workspace shell. One brand, one navigation:
  * Overview · Projects · Test Runs · Agents · Coverage · Reports · Integrations · Usage & Billing · Settings.
- * Verity remains the internal engine name and is not shown here.
+ * QAShift remains the internal engine name and is not shown here.
  */
 
 const P = {

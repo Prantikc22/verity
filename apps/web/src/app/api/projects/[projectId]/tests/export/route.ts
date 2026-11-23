@@ -61,12 +61,12 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ pro
     {
       path: "VERITY.md",
       content:
-        `# ${project.name} — exported from Verity\n\n` +
-        "These specs were AI-generated and kept alive by Verity (self-healing + flake triage).\n" +
+        `# ${project.name} — exported from QAShift\n\n` +
+        "These specs were AI-generated and kept alive by QAShift (self-healing + flake triage).\n" +
         "To make them an owned asset, a forward-deployed engineer:\n\n" +
         "1. Restructures flat specs into the Page Object Model under `pages/`.\n" +
-        "2. Commits them to your repo and wires the Verity GitHub Action.\n" +
-        "3. Maintains them as the product changes; Verity keeps predicting risk.\n\n" +
+        "2. Commits them to your repo and wires the QAShift GitHub Action.\n" +
+        "3. Maintains them as the product changes; QAShift keeps predicting risk.\n\n" +
         `Repo: ${project.repo ?? "(not linked)"} · default branch: ${project.default_branch}\n`,
     },
   ];

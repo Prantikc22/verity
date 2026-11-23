@@ -44,7 +44,7 @@ export function AgentGenerate({ projectId }: { projectId: string }) {
   return (
     <section className="border border-neutral-200 p-4 dark:border-neutral-800">
       <h3 className="text-sm font-semibold">Generate AI-feature evals</h3>
-      <p className="mt-0.5 text-xs text-neutral-500">Describe your AI feature and (optionally) its endpoint. Verity writes eval cases you review, then commit.</p>
+      <p className="mt-0.5 text-xs text-neutral-500">Describe your AI feature and (optionally) its endpoint. QAShift writes eval cases you review, then commit.</p>
       <div className="mt-3 grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Eval format">
         {([
           ["suite", "Scored eval suite", "Recommended. One file: built-in prompt-injection & PII checks plus cases for your feature. Each case repeats 3× on Full regression, so inconsistent answers show as flaky."],

@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!page) return {};
   const url = `/solutions/${page.slug}`;
   return {
-    title: { absolute: `${page.title} | Verity` },
+    title: { absolute: `${page.title} | QAShift` },
     description: page.description,
     alternates: { canonical: url },
     openGraph: { title: page.title, description: page.description, url, type: "article" },
@@ -37,7 +37,7 @@ export default async function SolutionPage({ params }: { params: Promise<{ slug:
       {
         "@type": "BreadcrumbList",
         itemListElement: [
-          { "@type": "ListItem", position: 1, name: "Verity", item: SITE_URL },
+          { "@type": "ListItem", position: 1, name: "QAShift", item: SITE_URL },
           { "@type": "ListItem", position: 2, name: "Solutions", item: `${SITE_URL}/solutions` },
           { "@type": "ListItem", position: 3, name: page.name, item: url },
         ],
@@ -53,7 +53,7 @@ export default async function SolutionPage({ params }: { params: Promise<{ slug:
       <main className={styles.main}>
         <div className={styles.shell}>
           <nav className={styles.crumbs} aria-label="Breadcrumb">
-            <Link href="/">Verity</Link><span>/</span><Link href="/solutions">Solutions</Link><span>/</span><span aria-current="page">{page.name}</span>
+            <Link href="/">QAShift</Link><span>/</span><Link href="/solutions">Solutions</Link><span>/</span><span aria-current="page">{page.name}</span>
           </nav>
         </div>
 
@@ -90,7 +90,7 @@ export default async function SolutionPage({ params }: { params: Promise<{ slug:
 
         <section className={styles.section}>
           <div className={styles.shell}>
-            <h2>Why teams choose Verity</h2>
+            <h2>Why teams choose QAShift</h2>
             <div className={styles.grid}>
               {page.why.map(([t, c]) => <div key={t}><h3>{t}</h3><p>{c}</p></div>)}
               <div><h3>One place for every test type</h3><p>UI, API, visual, AI-agent, load and security results share one run history and one verdict per release. <Link href="/pricing" className="underline">Every plan includes all six.</Link></p></div>

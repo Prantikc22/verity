@@ -84,12 +84,12 @@ export default async function VisualPage({ params }: { params: Promise<{ project
       <details className="border border-neutral-200 dark:border-neutral-800">
         <summary className="cursor-pointer px-5 py-3 text-sm font-semibold">How visual testing works <span className="font-normal text-neutral-400">— screenshots, not selectors</span></summary>
         <div className="space-y-3 border-t border-neutral-200 p-5 text-xs leading-relaxed text-neutral-600 dark:border-neutral-800 dark:text-neutral-400">
-          <p>Verity generates a Playwright test that navigates to a stable UI state, masks volatile regions (timestamps, avatars, ads), and captures a screenshot. On every run the screenshot is diffed against the baseline committed in your repo.</p>
+          <p>QAShift generates a Playwright test that navigates to a stable UI state, masks volatile regions (timestamps, avatars, ads), and captures a screenshot. On every run the screenshot is diffed against the baseline committed in your repo.</p>
           <ul className="list-disc space-y-1 pl-5">
             <li><strong className="text-emerald-600">Matched</strong> — within the pixel threshold. Nothing to do.</li>
             <li><strong className="text-red-600">Changed</strong> — the render differs. Intentional? Commit the new baseline. A real regression? Fix it.</li>
           </ul>
-          <p>Because the snapshot lives in your repo and runs in your CI, coverage is unlimited — Verity authors and heals the specs; you own the pixels.</p>
+          <p>Because the snapshot lives in your repo and runs in your CI, coverage is unlimited — QAShift authors and heals the specs; you own the pixels.</p>
         </div>
       </details>
 

@@ -3,9 +3,9 @@ import { LandingExperience } from "@/components/landing/LandingExperience";
 import { LANDING_FAQ } from "@/components/landing/faq";
 import { SITE_URL } from "@/lib/site";
 
-const TITLE = "Verity — AI test generation for Playwright, API & CI";
+const TITLE = "QAShift — AI test generation for Playwright, API & CI";
 const DESCRIPTION =
-  "Verity writes Playwright end-to-end and API tests from your live app, plus visual, AI-agent, load and security checks. You own the code; your CI runs it on every pull request.";
+  "QAShift writes Playwright end-to-end and API tests from your live app, plus visual, AI-agent, load and security checks. You own the code; your CI runs it on every pull request.";
 
 export const metadata: Metadata = {
   title: { absolute: TITLE },
@@ -32,7 +32,7 @@ const jsonLd = {
     },
     {
       "@type": "SoftwareApplication",
-      name: "Verity",
+      name: "QAShift",
       url: SITE_URL,
       applicationCategory: "DeveloperApplication",
       operatingSystem: "Web, GitHub Actions, GitLab CI, Jenkins",
@@ -42,8 +42,8 @@ const jsonLd = {
     },
     {
       "@type": "VideoObject",
-      name: "Verity product demo",
-      description: "Paste a URL, Verity writes Playwright tests for UI, API, visual, AI-agent, load and security, you commit one workflow, and every pull request gets a verdict with evidence.",
+      name: "QAShift product demo",
+      description: "Paste a URL, QAShift writes Playwright tests for UI, API, visual, AI-agent, load and security, you commit one workflow, and every pull request gets a verdict with evidence.",
       thumbnailUrl: `${SITE_URL}/demo/verity-demo-poster.jpg`,
       contentUrl: `${SITE_URL}/demo/verity-demo.mp4`,
       uploadDate: "2026-10-13",

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Geist_Mono } from "next/font/google";
+import { Inter, Geist_Mono, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import { NavigationProgress } from "@/components/NavigationProgress";
 import { PostHogProvider } from "@/components/PostHogProvider";
@@ -10,22 +10,23 @@ import { CookieConsent } from "@/components/CookieConsent";
 // dense dashboards / sidebar scanning). Keeps the same CSS variable name.
 const geistSans = Inter({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+const serif = Instrument_Serif({ variable: "--font-instrument", weight: "400", style: ["normal", "italic"], subsets: ["latin"] });
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
   title: {
-    default: "Verity — AI test generation for Playwright, API & CI",
-    template: "%s · Verity",
+    default: "QAShift — AI test generation for Playwright, API & CI",
+    template: "%s · QAShift",
   },
   description:
-    "Verity writes Playwright end-to-end and API tests from your live app, plus visual, AI-agent, load and security checks, and runs them in your own CI. A QAShift product.",
+    "QAShift writes Playwright end-to-end and API tests from your live app, plus visual, AI-agent, load and security checks, and runs them in your own CI.",
   openGraph: {
-    siteName: "Verity",
+    siteName: "QAShift",
     type: "website",
     url: appUrl,
-    images: [{ url: `${appUrl}/og.png`, width: 1200, height: 630, alt: "Verity — AI writes the tests. Your CI keeps the proof." }],
+    images: [{ url: `${appUrl}/og.png`, width: 1200, height: 630, alt: "QAShift — AI writes the tests. Your CI keeps the proof." }],
   },
   twitter: {
     card: "summary_large_image",
@@ -35,7 +36,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+    <html lang="en" suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable} ${serif.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         <NavigationProgress />
         <ThemeProvider>

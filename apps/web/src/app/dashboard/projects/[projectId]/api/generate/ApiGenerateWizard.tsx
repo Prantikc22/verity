@@ -106,7 +106,7 @@ export function ApiGenerateWizard({ projectId }: { projectId: string }) {
         {phase === "setup" && (
           <form onSubmit={(e) => { e.preventDefault(); propose(); }} className="space-y-4">
             <h3 className="text-base font-semibold">Set up your API tests</h3>
-            <p className="text-xs text-neutral-500">Point Verity at your OpenAPI/Swagger spec and/or describe what to test in plain English. It covers happy paths, negative, boundary, validation, and auth cases.</p>
+            <p className="text-xs text-neutral-500">Point QAShift at your OpenAPI/Swagger spec and/or describe what to test in plain English. It covers happy paths, negative, boundary, validation, and auth cases.</p>
 
             <label className="block">
               <span className="text-sm font-medium">OpenAPI / Swagger URL <span className="text-xs font-normal text-neutral-400">(JSON or YAML)</span></span>

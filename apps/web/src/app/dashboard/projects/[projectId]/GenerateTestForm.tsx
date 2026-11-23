@@ -59,7 +59,7 @@ export function GenerateTestForm({ projectId }: { projectId: string }) {
     <form onSubmit={submit} className="border border-neutral-200 p-5 dark:border-neutral-800">
       <h3 className="text-sm font-medium">Generate a test</h3>
       <p className="mt-1 text-xs text-neutral-500">
-        Give a <strong>URL</strong> and Verity opens the page to find real locators. Add a <strong>flow</strong> and/or a
+        Give a <strong>URL</strong> and QAShift opens the page to find real locators. Add a <strong>flow</strong> and/or a
         <strong> PRD</strong> to make it sharper. The saved test is a Playwright <code>.spec.ts</code> stored in this project.
       </p>
 
@@ -98,7 +98,7 @@ export function GenerateTestForm({ projectId }: { projectId: string }) {
             <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Test password (optional)"
               className="border border-neutral-300 bg-transparent px-3 py-2 text-xs outline-none focus:border-indigo-500 dark:border-neutral-700" />
           </div>
-          <p className="text-[11px] text-neutral-500">Provide creds and the test uses them directly. Leave blank and Verity uses credentials shown on the page (demo sites) or falls back to <code>TEST_USERNAME</code>/<code>TEST_PASSWORD</code> env vars.</p>
+          <p className="text-[11px] text-neutral-500">Provide creds and the test uses them directly. Leave blank and QAShift uses credentials shown on the page (demo sites) or falls back to <code>TEST_USERNAME</code>/<code>TEST_PASSWORD</code> env vars.</p>
 
           <input
             value={sourceFiles}

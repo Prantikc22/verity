@@ -21,7 +21,7 @@ async function assertProjectAdmin(projectId: string): Promise<string | null> {
 
 /**
  * Resolve a self-healing suggestion. 'applied' records that the human accepted
- * the suggested diff into source — Verity itself never writes to the repo, so
+ * the suggested diff into source — QAShift itself never writes to the repo, so
  * this is just bookkeeping that the user did. 'rejected' dismisses it.
  */
 export async function resolveHealing(

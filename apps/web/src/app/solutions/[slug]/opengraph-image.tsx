@@ -3,7 +3,7 @@ import { SOLUTION_SLUGS, solutionBySlug } from "@/lib/seo-pages";
 
 export const size = OG_SIZE;
 export const contentType = "image/png";
-export const alt = "Verity";
+export const alt = "QAShift";
 
 export function generateStaticParams() {
   return SOLUTION_SLUGS.map((slug) => ({ slug }));

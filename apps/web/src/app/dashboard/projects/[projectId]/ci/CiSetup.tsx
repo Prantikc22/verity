@@ -68,7 +68,7 @@ export function CiSetup({ defaultApiUrl, defaultBranch }: { defaultApiUrl: strin
       {/* ── 1. Pick your tests ─────────────────────────────────────── */}
       <section>
         <h3 className="text-sm font-semibold">1 · Pick the tests you want to run</h3>
-        <p className="mt-0.5 text-xs text-neutral-500">You don&apos;t need all of them. Toggle only what you need — everything runs in <strong>your</strong> CI and reports to Verity. <span className="text-amber-600">Toggling here updates the config below; you commit that to your repo to actually run them.</span></p>
+        <p className="mt-0.5 text-xs text-neutral-500">You don&apos;t need all of them. Toggle only what you need — everything runs in <strong>your</strong> CI and reports to QAShift. <span className="text-amber-600">Toggling here updates the config below; you commit that to your repo to actually run them.</span></p>
         <div className="mt-3 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
           {ENGINES.map((e) => {
             const on = c.engines[e.key];
@@ -159,7 +159,7 @@ export function CiSetup({ defaultApiUrl, defaultBranch }: { defaultApiUrl: strin
             {c.engines.agent && (
               <div className="border border-neutral-200 p-4 dark:border-neutral-800">
                 <div className="flex items-center gap-2 text-sm font-medium">🤖 Agent (AI) evals</div>
-                <p className="text-[11px] text-neutral-500">Evals for your <strong>own</strong> AI feature. Verity calls your endpoint and asserts a property of the reply (grounding, injection resistance, tool-use).</p>
+                <p className="text-[11px] text-neutral-500">Evals for your <strong>own</strong> AI feature. QAShift calls your endpoint and asserts a property of the reply (grounding, injection resistance, tool-use).</p>
                 <div className="mt-3 space-y-2 text-xs">
                   <Field label="AI endpoint (reachable from CI)" value={c.agent.endpoint} onChange={(v) => setAgent("endpoint", v)} placeholder="https://api.example.com/chat" />
                   <Field label="Token secret name" value={c.agent.authTokenSecret} onChange={(v) => setAgent("authTokenSecret", v)} mono />
@@ -209,7 +209,7 @@ export function CiSetup({ defaultApiUrl, defaultBranch }: { defaultApiUrl: strin
           <pre className="max-h-[460px] overflow-auto border border-neutral-200 bg-neutral-950 p-4 text-[11px] leading-relaxed text-neutral-300 dark:border-neutral-800">{anyEngine ? config : "# Pick at least one test type above to generate your config."}</pre>
         </div>
         {provider !== "github" && (
-          <p className="mt-2 text-[11px] text-neutral-500">GitLab & Jenkins fetch the same self-contained Verity runners via <code>curl</code> (no GitHub Action needed) — identical behavior, reporting to the same dashboard.</p>
+          <p className="mt-2 text-[11px] text-neutral-500">GitLab & Jenkins fetch the same self-contained QAShift runners via <code>curl</code> (no GitHub Action needed) — identical behavior, reporting to the same dashboard.</p>
         )}
 
         {/* The toggles don't run anything by themselves — this is what makes it real. */}
@@ -221,11 +221,11 @@ export function CiSetup({ defaultApiUrl, defaultBranch }: { defaultApiUrl: strin
           </p>
           <ol className="mt-2 list-decimal space-y-1 pl-5 text-neutral-600 dark:text-neutral-400">
             <li>Copy the config above.</li>
-            <li>Save it to {provider === "github" ? <code>.github/workflows/verity.yml</code> : provider === "gitlab" ? <code>.gitlab-ci.yml</code> : <code>Jenkinsfile</code>} in your repo, <strong>replacing</strong> any existing Verity workflow.</li>
+            <li>Save it to {provider === "github" ? <code>.github/workflows/verity.yml</code> : provider === "gitlab" ? <code>.gitlab-ci.yml</code> : <code>Jenkinsfile</code>} in your repo, <strong>replacing</strong> any existing QAShift workflow.</li>
             <li>Make sure your secrets are set ({provider === "github" ? <><code>VERITY_INGEST_TOKEN</code> in repo Settings → Secrets</> : <code>VERITY_INGEST_TOKEN</code>}).</li>
-            <li>Commit &amp; push — the engines run on the next PR/merge and results appear in Verity.</li>
+            <li>Commit &amp; push — the engines run on the next PR/merge and results appear in QAShift.</li>
           </ol>
-          <p className="mt-2 text-[11px] text-neutral-500">Already wired the Verity workflow once? You only need to update it again when you change which engines are on.</p>
+          <p className="mt-2 text-[11px] text-neutral-500">Already wired the QAShift workflow once? You only need to update it again when you change which engines are on.</p>
         </div>
       </section>
 
@@ -258,7 +258,7 @@ export function CiSetup({ defaultApiUrl, defaultBranch }: { defaultApiUrl: strin
             </tbody>
           </table>
         </div>
-        <p className="mt-2 text-[11px] text-neutral-500"><span className="text-emerald-600">✓</span> full · <span className="text-amber-500">◑</span> partial / needs setup · — not available. The <strong>Verity dashboard always has complete results</strong> regardless of provider.</p>
+        <p className="mt-2 text-[11px] text-neutral-500"><span className="text-emerald-600">✓</span> full · <span className="text-amber-500">◑</span> partial / needs setup · — not available. The <strong>QAShift dashboard always has complete results</strong> regardless of provider.</p>
       </section>
     </div>
   );

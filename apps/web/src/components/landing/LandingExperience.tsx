@@ -34,7 +34,7 @@ const STATS = [
 ] as const;
 
 const HOW_STEPS = [
-  ["01", "Paste your app's URL", "Verity opens it in a real browser and maps the journeys, forms and endpoints worth testing. Add an OpenAPI spec or PRD for deeper coverage."],
+  ["01", "Paste your app's URL", "QAShift opens it in a real browser and maps the journeys, forms and endpoints worth testing. Add an OpenAPI spec or PRD for deeper coverage."],
   ["02", "Review readable tests", "Playwright specs for UI and API, plus visual, AI-agent, load and security checks. Edit anything — every line is yours."],
   ["03", "Commit one workflow file", "CI Setup writes it for GitHub Actions, GitLab or Jenkins. Tests run on your runners, against your environments, with no run limit."],
   ["04", "Get a verdict on every PR", "A Quick check on pull requests and a Full regression on merge. Flakes are split from real failures, and failures arrive with the error and a proposed fix."],
@@ -45,7 +45,7 @@ const SYSTEM_STEPS = [
     number: "01",
     label: "Observe",
     title: "It uses the product, not a description of it.",
-    copy: "Verity opens the running app, walks the journeys that matter, and grounds every locator and assertion in live product evidence.",
+    copy: "QAShift opens the running app, walks the journeys that matter, and grounds every locator and assertion in live product evidence.",
   },
   {
     number: "02",
@@ -112,9 +112,9 @@ const X_QUOTES = [
 
 const NAV_MENUS = {
   Product: [
-    ["Verity Self-Serve", "Generate, run and maintain product verification yourself.", "/#system"],
+    ["QAShift Self-Serve", "Generate, run and maintain product verification yourself.", "/#system"],
     ["FDE Managed Testing", "A forward-deployed engineer who owns the testing function with you.", "https://qashifthq.com/managed-testing"],
-    ["Verity Cloud", "Managed browsers, parallel runs and retained release evidence.", "/#runtime"],
+    ["QAShift Cloud", "Managed browsers, parallel runs and retained release evidence.", "/#runtime"],
     ["MCP Server", "Put live product verification inside your coding agent.", "/mcp"],
   ],
   Solutions: [
@@ -124,10 +124,10 @@ const NAV_MENUS = {
     ["Self-healing", "Repair selector drift without hiding product failures.", "/#healing"],
   ],
   Developers: [
-    ["Documentation", "Set up Verity and run your first verification.", "/docs"],
+    ["Documentation", "Set up QAShift and run your first verification.", "/docs"],
     ["MCP server", "Put product verification inside your coding agent.", "/mcp"],
     ["GitHub App", "Run, review and gate from the pull request.", "/github"],
-    ["Execution options", "Run without limits on CI or use Verity Cloud.", "/#runtime"],
+    ["Execution options", "Run without limits on CI or use QAShift Cloud.", "/#runtime"],
   ],
   About: [
     ["About QAShift", "The company building AI-native quality infrastructure.", "https://qashifthq.com/about"],
@@ -216,7 +216,7 @@ export function UrlStart({ id, centered = false }: { id: string; centered?: bool
 
 function ReleaseConsole() {
   return (
-    <div className={styles.consoleShell} aria-label="Verity release verification example">
+    <div className={styles.consoleShell} aria-label="QAShift release verification example">
       <div className={styles.consoleTopline}>
         <div className={styles.windowDots}><i /><i /><i /></div>
         <span>verity / release-1284</span>
@@ -297,7 +297,7 @@ export function LandingNav() {
   return (
     <header className={styles.nav}>
       <div className={styles.navInner}>
-        <Link href="/" className={styles.navLogo} aria-label="Verity home"><Logo /></Link>
+        <Link href="/" className={styles.navLogo} aria-label="QAShift home"><Logo /></Link>
         <nav aria-label="Primary navigation">
           {(Object.keys(NAV_MENUS) as Array<keyof typeof NAV_MENUS>).map((label) => (
             <button
@@ -328,7 +328,7 @@ export function LandingNav() {
             <div className={styles.megaInner}>
               <div className={styles.megaIntro}>
                 <span>{openMenu}</span>
-                <strong>{openMenu === "Product" ? "Software and expert ownership for every testing maturity." : openMenu === "Solutions" ? "Built for teams whose shipping speed outgrew manual QA." : openMenu === "Developers" ? "Own the tests. Run them wherever your team works." : "Verity is built by QAShift in Bengaluru."}</strong>
+                <strong>{openMenu === "Product" ? "Software and expert ownership for every testing maturity." : openMenu === "Solutions" ? "Built for teams whose shipping speed outgrew manual QA." : openMenu === "Developers" ? "Own the tests. Run them wherever your team works." : "QAShift is built by QAShift in Bengaluru."}</strong>
               </div>
               <div className={styles.megaLinks}>
                 {NAV_MENUS[openMenu].map(([title, copy, href]) => (
@@ -373,7 +373,7 @@ function RevealBlock({ children, className = "", delay = 0 }: { children: React.
 
 function CustomerRail() {
   return (
-    <section className={styles.customerRail} aria-label="Teams using Verity and QAShift">
+    <section className={styles.customerRail} aria-label="Teams using QAShift and QAShift">
       <div className={styles.railLabel}><span>Trusted in production by teams at</span></div>
       <div className={styles.logoViewport}>
         <div className={styles.logoTrack}>
@@ -402,7 +402,7 @@ function GapSection() {
   const costs = [
     ["01", "Nobody has a sprint to spare for end-to-end tests.", "So the riskiest paths — sign-up, checkout, billing — ship with the least coverage, and the gap widens with every release."],
     ["02", "A green unit suite is not a working checkout.", "Mocks pass while the real page breaks. Only something that drives the running product can say a customer journey still works."],
-    ["03", "AI-written changes need an independent check.", "When an agent writes the code, Verity is the second pair of eyes: it runs the real flows on every pull request, so regressions surface before a customer finds them."],
+    ["03", "AI-written changes need an independent check.", "When an agent writes the code, QAShift is the second pair of eyes: it runs the real flows on every pull request, so regressions surface before a customer finds them."],
   ] as const;
 
   return (
@@ -447,7 +447,7 @@ function DemoSection() {
             <li><b>02</b>One workflow file runs it in your CI.</li>
             <li><b>03</b>The pull request gets a verdict — flaky told apart from broken, with a curl to reproduce.</li>
           </ul>
-          <p>Every screen is real Verity output.</p>
+          <p>Every screen is real QAShift output.</p>
         </RevealBlock>
         <div className={styles.demoFrame}>
           <video
@@ -455,7 +455,7 @@ function DemoSection() {
             playsInline
             preload="metadata"
             poster="/demo/verity-demo-poster.jpg"
-            aria-label="Verity product demo: paste a URL, Verity writes Playwright tests, commit one workflow, and every pull request gets a verdict with evidence."
+            aria-label="QAShift product demo: paste a URL, QAShift writes Playwright tests, commit one workflow, and every pull request gets a verdict with evidence."
           >
             <source src="/demo/verity-demo.mp4" type="video/mp4" />
           </video>
@@ -522,7 +522,7 @@ function StatsSection() {
           <div>
             <h2>Coverage in minutes,<br /><span>not sprints.</span></h2>
           </div>
-          <p>Hand-writing an end-to-end suite takes weeks. Verity drafts it from your live app in minutes, and your engineers spend their time reviewing tests instead of typing selectors.</p>
+          <p>Hand-writing an end-to-end suite takes weeks. QAShift drafts it from your live app in minutes, and your engineers spend their time reviewing tests instead of typing selectors.</p>
         </RevealBlock>
         <div className={styles.statsGrid}>
           {STATS.map(([value, label], index) => (
@@ -644,7 +644,7 @@ function OwnershipSection() {
         <div className={styles.ownershipGrid}>
           <RevealBlock className={styles.ownershipCopy}>
             <h2>Self-healing without hiding the bug.</h2>
-            <p>When the interface moves, Verity proposes the smallest grounded repair, reruns it, and keeps a human in control. Product failures stay failures.</p>
+            <p>When the interface moves, QAShift proposes the smallest grounded repair, reruns it, and keeps a human in control. Product failures stay failures.</p>
             <ul>
               <li><span>01</span> Locator drift is repaired from the live DOM</li>
               <li><span>02</span> Flakes are separated from real regressions</li>
@@ -671,7 +671,7 @@ function AlwaysOnSection() {
       title: "Every merge",
       headline: "The verdict lands on the pull request.",
       copy: "A Quick check runs on every PR and a Full regression on merge. Results post as a check and a comment, right where the review happens.",
-      visual: <div className={styles.mergeVisual}><span>PR #1284 · checkout-refactor</span><strong><i /> Verity verified 42 journeys</strong><small>Required check · ready to merge</small></div>,
+      visual: <div className={styles.mergeVisual}><span>PR #1284 · checkout-refactor</span><strong><i /> QAShift verified 42 journeys</strong><small>Required check · ready to merge</small></div>,
     },
     {
       title: "Every night",
@@ -692,7 +692,7 @@ function AlwaysOnSection() {
       <div className={styles.sectionShell}>
         <RevealBlock className={styles.alwaysHeading}>
           <h2>Wired into every merge,<br /><span>not anyone&apos;s memory.</span></h2>
-          <p>Tests only protect you when they run without someone remembering to start them. Verity lives in your pipeline.</p>
+          <p>Tests only protect you when they run without someone remembering to start them. QAShift lives in your pipeline.</p>
         </RevealBlock>
         <div className={styles.alwaysGrid}>
           {modes.map((mode, index) => (
@@ -716,7 +716,7 @@ function StackSection() {
     <section id="stack" className={styles.stackSection}>
       <div className={styles.sectionShell}>
         <RevealBlock className={styles.stackHeading}>
-          <h2>Bring Verity into<br />the stack you already use.</h2>
+          <h2>Bring QAShift into<br />the stack you already use.</h2>
           <p>Call the verifier from your agent, terminal, pull request, or delivery pipeline. The same suite and evidence follow the release everywhere.</p>
         </RevealBlock>
         <div className={styles.stackGrid}>
@@ -752,7 +752,7 @@ function RuntimeSection() {
       <div className={styles.sectionShell}>
         <RevealBlock className={styles.runtimeHeading}>
           <h2>Your tests. Your choice of where they run.</h2>
-          <p>Keep execution on your infrastructure, or let Verity Cloud handle it. Move between both without rewriting the suite.</p>
+          <p>Keep execution on your infrastructure, or let QAShift Cloud handle it. Move between both without rewriting the suite.</p>
         </RevealBlock>
         <div className={styles.runtimeGrid}>
           <RevealBlock className={styles.runtimeCard}>
@@ -760,13 +760,13 @@ function RuntimeSection() {
             <span>YOUR INFRASTRUCTURE</span>
             <h3>Unlimited on your CI.</h3>
             <p>Run as many tests as your own runners can handle. Ideal for active development, merge gates and private environments.</p>
-            <ul><li>Playwright stays in your repository</li><li>No per-run Verity limit</li><li>Works with existing CI secrets and networks</li></ul>
+            <ul><li>Playwright stays in your repository</li><li>No per-run QAShift limit</li><li>Works with existing CI secrets and networks</li></ul>
             <Link href="/docs">View CI setup <Arrow /></Link>
           </RevealBlock>
           <RevealBlock className={`${styles.runtimeCard} ${styles.runtimeCloud}`} delay={.1}>
             <div className={styles.runtimeSymbol}>◌</div>
             <span>VERITY INFRASTRUCTURE</span>
-            <h3>Metered on Verity Cloud.</h3>
+            <h3>Metered on QAShift Cloud.</h3>
             <p>Use managed browsers when you want zero runner maintenance. Included runs get you started; scale when the team is ready.</p>
             <ul><li>Managed browsers and evidence storage</li><li>Parallel execution without runner setup</li><li>Clear usage before you scale</li></ul>
             <Link href="/pricing">See cloud pricing <Arrow /></Link>
@@ -823,7 +823,7 @@ function FinalCta() {
       <motion.div className={styles.finalBeam} animate={{ x: ["-25%", "115%"] }} transition={{ duration: 8, repeat: Infinity, ease: "linear" }} aria-hidden />
       <div className={styles.sectionShell}>
         <RevealBlock className={styles.finalInner}>
-          <h2>Show Verity the product.<br /><span>Get the test and the proof.</span></h2>
+          <h2>Show QAShift the product.<br /><span>Get the test and the proof.</span></h2>
           <p>Start with a URL. Keep the Playwright. Know what changed before a customer has to tell you.</p>
           <UrlStart id="final-url" centered />
           <div className={styles.finalActions}>
@@ -846,18 +846,18 @@ export function LandingFooter() {
             <p>Product verification you can run, inspect, and own. A QAShift product.</p>
             <div className={styles.footerSecurity}>
               <strong>Security is part of the architecture.</strong>
-              <span>Your code and secrets stay in your infrastructure when you run Verity on CI.</span>
+              <span>Your code and secrets stay in your infrastructure when you run QAShift on CI.</span>
               <a href="https://qashifthq.com/security">Read the security overview <Arrow /></a>
             </div>
           </div>
           <div className={styles.footerLinks}>
-            <div><span>PRODUCTS</span><Link href="/#system">Verity Self-Serve</Link><a href="https://qashifthq.com/managed-testing">FDE Managed Testing</a><Link href="/#runtime">Verity Cloud</Link><Link href="/pricing">Pricing</Link></div>
-            <div><span>SOLUTIONS</span><Link href="/solutions/playwright-test-generator">AI Playwright tests</Link><Link href="/solutions/api-testing">API testing</Link><Link href="/solutions/visual-regression-testing">Visual regression</Link><Link href="/solutions/llm-evals">LLM evals</Link><Link href="/solutions/load-testing">Load testing</Link><Link href="/solutions/security-testing">Security testing</Link><Link href="/compare/testsprite">Verity vs TestSprite</Link></div>
+            <div><span>PRODUCTS</span><Link href="/#system">QAShift Self-Serve</Link><a href="https://qashifthq.com/managed-testing">FDE Managed Testing</a><Link href="/#runtime">QAShift Cloud</Link><Link href="/pricing">Pricing</Link></div>
+            <div><span>SOLUTIONS</span><Link href="/solutions/playwright-test-generator">AI Playwright tests</Link><Link href="/solutions/api-testing">API testing</Link><Link href="/solutions/visual-regression-testing">Visual regression</Link><Link href="/solutions/llm-evals">LLM evals</Link><Link href="/solutions/load-testing">Load testing</Link><Link href="/solutions/security-testing">Security testing</Link><Link href="/compare/testsprite">QAShift vs TestSprite</Link></div>
             <div><span>DEVELOPERS</span><Link href="/docs">Documentation</Link><Link href="/mcp">MCP server</Link><Link href="/github">GitHub App</Link><Link href="/#stack">Integrations</Link></div>
             <div><span>QASHIFT</span><a href="https://qashifthq.com/about">About</a><a href="https://qashifthq.com/about#careers">Careers</a><a href="https://qashifthq.com/contact">Contact</a><a href="https://qashifthq.com/security">Security</a><a href="https://qashifthq.com/insights">Insights</a></div>
           </div>
         </div>
-        <div className={styles.footerWordmark} aria-hidden>Verity</div>
+        <div className={styles.footerWordmark} aria-hidden>QAShift</div>
         <div className={styles.footerBottom}><span>© {new Date().getFullYear()} VERITY / QASHIFT</span><span>BUILT IN BENGALURU · TESTS STAY IN YOUR GITHUB</span></div>
       </div>
     </footer>
@@ -896,7 +896,7 @@ export function LandingExperience() {
               animate={{ y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
-              Paste a URL. Verity opens your live app, writes readable Playwright tests for UI and API flows — plus visual, AI-agent, load and security checks — and runs them in your own CI on every pull request. Failures come back with evidence, and you keep every line of code.
+              Paste a URL. QAShift opens your live app, writes readable Playwright tests for UI and API flows — plus visual, AI-agent, load and security checks — and runs them in your own CI on every pull request. Failures come back with evidence, and you keep every line of code.
             </motion.p>
             <motion.div
               initial={{ y: 14 }}

@@ -28,7 +28,7 @@ export default async function GithubAppPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">GitHub App</h1>
         <p className="mt-1 text-sm text-neutral-500">
-          Connect your repositories so Verity runs your tests on every pull request — exploratory and regression — and
+          Connect your repositories so QAShift runs your tests on every pull request — exploratory and regression — and
           comments the results, predictions, and self-healing diffs.
         </p>
       </div>
@@ -37,7 +37,7 @@ export default async function GithubAppPage() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-sm font-medium">Connect with GitHub</h2>
-            <p className="mt-1 text-xs text-neutral-500">Install <strong>Verity by QAShift</strong> and pick the repos to cover.</p>
+            <p className="mt-1 text-xs text-neutral-500">Install <strong>QAShift</strong> and pick the repos to cover.</p>
           </div>
           <a href={INSTALL_URL} target="_blank" rel="noreferrer"
             className="inline-flex items-center gap-2 bg-neutral-900 px-4 py-2 text-sm font-medium text-white dark:bg-white dark:text-neutral-900">

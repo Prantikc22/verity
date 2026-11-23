@@ -132,12 +132,12 @@ export function RunTests({ projectId, tests, kind }: { projectId: string; tests:
         <td class="s">${r.status}</td><td>${r.durationMs} ms</td>
         <td>${cell(r)}</td>
       </tr>`).join("");
-    const html = `<!doctype html><html><head><meta charset="utf-8"><title>Verity run report</title>
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>QAShift run report</title>
       <style>body{font-family:system-ui;margin:40px;max-width:1000px}h1{font-size:20px}
       table{border-collapse:collapse;width:100%;font-size:13px}td,th{border:1px solid #ddd;padding:8px;text-align:left;vertical-align:top}
       .passed .s,.healed .s{color:#059669}.failed .s{color:#dc2626}.flaky .s{color:#d97706}pre{white-space:pre-wrap;margin:0;font-size:12px;color:#dc2626}
       .sum span{display:inline-block;margin-right:16px}</style></head><body>
-      <h1>Verity — cloud run report</h1>
+      <h1>QAShift — cloud run report</h1>
       <p class="sum"><span><b>${summary.total}</b> total</span><span style="color:#059669"><b>${summary.passed}</b> passed</span><span style="color:#7c3aed"><b>${summary.healed}</b> self-healed</span><span style="color:#dc2626"><b>${summary.failed}</b> failed</span><span style="color:#d97706"><b>${summary.flaky}</b> flaky</span><span>${new Date().toLocaleString()}</span></p>
       <table><thead><tr><th>Test</th><th>Spec</th><th>Status</th><th>Duration</th><th>Details</th></tr></thead><tbody>${rowsHtml}</tbody></table>
       </body></html>`;

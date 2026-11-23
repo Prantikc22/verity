@@ -5,9 +5,9 @@ import landing from "@/components/landing/LandingExperience.module.css";
 import styles from "@/components/landing/SeoPage.module.css";
 import { SITE_URL } from "@/lib/site";
 
-const TITLE = "Verity vs TestSprite — an honest comparison for AI testing (2026)";
+const TITLE = "QAShift vs TestSprite — an honest comparison for AI testing (2026)";
 const DESCRIPTION =
-  "Comparing Verity and TestSprite: pricing models, test types, where tests run and who owns them. Verity charges for AI-written tests and runs them free in your CI; TestSprite uses monthly credits.";
+  "Comparing QAShift and TestSprite: pricing models, test types, where tests run and who owns them. QAShift charges for AI-written tests and runs them free in your CI; TestSprite uses monthly credits.";
 
 export const metadata: Metadata = {
   title: { absolute: TITLE },
@@ -33,9 +33,9 @@ const ROWS: [string, string, string][] = [
 ];
 
 const FAQ = [
-  { q: "Is Verity a TestSprite alternative?", a: "Yes, for teams that want AI-written tests they own as code and run in their own CI without a per-run meter. Teams that prefer a fully hosted runner with built-in Slack, Jira and Linear integrations may prefer TestSprite." },
-  { q: "Which is cheaper?", a: "It depends on how often you run. TestSprite's entry plan is cheaper ($19 vs $49). Because Verity never charges for runs in your CI, it tends to cost less for teams that run large suites on every commit." },
-  { q: "Can I move my tests off Verity later?", a: "Yes. UI, API and visual tests are plain Playwright files in your repository, so they keep running without Verity." },
+  { q: "Is QAShift a TestSprite alternative?", a: "Yes, for teams that want AI-written tests they own as code and run in their own CI without a per-run meter. Teams that prefer a fully hosted runner with built-in Slack, Jira and Linear integrations may prefer TestSprite." },
+  { q: "Which is cheaper?", a: "It depends on how often you run. TestSprite's entry plan is cheaper ($19 vs $49). Because QAShift never charges for runs in your CI, it tends to cost less for teams that run large suites on every commit." },
+  { q: "Can I move my tests off QAShift later?", a: "Yes. UI, API and visual tests are plain Playwright files in your repository, so they keep running without QAShift." },
 ];
 
 export default function CompareTestSprite() {
@@ -45,8 +45,8 @@ export default function CompareTestSprite() {
       {
         "@type": "BreadcrumbList",
         itemListElement: [
-          { "@type": "ListItem", position: 1, name: "Verity", item: SITE_URL },
-          { "@type": "ListItem", position: 2, name: "Verity vs TestSprite", item: `${SITE_URL}/compare/testsprite` },
+          { "@type": "ListItem", position: 1, name: "QAShift", item: SITE_URL },
+          { "@type": "ListItem", position: 2, name: "QAShift vs TestSprite", item: `${SITE_URL}/compare/testsprite` },
         ],
       },
       { "@type": "FAQPage", mainEntity: FAQ.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })) },
@@ -59,15 +59,15 @@ export default function CompareTestSprite() {
       <LandingNav />
       <main className={styles.main}>
         <div className={styles.shell}>
-          <nav className={styles.crumbs} aria-label="Breadcrumb"><Link href="/">Verity</Link><span>/</span><span aria-current="page">Verity vs TestSprite</span></nav>
+          <nav className={styles.crumbs} aria-label="Breadcrumb"><Link href="/">QAShift</Link><span>/</span><span aria-current="page">QAShift vs TestSprite</span></nav>
         </div>
         <section className={styles.hero}>
           <div className={styles.shell}>
             <span className={styles.eyebrow}>COMPARISON · UPDATED {CHECKED.toUpperCase()}</span>
-            <h1>Verity vs TestSprite<span>Which AI testing tool fits?</span></h1>
+            <h1>QAShift vs TestSprite<span>Which AI testing tool fits?</span></h1>
             <p className={styles.intro}>
               Both use AI to write end-to-end tests. They differ in how you pay, which kinds of test they cover, and where the tests live.
-              In short: Verity writes tests you own as code and runs them free in your CI; TestSprite runs tests on a credit plan in its cloud.
+              In short: QAShift writes tests you own as code and runs them free in your CI; TestSprite runs tests on a credit plan in its cloud.
             </p>
           </div>
         </section>
@@ -77,7 +77,7 @@ export default function CompareTestSprite() {
             <h2>Side by side</h2>
             <div className={styles.tableWrap}>
               <table className={styles.table}>
-                <thead><tr><th scope="col"></th><th scope="col">Verity</th><th scope="col">TestSprite</th></tr></thead>
+                <thead><tr><th scope="col"></th><th scope="col">QAShift</th><th scope="col">TestSprite</th></tr></thead>
                 <tbody>{ROWS.map(([k, v, t]) => <tr key={k}><td>{k}</td><td>{v}</td><td>{t}</td></tr>)}</tbody>
               </table>
             </div>
@@ -92,7 +92,7 @@ export default function CompareTestSprite() {
           <div className={styles.shell}>
             <h2>When to choose which</h2>
             <div className={styles.grid}>
-              <div><h3>Choose Verity if…</h3><p>You want tests as Playwright code in your repo, you run your suite often and don&apos;t want to pay per run, or you need visual, AI-agent, load or security testing alongside UI and API.</p></div>
+              <div><h3>Choose QAShift if…</h3><p>You want tests as Playwright code in your repo, you run your suite often and don&apos;t want to pay per run, or you need visual, AI-agent, load or security testing alongside UI and API.</p></div>
               <div><h3>Choose TestSprite if…</h3><p>You want a fully hosted runner with nothing in your CI, built-in Slack, Jira and Linear integrations, or the lowest-priced entry plan.</p></div>
             </div>
           </div>

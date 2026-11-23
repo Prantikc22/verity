@@ -32,7 +32,7 @@ export function AskAI() {
 
   function href(p: (typeof PROVIDERS)[number]) {
     const url = typeof window !== "undefined" ? window.location.href : "https://verity.qashifthq.com";
-    const prompt = `Summarize this page and tell me what Verity does — the AI-augmented testing platform where AI generates tests, an engineer verifies, and everything runs in your own CI: ${url}`;
+    const prompt = `Summarize this page and tell me what QAShift does — the AI-augmented testing platform where AI generates tests, an engineer verifies, and everything runs in your own CI: ${url}`;
     return p.url(encodeURIComponent(prompt));
   }
 

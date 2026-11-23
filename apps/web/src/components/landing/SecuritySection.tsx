@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 const ITEMS = [
   {
     t: "Your browsers and secrets never leave your CI",
-    d: "Verity is CI-native. Tests run in your own pipeline against your own environments. We never host your browsers or receive your app secrets — only test results and metadata are sent to us.",
+    d: "QAShift is CI-native. Tests run in your own pipeline against your own environments. We never host your browsers or receive your app secrets — only test results and metadata are sent to us.",
     icon: "M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z",
   },
   {
@@ -20,7 +20,7 @@ const ITEMS = [
   },
   {
     t: "We never write to your source",
-    d: "Self-healing proposes a corrected locator as a diff you approve. Verity has no write access to your code — a human always lands the change.",
+    d: "Self-healing proposes a corrected locator as a diff you approve. QAShift has no write access to your code — a human always lands the change.",
     icon: "M16 3l5 5L8 21H3v-5z",
   },
   {
@@ -42,7 +42,7 @@ export function SecuritySection() {
         <p className="text-sm font-medium text-indigo-600">Security &amp; data</p>
         <h2 className="mt-2 max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">Built so your code and secrets stay yours.</h2>
         <p className="mt-3 max-w-2xl text-neutral-600 dark:text-neutral-300">
-          Verity is designed for teams that can&apos;t hand their codebase to a SaaS. The architecture keeps execution in your
+          QAShift is designed for teams that can&apos;t hand their codebase to a SaaS. The architecture keeps execution in your
           infrastructure and gives us the least access that still does the job.
         </p>
       </motion.div>

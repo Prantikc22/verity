@@ -185,8 +185,8 @@ export function VeritySelfServeCards({ billing = { solo: false, yearly: false } 
         const rzp = new window.Razorpay({
           key: data.keyId,
           subscription_id: data.subscriptionId,
-          name: "Verity",
-          description: `Verity ${tierName(tier)} — ${period}`,
+          name: "QAShift",
+          description: `QAShift ${tierName(tier)} — ${period}`,
           theme: { color: "#4f46e5" },
           handler: () => window.location.assign("/dashboard?upgraded=1"),
           modal: { ondismiss: () => setBusy(null) },
@@ -205,7 +205,7 @@ export function VeritySelfServeCards({ billing = { solo: false, yearly: false } 
 
   return (
     <div className={styles.pricingCards}>
-      {/* Animated checkout-handoff modal — the QAShift → Verity → Razorpay
+      {/* Animated checkout-handoff modal — the QAShift → QAShift → Razorpay
           hand-off is never a silent page load; the user always sees what's up. */}
       {(busy || error) && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-neutral-950/70 p-4 backdrop-blur-sm">
@@ -228,7 +228,7 @@ export function VeritySelfServeCards({ billing = { solo: false, yearly: false } 
                 <svg className="mx-auto h-10 w-10 animate-spin text-indigo-600" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-20" /><path d="M22 12a10 10 0 0 0-10-10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" /></svg>
                 <h3 className="mt-4 text-base font-semibold">Opening secure checkout{deepLink ? ` — ${tierName(deepLink)}` : ""}…</h3>
                 <p className="mt-1.5 text-sm text-neutral-500">The Razorpay payment window is loading. If you&apos;re not signed in yet, we&apos;ll take you to sign in first, then bring you right back.</p>
-                <p className="mt-3 text-[11px] text-neutral-400">Billing runs on Verity — the QAShift engine.</p>
+                <p className="mt-3 text-[11px] text-neutral-400">Billing runs on QAShift — the QAShift engine.</p>
               </>
             )}
           </div>
@@ -237,7 +237,7 @@ export function VeritySelfServeCards({ billing = { solo: false, yearly: false } 
       {/* Contrast anchor — a managed QA hire runs $8k–15k/mo; against that the
           self-serve prices below read as almost free. */}
       <p className={styles.costAnchor}>
-        A dedicated QA hire can cost <s>$8,000+/mo</s>. Managed Verity with a forward-deployed engineer starts at <strong>$499/mo</strong>. Or start self-serve from <em>$0</em>.
+        A dedicated QA hire can cost <s>$8,000+/mo</s>. Managed QAShift with a forward-deployed engineer starts at <strong>$499/mo</strong>. Or start self-serve from <em>$0</em>.
       </p>
       {/* Currency toggle — above the cards, matching the platform pattern */}
       <div className={styles.currencyRow}>

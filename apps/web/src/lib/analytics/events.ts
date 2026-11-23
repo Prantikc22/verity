@@ -1,6 +1,6 @@
 /**
  * Canonical PLG funnel events. Wire these as each surface is built, not at the end.
- * Drop-off between consecutive steps is the core growth metric for Verity.
+ * Drop-off between consecutive steps is the core growth metric for QAShift.
  *
  *   test_generated → signup → github_connected → project_created
  *     → first_ci_run → upgrade_initiated → subscription_active

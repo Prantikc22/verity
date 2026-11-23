@@ -58,8 +58,8 @@ export function buildSummary(
 
   blocks.push(
     isFast
-      ? "## 🔎 Verity · Quick check"
-      : "## 🛡️ Verity · Full regression",
+      ? "## 🔎 QAShift · Quick check"
+      : "## 🛡️ QAShift · Full regression",
   );
   blocks.push(
     isFast
@@ -118,7 +118,7 @@ export function buildSummary(
   }
 
   blocks.push(`<sub>Commit \`${commitSha.slice(0, 7)}\` · [View run →](${APP_URL}/dashboard/projects/${project.id})</sub>`);
-  blocks.push("<sub>Posted by <b>Verity</b> — AI-augmented Playwright testing · a QAShift product</sub>");
+  blocks.push("<sub>Posted by <b>QAShift</b></sub>");
 
   return blocks.join("\n\n");
 }
@@ -143,7 +143,7 @@ export function buildDisciplineSummary(
   if (result.discipline === "performance" && result.perf) {
     const a = result.perf.aggregate;
     const isSmoke = result.perf.tier === "fast";
-    blocks.push("## ⚡ Verity · " + (isSmoke ? "Perf smoke check" : "Full load test"));
+    blocks.push("## ⚡ QAShift · " + (isSmoke ? "Perf smoke check" : "Full load test"));
     blocks.push(
       isSmoke
         ? "> A lightweight smoke check (few endpoints, short duration, small VU count) — **not** a full load test. The full load test runs on merge/schedule."
@@ -180,7 +180,7 @@ export function buildDisciplineSummary(
     const high = f.filter((x) => x.severity === "high").length;
     const med = f.filter((x) => x.severity === "medium").length;
     const low = f.filter((x) => x.severity === "low").length;
-    blocks.push("## 🔐 Verity · Security scan");
+    blocks.push("## 🔐 QAShift · Security scan");
     blocks.push(
       f.length === 0
         ? "> No security findings in this scan."
@@ -211,7 +211,7 @@ export function buildDisciplineSummary(
   }
 
   blocks.push(`<sub>Commit \`${commitSha.slice(0, 7)}\` · [View run →](${APP_URL}/dashboard/projects/${project.id}/runs/${result.runId})</sub>`);
-  blocks.push("<sub>Posted by <b>Verity</b> — a QAShift product</sub>");
+  blocks.push("<sub>Posted by <b>QAShift</b></sub>");
   return blocks.join("\n\n");
 }
 

@@ -71,7 +71,7 @@ export function McpInstall() {
       <div className="mt-4 border border-neutral-200 p-6 dark:border-neutral-800">
         {tab === "VS Code" && (
           <div>
-            <p className="text-sm text-neutral-600 dark:text-neutral-300">One click — VS Code will open and add the Verity MCP server. Then paste your project token when prompted.</p>
+            <p className="text-sm text-neutral-600 dark:text-neutral-300">One click — VS Code will open and add the QAShift MCP server. Then paste your project token when prompted.</p>
             <a href={VSCODE_LINK} className="mt-3 inline-flex items-center gap-2 bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-500">
               Install in VS Code →
             </a>

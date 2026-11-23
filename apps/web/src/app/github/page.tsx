@@ -8,20 +8,20 @@ import { GithubInstallVisual } from "@/components/GithubInstallVisual";
 export const metadata: Metadata = {
   title: "GitHub App — Playwright tests and PR checks",
   alternates: { canonical: "/github" },
-  description: "Install Verity on your repositories to automatically generate, run, and gate Playwright tests on every pull request.",
+  description: "Install QAShift on your repositories to automatically generate, run, and gate Playwright tests on every pull request.",
 };
 
 const INSTALL_URL = "https://github.com/apps/verity-by-qashift";
 
 const STEPS = [
-  { n: "1", t: "Install the app", d: "Add Verity by QAShift to the repositories you want covered. You control exactly which repos it can see." },
-  { n: "2", t: "Generate your tests", d: "Use the Verity MCP in your IDE, or the dashboard, to generate Playwright tests for your app — saved to your project." },
-  { n: "3", t: "Open a pull request", d: "Verity detects your tests and runs them on every PR — exploratory and regression — then comments the results." },
+  { n: "1", t: "Install the app", d: "Add QAShift to the repositories you want covered. You control exactly which repos it can see." },
+  { n: "2", t: "Generate your tests", d: "Use the QAShift MCP in your IDE, or the dashboard, to generate Playwright tests for your app — saved to your project." },
+  { n: "3", t: "Open a pull request", d: "QAShift detects your tests and runs them on every PR — exploratory and regression — then comments the results." },
   { n: "4", t: "Merge with confidence", d: "Pass rate, flake triage, and a deploy-confidence prediction posted right in the PR, before you ship." },
 ];
 
 const PERMS = [
-  { t: "Checks & commit statuses", d: "So Verity can post pass/fail and gate merges." },
+  { t: "Checks & commit statuses", d: "So QAShift can post pass/fail and gate merges." },
   { t: "Pull requests", d: "To comment results, predictions, and self-healing diffs." },
   { t: "Contents (read/write)", d: "To read your test specs and push generated tests as a PR." },
   { t: "Metadata", d: "Standard read-only access GitHub requires for every app." },
@@ -37,9 +37,9 @@ export default function GithubAppPage() {
             <span className="inline-flex items-center gap-2 border border-neutral-300 bg-white px-3 py-1 text-xs font-medium text-neutral-700 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
               <GithubMark className="h-3.5 w-3.5" /> GitHub App
             </span>
-            <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">Run Verity on every pull request.</h1>
+            <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">Run QAShift on every pull request.</h1>
             <p className="mt-4 max-w-2xl text-lg text-neutral-600 dark:text-neutral-300">
-              Connect your repositories to automate your testing lifecycle. Once you&apos;ve generated tests with Verity, our GitHub
+              Connect your repositories to automate your testing lifecycle. Once you&apos;ve generated tests with QAShift, our GitHub
               integration detects and runs them on every PR — so your changes are production-ready before they merge.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -80,7 +80,7 @@ export default function GithubAppPage() {
             <Reveal>
               <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">What it can access</h2>
               <p className="mt-2 max-w-2xl text-sm text-neutral-600 dark:text-neutral-300">
-                Least-privilege by design. You pick the repositories during install, and Verity only requests what it needs to run and report tests.
+                Least-privilege by design. You pick the repositories during install, and QAShift only requests what it needs to run and report tests.
               </p>
             </Reveal>
             <div className="mt-8 grid gap-4 sm:grid-cols-2">
@@ -101,7 +101,7 @@ export default function GithubAppPage() {
           {/* CTA */}
           <Reveal>
             <section className="mx-auto my-24 max-w-6xl bg-gradient-to-br from-indigo-600 to-violet-600 px-8 py-16 text-center text-white">
-              <h2 className="mx-auto max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">Add Verity to your repos in two clicks.</h2>
+              <h2 className="mx-auto max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">Add QAShift to your repos in two clicks.</h2>
               <p className="mx-auto mt-3 max-w-xl text-indigo-100">Install the GitHub App, then generate your first test from the dashboard or your IDE.</p>
               <div className="mt-8 flex flex-wrap justify-center gap-3">
                 <a href={INSTALL_URL} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 bg-white px-6 py-3 text-sm font-semibold text-indigo-700">
@@ -119,7 +119,7 @@ export default function GithubAppPage() {
           <div>
             <Logo />
             <p className="mt-2 max-w-sm text-sm text-neutral-500">
-              Verity is part of the QAShift testing platform —{" "}
+              QAShift is part of the QAShift testing platform —{" "}
               <a href="https://www.qashifthq.com" target="_blank" rel="noreferrer" className="font-medium text-neutral-700 underline underline-offset-2 hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-white">Explore QAShift →</a>
             </p>
           </div>
@@ -131,7 +131,7 @@ export default function GithubAppPage() {
           </div>
         </div>
         <div className="border-t border-neutral-100 py-5 text-center text-xs text-neutral-400 dark:border-neutral-900">
-          © {new Date().getFullYear()} Verity — part of the QAShift testing platform. AI writes, engineers verify.
+          © {new Date().getFullYear()} QAShift — part of the QAShift testing platform. AI writes, engineers verify.
         </div>
       </footer>
     </div>

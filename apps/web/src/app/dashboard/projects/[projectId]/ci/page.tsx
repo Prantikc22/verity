@@ -24,7 +24,7 @@ export default async function CiSetupPage({ params }: { params: Promise<{ projec
         <h2 className="text-lg font-semibold tracking-tight">CI Setup</h2>
         <p className="mt-0.5 text-sm text-neutral-500">
           Choose which tests to run, configure them, and copy a ready-to-paste config for GitHub, GitLab, or Jenkins.
-          Everything runs in <strong>your</strong> CI; results post to Verity.
+          Everything runs in <strong>your</strong> CI; results post to QAShift.
         </p>
       </div>
 

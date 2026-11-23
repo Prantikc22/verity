@@ -31,7 +31,7 @@ export default async function McpPage({ params }: { params: Promise<{ projectId:
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-lg font-semibold tracking-tight">Local testing with the Verity MCP</h2>
+        <h2 className="text-lg font-semibold tracking-tight">Local testing with the QAShift MCP</h2>
         <p className="text-xs text-neutral-500">
           Test on <strong>localhost</strong> straight from Cursor, Claude Code, or VS Code. The MCP runs Playwright in
           <strong> your own repo</strong> (no cloud browser), generates tests, and reports results back here.
@@ -60,7 +60,7 @@ export default async function McpPage({ params }: { params: Promise<{ projectId:
           <li><code>verity_list_tests</code> · <code>verity_status</code></li>
         </ul>
         <p className="mt-3 border-l-2 border-indigo-500 pl-3 text-xs italic text-neutral-500">
-          “Connect to Verity, propose tests for my diff, generate the top two, then run them against http://localhost:3000.”
+          “Connect to QAShift, propose tests for my diff, generate the top two, then run them against http://localhost:3000.”
         </p>
       </section>
 

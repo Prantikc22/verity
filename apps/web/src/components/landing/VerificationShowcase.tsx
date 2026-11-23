@@ -32,7 +32,7 @@ export function VerificationShowcase() {
         <aside className="hidden border-r border-white/[0.08] bg-black/10 p-4 sm:block">
           <div className="mb-6 flex items-center gap-2 px-2">
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-500 text-xs font-bold text-white">V</span>
-            <span className="text-sm font-semibold text-white">Verity</span>
+            <span className="text-sm font-semibold text-white">QAShift</span>
           </div>
           <div className="space-y-1 text-xs">
             {[

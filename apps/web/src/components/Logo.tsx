@@ -1,20 +1,12 @@
+/** The QAShift mark: a Q whose tail is a green check. Ring follows currentColor. */
 export function Logo({ className = "" }: { className?: string }) {
   return (
     <span className={`inline-flex items-center gap-2 ${className}`}>
-      <svg width="22" height="22" viewBox="0 0 32 32" fill="none" aria-hidden>
-        <rect width="32" height="32" className="fill-indigo-600" />
-        {/* A "V" that doubles as a verification checkmark — sharp, mitered. */}
-        <path
-          d="M6 9 L16 24 L26 9"
-          fill="none"
-          stroke="#ffffff"
-          strokeWidth="3.4"
-          strokeLinecap="square"
-          strokeLinejoin="miter"
-        />
-        <path d="M12 14.5 L15 18 L21.5 10" fill="none" stroke="#c7d2fe" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter" />
+      <svg width="24" height="24" viewBox="0 0 64 64" aria-hidden>
+        <path d="M 43.56 21.1 A 19 19 0 1 0 42.56 44.21" fill="none" stroke="currentColor" strokeWidth="7" strokeLinecap="round" />
+        <path d="M 19 33 L 27 41 L 55 13" fill="none" stroke="#22C55E" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
-      <span className="text-lg font-semibold tracking-tight">Verity</span>
+      <span className="text-lg font-semibold tracking-tight">QAShift</span>
     </span>
   );
 }

@@ -16,6 +16,8 @@ export type AgentStatus = "live" | "beta" | "roadmap";
 
 export interface AgentDef {
   key: AgentKey;
+  /** Short product name, always shown with the role. */
+  codename: string;
   name: string;
   status: AgentStatus;
   /** test_runs.discipline / tests.kind values this agent owns. */
@@ -26,12 +28,12 @@ export interface AgentDef {
 }
 
 export const AGENTS: AgentDef[] = [
-  { key: "ui", name: "UI Agent", status: "live", disciplines: ["ui"], projectPath: "generate", summary: "Journeys and functional regressions in a real browser." },
-  { key: "api", name: "API Agent", status: "live", disciplines: ["api", "contract"], projectPath: "api/generate", summary: "Contracts, auth rules and multi-step API workflows." },
-  { key: "visual", name: "Visual Agent", status: "live", disciplines: ["visual"], projectPath: "visual", summary: "Screenshot baselines and reviewable diffs." },
-  { key: "accessibility", name: "Accessibility Agent", status: "live", disciplines: ["accessibility"], projectPath: null, summary: "WCAG regressions per deploy, gated in the PR. Runs on the Clearpath engine." },
-  { key: "performance", name: "Performance Agent", status: "beta", disciplines: ["performance"], projectPath: "performance", summary: "Latency smoke checks and scoped load profiles." },
-  { key: "security", name: "Security Agent", status: "beta", disciplines: ["security"], projectPath: "security", summary: "Authorised, non-destructive dynamic and static checks." },
+  { key: "ui", codename: "Scout", name: "UI Agent", status: "live", disciplines: ["ui"], projectPath: "generate", summary: "Journeys and functional regressions in a real browser." },
+  { key: "api", codename: "Relay", name: "API Agent", status: "live", disciplines: ["api", "contract"], projectPath: "api/generate", summary: "Contracts, auth rules and multi-step API workflows." },
+  { key: "visual", codename: "Prism", name: "Visual Agent", status: "live", disciplines: ["visual"], projectPath: "visual", summary: "Screenshot baselines and reviewable diffs." },
+  { key: "accessibility", codename: "Lumen", name: "Accessibility Agent", status: "live", disciplines: ["accessibility"], projectPath: null, summary: "WCAG regressions per deploy, gated in the PR." },
+  { key: "performance", codename: "Pulse", name: "Performance Agent", status: "beta", disciplines: ["performance"], projectPath: "performance", summary: "Latency smoke checks and scoped load profiles." },
+  { key: "security", codename: "Warden", name: "Security Agent", status: "beta", disciplines: ["security"], projectPath: "security", summary: "Authorised, non-destructive dynamic and static checks." },
 ];
 
 /** Accessibility still lives on its own host until the Clearpath import lands. */

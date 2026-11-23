@@ -26,7 +26,7 @@ export default async function IntegrationsPage() {
     { name: "GitLab CI", desc: "Generated pipeline config posting to the same endpoint.", status: "live", href: ci },
     { name: "Jenkins", desc: "Generated Jenkinsfile stage.", status: "live", href: ci },
     { name: "CLI and MCP", desc: "Run from your terminal, Claude, Cursor or VS Code.", status: "live", href: mcp },
-    { name: "Accessibility (Clearpath)", desc: "Accessibility Agent runs here until accounts are merged.", status: "live", href: ACCESSIBILITY_APP_URL, external: true },
+    { name: "Accessibility workspace", desc: "Lumen, the Accessibility Agent, runs here until accounts are merged.", status: "live", href: ACCESSIBILITY_APP_URL, external: true },
     { name: "Slack", desc: "Release summaries in a channel.", status: "roadmap" },
     { name: "Jira", desc: "File real failures as issues.", status: "roadmap" },
     { name: "Linear", desc: "File real failures as issues.", status: "roadmap" },

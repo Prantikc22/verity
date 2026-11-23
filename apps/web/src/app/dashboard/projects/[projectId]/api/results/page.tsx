@@ -74,7 +74,7 @@ export default async function ApiResultsPage({ params }: { params: Promise<{ pro
     <div className="space-y-6">
       <div>
         <h2 className="text-lg font-semibold tracking-tight">API coverage &amp; results</h2>
-        <p className="text-xs text-neutral-500">Every endpoint and its health, in one place. Verity tests each endpoint with example user journeys <em>and</em> automatic contract checks, then merges them — so you see API health, not tooling.</p>
+        <p className="text-xs text-neutral-500">Every endpoint and its health, in one place. QAShift tests each endpoint with example user journeys <em>and</em> automatic contract checks, then merges them — so you see API health, not tooling.</p>
       </div>
 
       {totalChecks === 0 ? (

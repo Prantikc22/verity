@@ -198,7 +198,7 @@ function Choose({ onPick }: { onPick: (m: "mcp" | "web") => void }) {
             <span className="text-sm font-medium">Live Web App</span>
             <span className="ml-auto bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">Ready</span>
           </div>
-          <p className="mt-2 text-xs text-neutral-500">Catch bugs in any live environment — just paste a production, staging, or preview URL. Verity explores it and proposes a full test plan.</p>
+          <p className="mt-2 text-xs text-neutral-500">Catch bugs in any live environment — just paste a production, staging, or preview URL. QAShift explores it and proposes a full test plan.</p>
         </button>
         <button onClick={() => onPick("mcp")} className="group border border-neutral-200 p-4 text-left transition hover:border-indigo-400 dark:border-neutral-800">
           <div className="flex items-center gap-2">
@@ -223,7 +223,7 @@ function McpPanel({ projectId, onBack }: { projectId: string; onBack: () => void
       <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-xs text-neutral-600 dark:text-neutral-300">
         <li>Open the <Link href={`/dashboard/projects/${projectId}/mcp`} className="text-indigo-600 underline">Local / MCP</Link> page and copy your project token.</li>
         <li>Add the <code>@qashifthq/verity-mcp</code> server to your IDE&apos;s MCP config with that token.</li>
-        <li>In your IDE chat: <em>&quot;Use Verity to propose tests for http://localhost:3000, generate them, and run them.&quot;</em></li>
+        <li>In your IDE chat: <em>&quot;Use QAShift to propose tests for http://localhost:3000, generate them, and run them.&quot;</em></li>
       </ol>
       <Link href={`/dashboard/projects/${projectId}/mcp`} className="mt-4 inline-block bg-indigo-600 px-4 py-2 text-sm font-medium text-white">Open Local / MCP setup →</Link>
     </div>

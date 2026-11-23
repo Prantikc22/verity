@@ -50,7 +50,7 @@ export default async function PredictionsPage({ params }: { params: Promise<{ pr
       {/* Plain-English, project-scoped headline — the selling point */}
       <section className="border-l-4 border-indigo-500 bg-indigo-50/40 p-5 dark:bg-indigo-950/20">
         <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold tracking-tight">What Verity predicts for this project</h2>
+          <h2 className="text-lg font-semibold tracking-tight">What QAShift predicts for this project</h2>
           <Badge kind="live" />
         </div>
         <p className="mt-1 text-xs text-neutral-500">Predictions are <strong>per project</strong> — one project is one app/domain you&apos;re testing. They&apos;re built from this project&apos;s real run history.</p>

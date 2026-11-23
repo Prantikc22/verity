@@ -14,10 +14,55 @@ import { randomUUID } from "node:crypto";
 import { pathToFileURL } from "node:url";
 import { mkdirSync, writeFileSync, readFileSync, existsSync, rmSync } from "node:fs";
 import { join } from "node:path";
+import { lookup } from "node:dns/promises";
+import { isIP } from "node:net";
 
 const TOKEN = process.env.RUNNER_SERVICE_TOKEN;
 const PORT = Number(process.env.PORT ?? 8080);
 const APP_DIR = process.cwd();
+
+/**
+ * Multi-tenant safety. Customer spec code runs in a child process, so it must
+ * never see this service's secrets: the child gets ONLY what Playwright needs.
+ */
+const CHILD_ENV = Object.fromEntries(
+  ["PATH", "HOME", "NODE_ENV", "PLAYWRIGHT_BROWSERS_PATH", "TMPDIR", "LANG"]
+    .filter((k) => process.env[k] !== undefined)
+    .map((k) => [k, process.env[k]]),
+);
+
+/** One job per machine (Fly's hard_limit routes the next request to another machine). */
+const MAX_JOBS = Math.max(1, Number(process.env.RUNNER_MAX_JOBS ?? 1));
+let activeJobs = 0;
+
+/**
+ * Refuse private, loopback, link-local and metadata targets so a tenant cannot
+ * use our runner to reach internal networks. Set RUNNER_ALLOW_PRIVATE_TARGETS=1
+ * only for local development.
+ */
+export function isPrivateAddress(ip) {
+  if (isIP(ip) === 6) {
+    const v = ip.toLowerCase();
+    if (v === "::1" || v === "::") return true;
+    if (v.startsWith("fc") || v.startsWith("fd") || v.startsWith("fe80")) return true;
+    const m = v.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);
+    return m ? isPrivateAddress(m[1]) : false;
+  }
+  const [a, b] = ip.split(".").map(Number);
+  return a === 10 || a === 127 || a === 0 || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31)
+    || (a === 192 && b === 168) || (a === 100 && b >= 64 && b <= 127) || a >= 224;
+}
+
+export async function assertPublicTarget(raw) {
+  if (raw === undefined || raw === null || raw === "") return;
+  if (process.env.RUNNER_ALLOW_PRIVATE_TARGETS === "1") return;
+  let u;
+  try { u = new URL(raw); } catch { throw new Error("Target must be a valid URL."); }
+  if (u.protocol !== "http:" && u.protocol !== "https:") throw new Error("Target must be http(s).");
+  const host = u.hostname.replace(/^\[|\]$/g, "");
+  const addrs = isIP(host) ? [host] : (await lookup(host, { all: true })).map((r) => r.address);
+  if (!addrs.length || addrs.some(isPrivateAddress)) throw new Error("Target resolves to a private or internal address.");
+}
 
 /**
  * Execute real Playwright specs (with their assertions) and return per-test
@@ -52,7 +97,7 @@ export async function runTests({ tests, baseURL, reruns = 2, updateSnapshots = f
       ...(updateSnapshots ? ["--update-snapshots"] : []),
       ...(grep ? ["--grep", grep] : []),
     ];
-    const res = await promisify(execFile)("npx", args, { cwd: APP_DIR, encoding: "utf8", timeout: 200000, maxBuffer: 64 * 1024 * 1024 }).catch(e => e);
+    const res = await promisify(execFile)("npx", args, { cwd: APP_DIR, env: CHILD_ENV, encoding: "utf8", timeout: 200000, maxBuffer: 64 * 1024 * 1024 }).catch(e => e);
     lastStderr = res.stderr ?? "";
     // The json reporter writes the report to stdout; isolate the JSON object.
     const out = res.stdout ?? "";
@@ -83,8 +128,9 @@ export async function runTests({ tests, baseURL, reruns = 2, updateSnapshots = f
     return out;
   };
 
+  try {
   const first = await runOnce();
-  if (!first) { rmSync(dir, { recursive: true, force: true }); throw new Error("playwright did not produce output: " + lastStderr.slice(0, 400)); }
+  if (!first) throw new Error("playwright did not produce output: " + lastStderr.slice(0, 400));
   const specs = collect(first);
 
   const results = [];
@@ -107,8 +153,11 @@ export async function runTests({ tests, baseURL, reruns = 2, updateSnapshots = f
       error: allPassed ? null : failure?.error || first.errors?.[0]?.message || "No passing executable tests were collected.",
       screenshotBase64: failure?.screenshotBase64 ?? null, cases: rows };
   });
-  rmSync(dir, { recursive: true, force: true });
   return grouped;
+  } finally {
+    // Always remove this tenant's specs, traces and screenshots from disk.
+    rmSync(dir, { recursive: true, force: true });
+  }
 }
 
 function readJson(req) {
@@ -273,6 +322,19 @@ const server = createServer(async (req, res) => {
     res.writeHead(401, { "content-type": "application/json" }); res.end('{"error":"unauthorized"}'); return;
   }
   const body = await readJson(req);
+  try {
+    await assertPublicTarget(body?.url);
+    await assertPublicTarget(body?.baseURL);
+  } catch (err) {
+    res.writeHead(400, { "content-type": "application/json" }); res.end(JSON.stringify({ error: err.message })); return;
+  }
+  if (activeJobs >= MAX_JOBS) {
+    res.writeHead(503, { "content-type": "application/json", "retry-after": "5" }); res.end('{"error":"busy"}'); return;
+  }
+  activeJobs++;
+  let released = false;
+  const release = () => { if (!released) { released = true; activeJobs--; } };
+  res.on("close", () => { if (req.url !== "/explore") release(); });
 
   if (req.url === "/explore") {
     if (!body?.url || !body?.explorationId || !body?.callbackUrl || !body?.callbackToken) {
@@ -280,7 +342,7 @@ const server = createServer(async (req, res) => {
     }
     res.writeHead(202, { "content-type": "application/json" });
     res.end('{"accepted":true}');
-    explore(body);
+    explore(body).finally(release);
     return;
   }
 

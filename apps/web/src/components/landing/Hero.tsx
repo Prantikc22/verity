@@ -47,7 +47,7 @@ export function Hero() {
           </motion.h1>
 
           <motion.p variants={item} className="mt-7 max-w-2xl text-lg leading-relaxed text-neutral-300 sm:text-xl">
-            You changed the code. Did anything break? Verity writes the end-to-end tests your team never gets to, runs them against the real app, and shows exactly what failed—before a user does.
+            You changed the code. Did anything break? QAShift writes the end-to-end tests your team never gets to, runs them against the real app, and shows exactly what failed—before a user does.
           </motion.p>
 
           <motion.div variants={item} className="mt-9 max-w-2xl">

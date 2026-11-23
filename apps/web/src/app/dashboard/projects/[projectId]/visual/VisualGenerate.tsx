@@ -36,7 +36,7 @@ export function VisualGenerate({ projectId }: { projectId: string }) {
   return (
     <section className="border border-neutral-200 p-4 dark:border-neutral-800">
       <h3 className="text-sm font-semibold">Generate a visual snapshot</h3>
-      <p className="mt-0.5 text-xs text-neutral-500">Give a URL or describe a screen/state. Verity writes a Playwright <code>toHaveScreenshot</code> spec you review, then commit as the baseline.</p>
+      <p className="mt-0.5 text-xs text-neutral-500">Give a URL or describe a screen/state. QAShift writes a Playwright <code>toHaveScreenshot</code> spec you review, then commit as the baseline.</p>
       <div className="mt-3 space-y-2">
         <input
           value={input}

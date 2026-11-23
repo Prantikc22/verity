@@ -28,21 +28,21 @@ export const SOLUTION_PAGES: SolutionPage[] = [
     name: "AI Playwright test generator",
     title: "AI Playwright Test Generator — readable end-to-end tests from your live app",
     description:
-      "Generate Playwright end-to-end tests with AI from your app's URL. Verity opens the live page, writes readable TypeScript with role-based locators, verifies it in a real browser, and runs it in your CI.",
+      "Generate Playwright end-to-end tests with AI from your app's URL. QAShift opens the live page, writes readable TypeScript with role-based locators, verifies it in a real browser, and runs it in your CI.",
     eyebrow: "AI PLAYWRIGHT TEST GENERATOR",
     h1: "Playwright tests, written by AI.",
     h1Accent: "Grounded in your live app.",
     intro:
-      "Paste a URL and Verity opens your app in a real browser, maps the journeys worth testing, and writes Playwright specs your team can read, edit and keep. Locators come from the rendered page — getByRole, getByLabel, getByText — never guessed CSS selectors, so tests survive the next refactor.",
+      "Paste a URL and QAShift opens your app in a real browser, maps the journeys worth testing, and writes Playwright specs your team can read, edit and keep. Locators come from the rendered page — getByRole, getByLabel, getByText — never guessed CSS selectors, so tests survive the next refactor.",
     checks: [
       ["Critical journeys", "Sign-up, login, checkout, search, settings — the flows that lose money when they break."],
       ["Real browser verification", "Each draft is run in a real browser before it is marked verified, so you start from tests that pass."],
-      ["Logged-in flows", "Give test credentials and Verity confirms the sign-in works before it writes protected flows."],
+      ["Logged-in flows", "Give test credentials and QAShift confirms the sign-in works before it writes protected flows."],
       ["Flaky vs. broken", "Failures are rerun automatically. Passing on retry is flagged as flaky and tracked; failing every time is a real bug."],
     ],
     steps: [
       ["Paste a URL", "Optionally add a PRD or acceptance criteria for intent-aware coverage."],
-      ["Pick the tests to keep", "Verity proposes a set of journeys; you choose, review the plain-English plan and the code."],
+      ["Pick the tests to keep", "QAShift proposes a set of journeys; you choose, review the plain-English plan and the code."],
       ["Commit and run in CI", "Copy the GitHub Actions, GitLab or Jenkins config. Every pull request gets a Quick check; merges get a Full regression."],
     ],
     code: {
@@ -59,13 +59,13 @@ test("guest can check out with a saved cart", async ({ page }) => {
     },
     why: [
       ["Plain Playwright you own", "No proprietary format or runtime. If you leave, the tests keep running with npx playwright test."],
-      ["Unlimited runs in your CI", "You pay for tests Verity writes, never for executions on your own runners."],
-      ["Self-healing without hiding bugs", "When a selector drifts, Verity proposes a grounded fix as a reviewable diff. Real failures stay failures."],
+      ["Unlimited runs in your CI", "You pay for tests QAShift writes, never for executions on your own runners."],
+      ["Self-healing without hiding bugs", "When a selector drifts, QAShift proposes a grounded fix as a reviewable diff. Real failures stay failures."],
     ],
     faq: [
-      { q: "Does Verity generate Playwright tests from a URL?", a: "Yes. Verity renders the page in a real browser, extracts its headings, buttons, inputs and links, and generates a Playwright TypeScript spec whose locators are grounded in what it saw. Drafts are then run in a browser before they are marked verified." },
+      { q: "Does QAShift generate Playwright tests from a URL?", a: "Yes. QAShift renders the page in a real browser, extracts its headings, buttons, inputs and links, and generates a Playwright TypeScript spec whose locators are grounded in what it saw. Drafts are then run in a browser before they are marked verified." },
       { q: "Can I edit the generated tests?", a: "Yes — they are ordinary Playwright files in your repository. Edit, refactor or delete them like any other code." },
-      { q: "Does it work with single-page apps?", a: "Yes. When static HTML is sparse, Verity renders the page in a browser first, so client-rendered React, Vue or Angular apps get locators from the real DOM." },
+      { q: "Does it work with single-page apps?", a: "Yes. When static HTML is sparse, QAShift renders the page in a browser first, so client-rendered React, Vue or Angular apps get locators from the real DOM." },
       { q: "Is there a free plan?", a: "Yes. The free plan includes 15 AI-written tests a month and unlimited runs in your CI, with no credit card." },
     ],
     related: ["api-testing", "visual-regression-testing", "load-testing"],
@@ -80,7 +80,7 @@ test("guest can check out with a saved cart", async ({ page }) => {
     h1: "API tests from your spec.",
     h1Accent: "Contract checks on every endpoint.",
     intro:
-      "Upload an OpenAPI spec (or point at your base URL) and Verity proposes the API journeys that matter — create, read, update, auth failures, edge cases — as Playwright API tests. Separately, contract checks exercise every operation automatically and report only the smallest request that breaks your documented contract.",
+      "Upload an OpenAPI spec (or point at your base URL) and QAShift proposes the API journeys that matter — create, read, update, auth failures, edge cases — as Playwright API tests. Separately, contract checks exercise every operation automatically and report only the smallest request that breaks your documented contract.",
     checks: [
       ["Request chains", "Create a resource, read it back, update it, delete it — state carried between calls like a real client."],
       ["Auth and permissions", "Missing or wrong tokens, forbidden actions, and the status codes your spec promises."],
@@ -108,11 +108,11 @@ test("an order can be created and read back", async ({ request }) => {
     },
     why: [
       ["Two methods, one view", "Example-based journeys and automatic contract checks land in one endpoint view; a failure both catch is marked double-verified."],
-      ["Runs where your API lives", "Internal APIs stay internal: tests run on your CI runners, not on Verity's servers."],
+      ["Runs where your API lives", "Internal APIs stay internal: tests run on your CI runners, not on QAShift's servers."],
       ["No lock-in", "Tests are Playwright files; contract checks read your existing OpenAPI document."],
     ],
     faq: [
-      { q: "Can Verity generate API tests from an OpenAPI or Swagger file?", a: "Yes. Verity reads the spec, proposes endpoint journeys and writes them as Playwright API tests. Contract checks also use the spec to exercise every operation." },
+      { q: "Can QAShift generate API tests from an OpenAPI or Swagger file?", a: "Yes. QAShift reads the spec, proposes endpoint journeys and writes them as Playwright API tests. Contract checks also use the spec to exercise every operation." },
       { q: "Do I need a public API?", a: "No. Generation reads your spec; execution happens in your own CI, so private and internal APIs work." },
       { q: "What do contract checks report?", a: "Each operation that violates the spec — for example an undocumented 400 or a response that doesn't match the schema — with the minimal failing request and a curl command to reproduce it." },
     ],
@@ -128,7 +128,7 @@ test("an order can be created and read back", async ({ request }) => {
     h1: "See every unintended UI change",
     h1Accent: "before your users do.",
     intro:
-      "Verity writes Playwright visual tests that reach a stable state of each key screen, mask volatile regions like timestamps and avatars, and compare a screenshot against a baseline committed in your repository. A change over your threshold is flagged as changed — you approve the new baseline or fix the regression.",
+      "QAShift writes Playwright visual tests that reach a stable state of each key screen, mask volatile regions like timestamps and avatars, and compare a screenshot against a baseline committed in your repository. A change over your threshold is flagged as changed — you approve the new baseline or fix the regression.",
     checks: [
       ["Layout and styling drift", "Broken grids, overlapping elements, missing icons, wrong colours after a CSS or dependency change."],
       ["Key screens and components", "Full pages or a single component, each in its own focused spec."],
@@ -136,7 +136,7 @@ test("an order can be created and read back", async ({ request }) => {
       ["First-run baselines", "A new test captures its baseline in CI and hands it back as an artifact to commit — same OS as later runs."],
     ],
     steps: [
-      ["Paste a URL", "Verity picks stable states worth snapshotting and writes one spec per state."],
+      ["Paste a URL", "QAShift picks stable states worth snapshotting and writes one spec per state."],
       ["Run once to capture baselines", "Download the captured images from the CI artifact and commit them next to the specs."],
       ["Every PR compares", "Changes over your threshold are reported as changed snapshots with the diff."],
     ],
@@ -160,7 +160,7 @@ test("pricing page looks right", async ({ page }) => {
     ],
     faq: [
       { q: "Where are visual baselines stored?", a: "In your repository, next to each spec. CI compares against them; you update them by committing new images." },
-      { q: "Why do baselines need to be captured on the CI OS?", a: "Fonts and anti-aliasing render slightly differently per operating system. Capturing baselines on the same OS as CI (Linux on GitHub-hosted runners) avoids false diffs — Verity's first run does exactly that." },
+      { q: "Why do baselines need to be captured on the CI OS?", a: "Fonts and anti-aliasing render slightly differently per operating system. Capturing baselines on the same OS as CI (Linux on GitHub-hosted runners) avoids false diffs — QAShift's first run does exactly that." },
       { q: "How do you avoid flaky visual tests?", a: "Specs wait for the key element, mask volatile regions, and use a suite-wide pixel-drift threshold rather than an exact match." },
     ],
     related: ["playwright-test-generator", "llm-evals", "security-testing"],
@@ -170,12 +170,12 @@ test("pricing page looks right", async ({ page }) => {
     name: "LLM & AI agent evals",
     title: "LLM Evals for Your AI Features — prompt-injection, leakage and grounding tests in CI",
     description:
-      "Test your chatbot, RAG assistant or AI agent on every deploy. Verity writes eval suites with a built-in prompt-injection and PII pack, scores every reply, and flags inconsistent answers as flaky.",
+      "Test your chatbot, RAG assistant or AI agent on every deploy. QAShift writes eval suites with a built-in prompt-injection and PII pack, scores every reply, and flags inconsistent answers as flaky.",
     eyebrow: "LLM & AI AGENT EVALS",
     h1: "Test your AI feature",
     h1Accent: "like the rest of your product.",
     intro:
-      "A prompt tweak or a model swap can quietly change what your assistant says. Verity writes an eval suite for your own AI endpoint — grounding, refusals, answer format, tool use — and adds a built-in adversarial pack for prompt injection and data leakage. Every case runs against your endpoint in CI and is scored, not eyeballed.",
+      "A prompt tweak or a model swap can quietly change what your assistant says. QAShift writes an eval suite for your own AI endpoint — grounding, refusals, answer format, tool use — and adds a built-in adversarial pack for prompt injection and data leakage. Every case runs against your endpoint in CI and is scored, not eyeballed.",
     checks: [
       ["Prompt injection", "Direct overrides, instructions hidden in pasted data, role-play jailbreaks and encoded instructions, each with a canary that must never come back."],
       ["Data leakage", "Card numbers and other sensitive input must not be echoed back."],
@@ -225,7 +225,7 @@ test("pricing page looks right", async ({ page }) => {
     h1: "Know it is slower",
     h1Accent: "before it ships.",
     intro:
-      "Verity writes one load-test script from your API spec and runs it with deterministic profiles: a 30-second smoke check on every pull request, and the profile you choose on merge — load, stress, spike, soak or breakpoint. p50, p95, p99 and error rate are tracked per run, and optional Core Web Vitals cover page-load speed.",
+      "QAShift writes one load-test script from your API spec and runs it with deterministic profiles: a 30-second smoke check on every pull request, and the profile you choose on merge — load, stress, spike, soak or breakpoint. p50, p95, p99 and error rate are tracked per run, and optional Core Web Vitals cover page-load speed.",
     checks: [
       ["Latency regressions", "A pull request that makes a key endpoint slower shows up in its smoke check, not in production."],
       ["Capacity", "Load at your real peak, stress past it, or ramp until it breaks to find the ceiling."],
@@ -254,7 +254,7 @@ export function scenario() {
       ["Configurable without regeneration", "Concurrency and duration are knobs, so you tune load without new code."],
     ],
     faq: [
-      { q: "Can I run load tests in GitHub Actions?", a: "Yes. The Verity action installs the load engine on the runner and runs the profile for that tier. One runner typically drives a few hundred requests per second." },
+      { q: "Can I run load tests in GitHub Actions?", a: "Yes. The QAShift action installs the load engine on the runner and runs the profile for that tier. One runner typically drives a few hundred requests per second." },
       { q: "What is the difference between load, stress, spike and soak tests?", a: "Load holds your normal peak; stress climbs past it to find where it degrades; spike jumps to ten times the load suddenly; soak holds steady for an hour to expose leaks; breakpoint ramps until something fails." },
       { q: "Does it measure front-end performance?", a: "Optionally. Add a page URL and each run also records Core Web Vitals." },
     ],
@@ -270,7 +270,7 @@ export function scenario() {
     h1: "Security checks on every PR,",
     h1Accent: "not once a year.",
     intro:
-      "Switch on security in CI Setup and Verity scans both halves of your product: your running app at a staging or preview URL, and your source code. Pull requests get a fast passive scan and a static scan of the files they change; merges get a time-boxed active scan. Findings arrive severity-ranked, with the URL or file and line, and never silently pass.",
+      "Switch on security in CI Setup and QAShift scans both halves of your product: your running app at a staging or preview URL, and your source code. Pull requests get a fast passive scan and a static scan of the files they change; merges get a time-boxed active scan. Findings arrive severity-ranked, with the URL or file and line, and never silently pass.",
     checks: [
       ["Running app", "Missing security headers, cookie flags, information disclosure, cross-site scripting and other OWASP Top 10 risks."],
       ["Source code", "Injection patterns, unsafe APIs, hard-coded secrets and risky CI configuration, pointing at the file and line."],
@@ -293,14 +293,14 @@ export function scenario() {
     security-dast-depth: full   # passive "baseline" on PRs`,
     },
     why: [
-      ["Code stays in your CI", "Static analysis runs on your runner; only findings are sent to Verity."],
+      ["Code stays in your CI", "Static analysis runs on your runner; only findings are sent to QAShift."],
       ["Advisory, not blocking", "Findings are ranked issues alongside your test results, so security work is visible without breaking builds."],
       ["Time-boxed active scans", "Full active scans have a configurable time limit, so merges never hang."],
     ],
     faq: [
-      { q: "What is the difference between DAST and SAST?", a: "Dynamic analysis (DAST) tests your running app from the outside, like an attacker would. Static analysis (SAST) reads your source code for vulnerable patterns. Verity runs both." },
+      { q: "What is the difference between DAST and SAST?", a: "Dynamic analysis (DAST) tests your running app from the outside, like an attacker would. Static analysis (SAST) reads your source code for vulnerable patterns. QAShift runs both." },
       { q: "Is an active scan safe to run?", a: "Run active scans only against environments you own, such as staging or a preview deployment. Pull requests use the passive baseline scan by default." },
-      { q: "Do security findings fail the build?", a: "No. They are reported as severity-ranked issues in Verity; your team decides what blocks a release." },
+      { q: "Do security findings fail the build?", a: "No. They are reported as severity-ranked issues in QAShift; your team decides what blocks a release." },
     ],
     related: ["api-testing", "llm-evals", "load-testing"],
   },

@@ -13,3 +13,10 @@ primary_region = "sin"
 [[vm]]
   size = "shared-cpu-2x"
   memory = "2gb"
+
+# One customer job per machine. When a machine is busy, Fly's proxy routes the
+# next request to another (auto-started) machine instead of sharing this one.
+[http_service.concurrency]
+  type = "requests"
+  soft_limit = 1
+  hard_limit = 1

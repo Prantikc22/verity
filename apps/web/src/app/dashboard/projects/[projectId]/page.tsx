@@ -79,7 +79,7 @@ export default async function ProjectOverview({ params }: { params: Promise<{ pr
       <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Link href={`/dashboard/projects/${projectId}/create`} className="group v-card border border-indigo-300 bg-indigo-50/40 p-5 hover:border-indigo-500 dark:border-indigo-800 dark:bg-indigo-950/20">
           <div className="text-sm font-semibold">＋ Create tests</div>
-          <p className="mt-1 text-xs text-neutral-500">UI, API, visual, AI agent, performance or security — pick a type and Verity writes the test.</p>
+          <p className="mt-1 text-xs text-neutral-500">UI, API, visual, AI agent, performance or security — pick a type and QAShift writes the test.</p>
         </Link>
         <Link href={`/dashboard/projects/${projectId}/ci`} className="group v-card border border-neutral-200 p-5 hover:border-indigo-400 dark:border-neutral-800">
           <div className="text-sm font-semibold">⚙️ Set up CI</div>
@@ -94,7 +94,7 @@ export default async function ProjectOverview({ params }: { params: Promise<{ pr
             <span>🩹 Self-healing</span>
             {(healingOpen ?? 0) > 0 && <span className="bg-amber-500 px-1.5 text-[10px] text-white">{healingOpen}</span>}
           </div>
-          <p className="mt-1 text-xs text-neutral-500">Review locator fixes Verity proposed during runs.</p>
+          <p className="mt-1 text-xs text-neutral-500">Review locator fixes QAShift proposed during runs.</p>
         </Link>
       </section>
     </div>

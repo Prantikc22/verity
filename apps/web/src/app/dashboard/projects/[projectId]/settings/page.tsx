@@ -65,7 +65,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ proje
       <section className="border border-neutral-200 p-5 dark:border-neutral-800">
         <h3 className="text-sm font-medium">Data retention</h3>
         <p className="mt-1 text-xs text-neutral-500">
-          Verity keeps the <strong>last {RETAINED_RUNS} runs</strong> of detailed history per project — older run records are pruned automatically (you&apos;re on the {plan.name} plan). Your <strong>aggregate trends and predictions are preserved</strong>: flake rates, regression-prone files, and deploy confidence are rolled up into compact stats that don&apos;t expire, so the intelligence keeps improving even as old raw runs age out.
+          QAShift keeps the <strong>last {RETAINED_RUNS} runs</strong> of detailed history per project — older run records are pruned automatically (you&apos;re on the {plan.name} plan). Your <strong>aggregate trends and predictions are preserved</strong>: flake rates, regression-prone files, and deploy confidence are rolled up into compact stats that don&apos;t expire, so the intelligence keeps improving even as old raw runs age out.
         </p>
       </section>
     </div>

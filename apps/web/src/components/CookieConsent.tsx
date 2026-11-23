@@ -47,7 +47,7 @@ export function CookieConsent() {
               <div>
                 <p className="text-sm font-semibold">We value your privacy</p>
                 <p className="mt-1 max-w-xl text-xs leading-relaxed text-neutral-500">
-                  We use essential cookies to run Verity and optional analytics to improve the product.
+                  We use essential cookies to run QAShift and optional analytics to improve the product.
                   You&apos;re in control — choose what you&apos;re comfortable with.
                 </p>
               </div>

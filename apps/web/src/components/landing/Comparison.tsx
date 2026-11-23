@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 
-const COLS = ["Verity", "DIY Playwright", "AI per-test tools", "Managed QA agency"];
+const COLS = ["QAShift", "DIY Playwright", "AI per-test tools", "Managed QA agency"];
 
 const ROWS: { label: string; cells: (boolean | string)[] }[] = [
   { label: "AI generates the tests", cells: [true, false, true, "manual"] },
