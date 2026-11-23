@@ -12,6 +12,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      report_shares: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          days: number
+          expires_at: string
+          id: string
+          org_id: string
+          project_id: string | null
+          revoked_at: string | null
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          days?: number
+          expires_at: string
+          id?: string
+          org_id: string
+          project_id?: string | null
+          revoked_at?: string | null
+          token: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          days?: number
+          expires_at?: string
+          id?: string
+          org_id?: string
+          project_id?: string | null
+          revoked_at?: string | null
+          token?: string
+        }
+        Relationships: []
+      }
       legacy_a11y_subscriptions: {
         Row: {
           created_at: string

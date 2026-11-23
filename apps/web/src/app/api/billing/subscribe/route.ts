@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
   let body: { plan?: string; currency?: string; acceptScope?: boolean };
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid body" }, { status: 400 }); }
   const plan = qsPlan(body.plan);
-  if (!plan) return NextResponse.json({ error: "Unknown plan." }, { status: 400 });
+  if (!plan || plan.retired) return NextResponse.json({ error: "Unknown plan." }, { status: 400 });
   if (plan.requiresScope && body.acceptScope !== true) return NextResponse.json({ error: "Please accept the managed QA scope first." }, { status: 400 });
   const currency = body.currency === "INR" ? "INR" : "USD";
   const planId = qsRazorpayPlanId(plan, currency);

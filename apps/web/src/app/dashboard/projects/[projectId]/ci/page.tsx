@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { IngestToken } from "../IngestToken";
 import { CiSetup } from "./CiSetup";
+import { ReporterSetup } from "@/components/shell/ReporterSetup";
 
 export const metadata: Metadata = { title: "CI Setup", robots: { index: false } };
 
@@ -27,6 +28,9 @@ export default async function CiSetupPage({ params }: { params: Promise<{ projec
           Everything runs in <strong>your</strong> CI; results post to QAShift.
         </p>
       </div>
+
+      {/* Reporting only: the fastest path, no agents needed. */}
+      <ReporterSetup apiUrl={APP} />
 
       {/* The two-tier mental model, visualized. */}
       <section className="border border-neutral-200 p-5 dark:border-neutral-800">

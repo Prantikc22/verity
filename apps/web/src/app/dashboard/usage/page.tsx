@@ -149,7 +149,7 @@ export default async function UsagePage({ searchParams }: { searchParams: Promis
 
       <section id="plans">
         <h2 className="mb-3 text-sm font-medium text-neutral-500">Change plan</h2>
-        <PlanPicker initial={wanted} plans={QS_PLANS.map((p) => ({ key: p.key, product: p.product, name: p.name, usd: p.usd, inr: p.inr, requiresScope: p.requiresScope,
+        <PlanPicker initial={wanted} plans={QS_PLANS.filter((p) => !p.retired).map((p) => ({ key: p.key, product: p.product, name: p.name, usd: p.usd, inr: p.inr, requiresScope: p.requiresScope,
           current: (p.product === "autonomous" && orgCtx?.org.autonomous_plan === p.planKey) || (p.product === "reports" && orgCtx?.org.reports_plan === p.planKey) || (p.product === "managed" && orgCtx?.org.managed_plan === p.planKey) }))} />
       </section>
     </div>

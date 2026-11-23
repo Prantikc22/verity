@@ -21,6 +21,7 @@ import { execSync, spawnSync } from "node:child_process";
 import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { parseJUnit } from "./junit.mjs";
 
 function arg(name, fallback) {
   const i = process.argv.indexOf(`--${name}`);
@@ -35,8 +36,10 @@ const apiUrl = (process.env.VERITY_API_URL ?? "https://verity.qashifthq.com").re
 function git(args) {
   try { return execSync(`git ${args}`, { encoding: "utf8" }).trim(); } catch { return ""; }
 }
-const commitSha = git("rev-parse HEAD") || "unknown";
-const branch = git("rev-parse --abbrev-ref HEAD") || "unknown";
+const env = process.env;
+// CI checkouts are often detached, so prefer the CI's own commit/branch variables.
+const commitSha = env.GITHUB_SHA || env.CI_COMMIT_SHA || env.GIT_COMMIT || env.CIRCLE_SHA1 || git("rev-parse HEAD") || "unknown";
+const branch = env.GITHUB_HEAD_REF || env.GITHUB_REF_NAME || env.CI_COMMIT_REF_NAME || env.BRANCH_NAME || env.GIT_BRANCH || env.CIRCLE_BRANCH || git("rev-parse --abbrev-ref HEAD") || "unknown";
 
 function requireToken() {
   if (!token) { console.error("✗ Missing token. Pass --token or set VERITY_INGEST_TOKEN."); process.exit(1); }
@@ -267,13 +270,35 @@ async function cmdSecurity() {
   process.exit(0);
 }
 
+/* ========================== upload (JUnit XML) =========================== */
+async function cmdUpload() {
+  requireToken();
+  const files = process.argv.slice(3).filter((a, i, all) => !a.startsWith("--") && !(all[i - 1] ?? "").startsWith("--"));
+  if (!files.length) { console.error("✗ Usage: verity upload <junit.xml> [more.xml] --token <token>"); process.exit(1); }
+  let results = [];
+  for (const f of files) {
+    if (!existsSync(f)) { console.error(`✗ ${f} not found.`); process.exit(1); }
+    const r = parseJUnit(readFileSync(f, "utf8"));
+    console.log(`  · ${f}: ${r.length} test(s)`);
+    results = results.concat(r);
+  }
+  if (!results.length) { console.error("✗ No test cases found in the XML — nothing was posted."); process.exit(1); }
+  const tier = arg("tier", "full");
+  const data = await postIngest({ ...basePayload(tier), trigger: env.GITHUB_EVENT_NAME === "pull_request" ? "pr" : env.CI ? "merge" : "manual", results });
+  const s = data.summary ?? {};
+  console.log(`✓ Uploaded ${results.length} result(s): ${s.passed ?? "?"} passed, ${s.failed ?? "?"} failed, ${s.flaky ?? "?"} flaky.`);
+  if (data.run_url) console.log(`  ${data.run_url}`);
+  process.exit(0);
+}
+
 /* ================================ dispatch =============================== */
-const COMMANDS = { run: cmdRun, perf: cmdPerf, security: cmdSecurity };
+const COMMANDS = { run: cmdRun, perf: cmdPerf, security: cmdSecurity, upload: cmdUpload };
 if (!COMMANDS[cmd]) {
   console.log("Usage:");
   console.log("  verity run      --tier <fast|full> --token <token> [--base origin/main]");
   console.log("  verity perf     --profile <smoke|load|stress|spike|soak|breakpoint> --target <url> [--vus N] [--duration 2m] --token <token>");
   console.log("  verity security --target <url> [--sast] [--dast] --token <token>");
+  console.log("  verity upload   <junit.xml> [more.xml] --token <token>   # any framework");
   process.exit(cmd ? 1 : 0);
 }
 COMMANDS[cmd]();
