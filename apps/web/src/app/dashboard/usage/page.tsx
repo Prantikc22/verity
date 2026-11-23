@@ -4,6 +4,8 @@ import { getPrimaryOrg } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { entitlementsFor } from "@/lib/entitlements";
 import type { Enums } from "@/lib/supabase/database.types";
+import { QS_PLANS } from "@/lib/billing/qs-plans";
+import { PlanPicker } from "@/components/shell/PlanPicker";
 
 export const metadata: Metadata = { title: "Usage", robots: { index: false } };
 
@@ -29,7 +31,8 @@ function Meter({ label, used, cap, note }: { label: string; used: number; cap: n
   );
 }
 
-export default async function UsagePage() {
+export default async function UsagePage({ searchParams }: { searchParams: Promise<{ plan?: string }> }) {
+  const { plan: wanted } = await searchParams;
   const orgCtx = await getPrimaryOrg();
   const supabase = await createClient();
   const plan = entitlementsFor(orgCtx?.org);
@@ -142,6 +145,12 @@ export default async function UsagePage() {
           <li><strong>CI runs are unlimited</strong> — the product is meant to live in your pipeline. Wire it in <Link href={orgCtx ? `/dashboard` : "/dashboard"} className="text-indigo-600 underline">CI Setup</Link> and stop touching these caps entirely.</li>
         </ul>
         <p className="mt-3">Need more headroom? <Link href="/pricing" className="text-indigo-600 underline">Compare plans →</Link></p>
+      </section>
+
+      <section id="plans">
+        <h2 className="mb-3 text-sm font-medium text-neutral-500">Change plan</h2>
+        <PlanPicker initial={wanted} plans={QS_PLANS.map((p) => ({ key: p.key, product: p.product, name: p.name, usd: p.usd, inr: p.inr, requiresScope: p.requiresScope,
+          current: (p.product === "autonomous" && orgCtx?.org.autonomous_plan === p.planKey) || (p.product === "reports" && orgCtx?.org.reports_plan === p.planKey) || (p.product === "managed" && orgCtx?.org.managed_plan === p.planKey) }))} />
       </section>
     </div>
   );

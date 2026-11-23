@@ -1,102 +1,97 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
-import { ProjectTrend } from "./ProjectTrend";
-import { GettingStarted } from "./GettingStarted";
+import { AGENTS } from "@/lib/catalog";
+import { KpiStrip, Panel, Chip, fmtDuration, timeAgo } from "@/components/shell/ui";
+import { RunsTable, RUN_COLUMNS, type RunRow } from "@/components/shell/RunsTable";
 
 export const metadata: Metadata = { title: "Project", robots: { index: false } };
-
-type Tone = "neutral" | "good" | "warn" | "bad";
-const TONE: Record<Tone, { text: string; dot: string }> = {
-  neutral: { text: "", dot: "bg-neutral-300 dark:bg-neutral-700" },
-  good: { text: "text-emerald-600 dark:text-emerald-400", dot: "bg-emerald-500" },
-  warn: { text: "text-amber-600 dark:text-amber-400", dot: "bg-amber-500" },
-  bad: { text: "text-red-600 dark:text-red-400", dot: "bg-red-500" },
-};
-
-function Stat({ v, k, href, tone = "neutral" }: { v: string; k: string; href?: string; tone?: Tone }) {
-  const t = TONE[tone];
-  const inner = (
-    <div className="v-card border border-neutral-200 p-4 hover:border-indigo-400 dark:border-neutral-800 dark:hover:border-indigo-600">
-      <div className={`tnum text-2xl font-semibold ${t.text}`}>{v}</div>
-      <div className="mt-1 flex items-center gap-1.5 text-xs text-neutral-500">
-        {tone !== "neutral" && <span className={`h-1.5 w-1.5 rounded-full ${t.dot}`} />}
-        {k}
-      </div>
-    </div>
-  );
-  return href ? <Link href={href}>{inner}</Link> : inner;
-}
-
-// At-a-glance health so the two quality metrics read instantly, not as bare numbers.
-const passTone = (p: number | null): Tone => (p === null ? "neutral" : p >= 80 ? "good" : p >= 50 ? "warn" : "bad");
-const flakeTone = (f: number | null): Tone => (f === null ? "neutral" : f <= 5 ? "good" : f <= 15 ? "warn" : "bad");
 
 export default async function ProjectOverview({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = await params;
   const supabase = await createClient();
+  const base = `/dashboard/projects/${projectId}`;
 
-  const [{ count: testCount }, { count: runCount }, { data: runs }, { count: healingOpen }] = await Promise.all([
-    supabase.from("tests").select("id", { count: "exact", head: true }).eq("project_id", projectId),
-    supabase.from("test_runs").select("id", { count: "exact", head: true }).eq("project_id", projectId),
-    supabase.from("test_runs").select("created_at, total, passed, failed, flaky, tier").eq("project_id", projectId).eq("status", "completed").order("created_at", { ascending: true }).limit(30),
+  const [{ data: tests }, { data: runs }, { data: a11y }, { count: healingOpen }] = await Promise.all([
+    supabase.from("tests").select("kind").eq("project_id", projectId).neq("status", "archived").limit(5000),
+    supabase.from("test_runs").select(RUN_COLUMNS).eq("project_id", projectId).order("created_at", { ascending: false }).limit(50),
+    supabase.from("a11y_scans").select("score, created_at").eq("project_id", projectId).order("created_at", { ascending: false }).limit(1),
     supabase.from("healing_events").select("id", { count: "exact", head: true }).eq("project_id", projectId).eq("status", "suggested"),
   ]);
 
-  const r = runs ?? [];
-  const latest = r[r.length - 1];
-  const passRate = latest && latest.total ? Math.round((latest.passed / latest.total) * 100) : null;
-  const flakeRate = latest && latest.total ? Math.round((latest.flaky / latest.total) * 100) : null;
+  const list = (runs ?? []) as RunRow[];
+  const done = list.filter((r) => r.status === "completed");
+  const last = done[0];
+  const totals = done.slice(0, 10);
+  const results = totals.reduce((n, r) => n + r.total, 0);
+  const passed = totals.reduce((n, r) => n + r.passed, 0);
+  const flaky = totals.reduce((n, r) => n + r.flaky, 0);
+  const byKind = new Map<string, number>();
+  for (const t of tests ?? []) byKind.set(t.kind, (byKind.get(t.kind) ?? 0) + 1);
+  const testCount = tests?.length ?? 0;
+  const lastA11y = a11y?.[0];
+
+  const steps = [
+    { done: testCount > 0, title: "Create tests", body: "Pick an agent and a target. Keep the tests you want.", href: `${base}/create` },
+    { done: list.length > 0, title: "Connect CI", body: "Copy one step into GitHub Actions, GitLab or Jenkins.", href: `${base}/ci` },
+    { done: !!lastA11y, title: "Add accessibility", body: "Lumen scans each deploy and flags regressions.", href: `${base}/accessibility` },
+  ];
+  const setupLeft = steps.filter((s) => !s.done).length;
 
   return (
-    <div>
-      <GettingStarted projectId={projectId} hasTests={(testCount ?? 0) > 0} hasRuns={(runCount ?? 0) > 0} />
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <Stat v={`${testCount ?? 0}`} k="tests" href={`/dashboard/projects/${projectId}/tests`} />
-        <Stat v={`${runCount ?? 0}`} k="CI runs" href={`/dashboard/projects/${projectId}/runs`} />
-        <Stat v={passRate === null ? "—" : `${passRate}%`} k="latest pass rate" tone={passTone(passRate)} />
-        <Stat v={flakeRate === null ? "—" : `${flakeRate}%`} k="latest flake rate" tone={flakeTone(flakeRate)} />
-      </div>
+    <>
+      {setupLeft > 0 && (
+        <Panel title="Set up this project" action={`${steps.length - setupLeft} of ${steps.length} done`} flush className="mb-5">
+          <ol className="divide-y divide-neutral-100 dark:divide-neutral-800">
+            {steps.map((s, i) => (
+              <li key={s.title}>
+                <Link href={s.href} className="flex items-center gap-3 px-4 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-950">
+                  <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-full text-[11px] font-semibold ${s.done ? "bg-emerald-500 text-white" : "border border-neutral-300 text-neutral-500 dark:border-neutral-700"}`}>{s.done ? "✓" : i + 1}</span>
+                  <span className="min-w-0 flex-1"><span className={`block text-[13px] font-medium ${s.done ? "text-neutral-400 line-through" : ""}`}>{s.title}</span><span className="block text-[12.5px] text-neutral-500">{s.body}</span></span>
+                  {!s.done && <span className="text-[12.5px] font-medium text-violet-700 dark:text-violet-400">Start →</span>}
+                </Link>
+              </li>
+            ))}
+          </ol>
+        </Panel>
+      )}
 
-      {/* Trend */}
-      <section className="mt-8">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-medium text-neutral-500">Trend (last {r.length} run{r.length === 1 ? "" : "s"})</h2>
-          <Link href="/dashboard/trends" className="text-xs text-indigo-600 hover:underline">All trends →</Link>
+      <KpiStrip items={[
+        { label: "Tests", value: String(testCount), sub: `${byKind.size} agent${byKind.size === 1 ? "" : "s"} in use` },
+        { label: "Pass rate · last 10 runs", value: results ? `${((passed / results) * 100).toFixed(1)}%` : "—", tone: results ? (passed / results >= 0.95 ? "ok" : "warn") : undefined },
+        { label: "Flaky · last 10 runs", value: results ? String(flaky) : "—", tone: flaky ? "warn" : undefined },
+        { label: "Last run", value: last ? timeAgo(last.created_at) : "—", sub: last ? fmtDuration(last.duration_ms) : "no runs yet" },
+      ]} />
+
+      <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
+        <Panel title="Recent runs" action={<Link href={`${base}/runs`} className="hover:text-neutral-900 dark:hover:text-white">All runs →</Link>} flush>
+          {list.length ? <RunsTable runs={list.slice(0, 8)} showProject={false} /> : <p className="p-4 text-[13px] text-neutral-500">No runs yet. <Link href={`${base}/ci`} className="font-medium text-violet-700 hover:underline">Connect CI</Link> to start recording.</p>}
+        </Panel>
+
+        <div className="space-y-5">
+          <Panel title="Agents" flush>
+            <ul className="divide-y divide-neutral-100 dark:divide-neutral-800">
+              {AGENTS.map((a) => {
+                const n = a.key === "accessibility" ? (lastA11y ? 1 : 0) : a.disciplines.reduce((s, d) => s + (byKind.get(d) ?? 0), 0);
+                return (
+                  <li key={a.key}>
+                    <Link href={a.projectPath ? `${base}/${a.projectPath}` : base} className="flex items-center justify-between px-4 py-2.5 text-[13px] hover:bg-neutral-50 dark:hover:bg-neutral-950">
+                      <span><span className="font-medium">{a.codename}</span> <span className="text-neutral-500">{a.name.replace(" Agent", "")}</span></span>
+                      <span className="tnum text-[12px] text-neutral-500">{a.key === "accessibility" ? (lastA11y?.score != null ? `score ${Math.round(Number(lastA11y.score))}` : "not set up") : n ? `${n} test${n === 1 ? "" : "s"}` : "—"}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </Panel>
+          {(healingOpen ?? 0) > 0 && (
+            <Panel title="Suggested fixes" action={<Chip tone="warn">{healingOpen}</Chip>}>
+              <p className="text-[13px] text-neutral-500">Tracer proposed locator fixes during recent runs. Review them as diffs; nothing merges on its own.</p>
+              <Link href={`${base}/runs`} className="mt-2 inline-block text-[13px] font-medium text-violet-700 hover:underline">Review →</Link>
+            </Panel>
+          )}
         </div>
-        {r.length < 2 ? (
-          <p className="mt-3 text-sm text-neutral-500">Not enough completed runs yet to chart. <Link href={`/dashboard/projects/${projectId}/ci`} className="text-indigo-600 hover:underline">Set up CI</Link> to start recording.</p>
-        ) : (
-          <ProjectTrend
-            pass={r.map((x) => (x.total ? x.passed / x.total : 0))}
-            flake={r.map((x) => (x.total ? x.flaky / x.total : 0))}
-            volume={r.map((x) => x.total)}
-          />
-        )}
-      </section>
-
-      {/* Quick actions */}
-      <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Link href={`/dashboard/projects/${projectId}/create`} className="group v-card border border-indigo-300 bg-indigo-50/40 p-5 hover:border-indigo-500 dark:border-indigo-800 dark:bg-indigo-950/20">
-          <div className="text-sm font-semibold">＋ Create tests</div>
-          <p className="mt-1 text-xs text-neutral-500">UI, API, visual, AI agent, performance or security — pick a type and QAShift writes the test.</p>
-        </Link>
-        <Link href={`/dashboard/projects/${projectId}/ci`} className="group v-card border border-neutral-200 p-5 hover:border-indigo-400 dark:border-neutral-800">
-          <div className="text-sm font-semibold">⚙️ Set up CI</div>
-          <p className="mt-1 text-xs text-neutral-500">Get the workflow file for GitHub, GitLab or Jenkins. Runs in your CI are unlimited.</p>
-        </Link>
-        <Link href={`/dashboard/projects/${projectId}/cloud`} className="group v-card border border-neutral-200 p-5 hover:border-indigo-400 dark:border-neutral-800">
-          <div className="text-sm font-semibold">▶ Run in cloud</div>
-          <p className="mt-1 text-xs text-neutral-500">Watch a saved test execute live in a real browser. Capped — CI is unlimited.</p>
-        </Link>
-        <Link href={`/dashboard/projects/${projectId}/runs`} className="group v-card border border-neutral-200 p-5 hover:border-indigo-400 dark:border-neutral-800">
-          <div className="flex items-center justify-between text-sm font-semibold">
-            <span>🩹 Self-healing</span>
-            {(healingOpen ?? 0) > 0 && <span className="bg-amber-500 px-1.5 text-[10px] text-white">{healingOpen}</span>}
-          </div>
-          <p className="mt-1 text-xs text-neutral-500">Review locator fixes QAShift proposed during runs.</p>
-        </Link>
-      </section>
-    </div>
+      </div>
+    </>
   );
 }

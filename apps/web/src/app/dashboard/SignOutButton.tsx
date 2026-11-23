@@ -11,10 +11,7 @@ export function SignOutButton() {
     router.refresh();
   }
   return (
-    <button
-      onClick={signOut}
-      className="border border-neutral-300 px-3 py-1.5 text-sm transition hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-900"
-    >
+    <button onClick={signOut} className="shrink-0 rounded-md px-2 py-1 text-[12px] font-medium text-neutral-500 transition hover:bg-neutral-900/[0.05] hover:text-neutral-900 dark:hover:bg-white/10 dark:hover:text-white">
       Sign out
     </button>
   );

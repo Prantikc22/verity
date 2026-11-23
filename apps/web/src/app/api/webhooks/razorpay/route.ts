@@ -4,6 +4,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { captureServer } from "@/lib/analytics/posthog-server";
 import { FUNNEL_EVENTS } from "@/lib/analytics/events";
 import type { Enums } from "@/lib/supabase/database.types";
+import { applyQsPlan } from "@/lib/billing/activate";
+import type { QsProduct } from "@/lib/billing/qs-plans";
 
 export const runtime = "nodejs";
 
@@ -22,7 +24,7 @@ export async function POST(req: NextRequest) {
   const admin = createAdminClient();
   const { data: sub } = await admin
     .from("subscriptions")
-    .select("id, org_id, status, tier")
+    .select("id, org_id, status, tier, product, plan_key")
     .eq("provider_subscription_id", event.providerSubscriptionId)
     .maybeSingle();
   if (!sub) return NextResponse.json({ ok: true });
@@ -41,6 +43,13 @@ export async function POST(req: NextRequest) {
       updated_at: new Date().toISOString(),
     })
     .eq("id", sub.id);
+
+  // QAShift 2.0 plans write their own org column and never touch orgs.plan.
+  if (sub.product && sub.product !== "legacy" && sub.product !== "accessibility_legacy") {
+    if (event.status === "active" && sub.plan_key) await applyQsPlan(sub.org_id, sub.product as QsProduct, sub.plan_key);
+    else if (event.status === "cancelled" || event.status === "halted") await applyQsPlan(sub.org_id, sub.product as QsProduct, null);
+    return NextResponse.json({ ok: true });
+  }
 
   // Keep orgs.plan (the gating source of truth) in sync with the subscription.
   if (event.status === "active" && tier) {
