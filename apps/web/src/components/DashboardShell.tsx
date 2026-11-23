@@ -20,8 +20,8 @@ const NAV = [
 // Project nav, grouped by what you are doing (not by test type), so it stays
 // short. Each item also owns the sub-pages listed in `also`, which keep it
 // highlighted — e.g. every generator lives under "Create tests".
-type ProjectItem = { seg: string; label: string; icon: string; also?: string[] };
-const PROJECT_GROUPS: { heading?: string; items: ProjectItem[] }[] = [
+export type ProjectItem = { seg: string; label: string; icon: string; also?: string[] };
+export const PROJECT_GROUPS: { heading?: string; items: ProjectItem[] }[] = [
   { items: [
     { seg: "", label: "Overview", icon: "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" },
     { seg: "create", label: "Create tests", icon: "M12 5v14M5 12h14", also: ["generate", "api/generate", "visual", "agent", "performance/configure"] },
@@ -42,7 +42,7 @@ const PROJECT_GROUPS: { heading?: string; items: ProjectItem[] }[] = [
 ];
 
 /** Is `item` the current page (or one of the sub-pages it owns)? Exact segment match, so /performance never claims /performance/configure. */
-function isActiveItem(pathname: string, projectId: string, item: ProjectItem): boolean {
+export function isActiveItem(pathname: string, projectId: string, item: ProjectItem): boolean {
   const base = `/dashboard/projects/${projectId}`;
   const rest = pathname === base ? "" : pathname.startsWith(`${base}/`) ? pathname.slice(base.length + 1) : null;
   if (rest === null) return false;

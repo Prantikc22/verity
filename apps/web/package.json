@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --import tsx --test src/lib/ci/workflow.test.ts"
+    "test": "node --import tsx --test src/lib/ci/workflow.test.ts src/lib/entitlements.test.ts"
   },
   "dependencies": {
     "@octokit/app": "^16.1.2",

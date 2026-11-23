@@ -5,7 +5,7 @@ import { extractPageContext } from "@/lib/llm/page-context";
 import { llmConfig } from "@/lib/llm/provider";
 import { projectFromToken } from "@/lib/mcp-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { planFor } from "@/lib/plans";
+import { entitlementsFor } from "@/lib/entitlements";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -45,8 +45,8 @@ export async function POST(req: NextRequest) {
 
   // Propose as many as the plan still allows this month.
   const admin = createAdminClient();
-  const { data: org } = await admin.from("orgs").select("plan").eq("id", project.org_id).maybeSingle();
-  const plan = planFor(org?.plan);
+  const { data: org } = await admin.from("orgs").select("*").eq("id", project.org_id).maybeSingle();
+  const plan = entitlementsFor(org);
   const monthStart = new Date(); monthStart.setUTCDate(1); monthStart.setUTCHours(0, 0, 0, 0);
   const [{ count: gensThisMonth }, { count: testsInProject }] = await Promise.all([
     admin.from("tests").select("id", { count: "exact", head: true }).eq("org_id", project.org_id).gte("created_at", monthStart.toISOString()),

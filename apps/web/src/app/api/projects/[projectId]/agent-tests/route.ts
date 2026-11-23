@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { proposeAgentEvals, generateAgentEval, generateAgentEvalSuite } from "@/lib/llm/generate";
 import { AGENT_SUITE_PATH, AGENT_REDTEAM_PACK } from "@qashift/verity-core";
 import { llmConfig } from "@/lib/llm/provider";
-import { planFor } from "@/lib/plans";
+import { entitlementsFor } from "@/lib/entitlements";
 import type { Json } from "@/lib/supabase/database.types";
 
 export const runtime = "nodejs";
@@ -45,8 +45,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
   const { data: project } = await supabase.from("projects").select("id, org_id").eq("id", projectId).maybeSingle();
   if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 });
 
-  const { data: org } = await supabase.from("orgs").select("plan").eq("id", project.org_id).maybeSingle();
-  const plan = planFor(org?.plan);
+  const { data: org } = await supabase.from("orgs").select("*").eq("id", project.org_id).maybeSingle();
+  const plan = entitlementsFor(org);
   const monthStart = new Date(); monthStart.setUTCDate(1); monthStart.setUTCHours(0, 0, 0, 0);
   const [{ count: gensThisMonth }, { count: testsInProject }] = await Promise.all([
     supabase.from("tests").select("id", { count: "exact", head: true }).eq("org_id", project.org_id).gte("created_at", monthStart.toISOString()),

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { planFor } from "@/lib/plans";
+import { entitlementsFor } from "@/lib/entitlements";
 import { recordRun, type IngestResultInput } from "@/lib/ingest";
 import { healTest } from "@/lib/llm/generate";
 import { llmConfig } from "@/lib/llm/provider";
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
   // Cap cloud runs per plan. Count ONLY runs on our infra (branch "cloud") — local
   // MCP runs (also trigger="manual", on the user's own machine) must NOT consume the
   // cloud-run budget.
-  const plan = planFor((await admin.from("orgs").select("plan").eq("id", project.org_id).maybeSingle()).data?.plan);
+  const plan = entitlementsFor((await admin.from("orgs").select("*").eq("id", project.org_id).maybeSingle()).data);
   const monthStart = new Date(); monthStart.setUTCDate(1); monthStart.setUTCHours(0, 0, 0, 0);
   const { count: used } = await admin.from("test_runs").select("id", { count: "exact", head: true })
     .eq("project_id", projectId).eq("trigger", "manual").eq("branch", "cloud").gte("created_at", monthStart.toISOString());

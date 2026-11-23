@@ -4,7 +4,7 @@ import { generateTest } from "@/lib/llm/generate";
 import { llmConfig } from "@/lib/llm/provider";
 import { getUser, getPrimaryOrg, ensureOrgForCurrentUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { planFor } from "@/lib/plans";
+import { entitlementsFor } from "@/lib/entitlements";
 import type { Json } from "@/lib/supabase/database.types";
 
 export const runtime = "nodejs";
@@ -41,8 +41,8 @@ export async function POST(req: NextRequest) {
 
   // Per-tier monthly generation cap — /start creates a real (paid) LLM
   // generation, so it must honor the same cap as the dashboard generate routes.
-  const { data: orgRow } = await admin.from("orgs").select("plan").eq("id", org.org.id).maybeSingle();
-  const plan = planFor(orgRow?.plan);
+  const { data: orgRow } = await admin.from("orgs").select("*").eq("id", org.org.id).maybeSingle();
+  const plan = entitlementsFor(orgRow);
   const monthStart = new Date();
   monthStart.setUTCDate(1);
   monthStart.setUTCHours(0, 0, 0, 0);

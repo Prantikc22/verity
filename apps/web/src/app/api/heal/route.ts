@@ -3,7 +3,7 @@ import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { healSelector } from "@/lib/llm/generate";
 import { llmConfig } from "@/lib/llm/provider";
-import { planFor } from "@/lib/plans";
+import { entitlementsFor } from "@/lib/entitlements";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -47,8 +47,8 @@ export async function POST(req: NextRequest) {
   // Plan gate — self-healing is a paid feature. Reject BEFORE any LLM call so
   // free-tier CI can't burn our token budget. Generated tests self-heal from
   // Pro up (see lib/plans.ts).
-  const { data: org } = await admin.from("orgs").select("plan").eq("id", project.org_id).maybeSingle();
-  if (!planFor(org?.plan).selfHealing) {
+  const { data: org } = await admin.from("orgs").select("*").eq("id", project.org_id).maybeSingle();
+  if (!entitlementsFor(org).selfHealing) {
     return NextResponse.json(
       { error: "Self-healing is a paid feature — it's included from Pro. Upgrade to enable locator healing in CI.", healed: false, upgrade: true },
       { status: 402 },

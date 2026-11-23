@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { getPrimaryOrg } from "@/lib/auth";
-import { planFor } from "@/lib/plans";
+import { entitlementsFor } from "@/lib/entitlements";
 import { getCorrelation, getDeployConfidence } from "@/lib/predictions";
 
 export const metadata: Metadata = { title: "Predictions", robots: { index: false } };
@@ -20,7 +20,7 @@ export default async function PredictionsPage({ params }: { params: Promise<{ pr
   const { projectId } = await params;
   const supabase = await createClient();
   const orgCtx = await getPrimaryOrg();
-  const plan = planFor(orgCtx?.org.plan);
+  const plan = entitlementsFor(orgCtx?.org);
 
   const [{ data: regress }, { data: flake }, { data: tests }] = await Promise.all([
     supabase.from("regression_stats").select("*").eq("project_id", projectId).order("regressions_total", { ascending: false }).limit(8),

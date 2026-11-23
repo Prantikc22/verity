@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { recordRun } from "@/lib/ingest";
-import { planFor } from "@/lib/plans";
+import { entitlementsFor } from "@/lib/entitlements";
 import { isPublicHttpUrl, runPerfTrial, runSecurityTrial } from "@/lib/cloud-trial";
 
 export const runtime = "nodejs";
@@ -29,8 +29,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
   }
 
   // Cap: cloud trials are tiny but cost us money — 1 on free, 3 on paid. CI is unlimited.
-  const { data: org } = await supabase.from("orgs").select("plan").eq("id", project.org_id).maybeSingle();
-  const plan = planFor(org?.plan);
+  const { data: org } = await supabase.from("orgs").select("*").eq("id", project.org_id).maybeSingle();
+  const plan = entitlementsFor(org);
   const monthStart = new Date(); monthStart.setUTCDate(1); monthStart.setUTCHours(0, 0, 0, 0);
   const { count: used } = await supabase
     .from("test_runs")

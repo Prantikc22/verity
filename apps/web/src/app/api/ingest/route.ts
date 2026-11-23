@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { recordRun, isFirstCiRun, type IngestPayload } from "@/lib/ingest";
 import { postRunResults, postDisciplineResults } from "@/lib/github/post";
-import { planFor } from "@/lib/plans";
+import { entitlementsFor } from "@/lib/entitlements";
 import { captureServer } from "@/lib/analytics/posthog-server";
 import { FUNNEL_EVENTS } from "@/lib/analytics/events";
 
@@ -86,8 +86,8 @@ export async function POST(req: NextRequest) {
   }
 
   // Effective plan from the org.
-  const { data: org } = await admin.from("orgs").select("plan").eq("id", project.org_id).maybeSingle();
-  const plan = planFor(org?.plan);
+  const { data: org } = await admin.from("orgs").select("*").eq("id", project.org_id).maybeSingle();
+  const plan = entitlementsFor(org);
 
   const first = await isFirstCiRun(project.id);
 

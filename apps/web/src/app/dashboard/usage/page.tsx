@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { getPrimaryOrg } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { planFor } from "@/lib/plans";
+import { entitlementsFor } from "@/lib/entitlements";
 import type { Enums } from "@/lib/supabase/database.types";
 
 export const metadata: Metadata = { title: "Usage", robots: { index: false } };
@@ -32,7 +32,7 @@ function Meter({ label, used, cap, note }: { label: string; used: number; cap: n
 export default async function UsagePage() {
   const orgCtx = await getPrimaryOrg();
   const supabase = await createClient();
-  const plan = planFor(orgCtx?.org.plan);
+  const plan = entitlementsFor(orgCtx?.org);
   const orgId = orgCtx?.org.id;
 
   const monthStart = new Date(); monthStart.setUTCDate(1); monthStart.setUTCHours(0, 0, 0, 0);
@@ -73,6 +73,24 @@ export default async function UsagePage() {
         </div>
         <p className="mt-1 text-sm text-neutral-500">Everything metered, in the open — no hidden credit burn. Monthly meters reset on the 1st (UTC). <strong className="text-neutral-700 dark:text-neutral-300">Runs in your own CI are always unlimited and never metered.</strong></p>
       </div>
+
+      <section className="grid gap-3 sm:grid-cols-3">
+        <div className="border border-neutral-200 p-4 dark:border-neutral-800">
+          <div className="text-xs text-neutral-500">Plan</div>
+          <div className="mt-1 font-medium">{plan.label}</div>
+          <div className="mt-1 text-[11px] text-neutral-400">All six agents included.</div>
+        </div>
+        <div className="border border-neutral-200 p-4 dark:border-neutral-800">
+          <div className="text-xs text-neutral-500">Agent credits / month</div>
+          <div className="tnum mt-1 font-medium">{plan.creditsPerMonth.toLocaleString()}</div>
+          <div className="mt-1 text-[11px] text-neutral-400">Pooled across agents. Credit metering switches on with the new plans; until then the meters below apply.</div>
+        </div>
+        <div className="border border-neutral-200 p-4 dark:border-neutral-800">
+          <div className="text-xs text-neutral-500">{plan.managed ? "Managed QA" : "Pricing"}</div>
+          <div className="mt-1 font-medium">{plan.managed ? `${plan.managed.name} · ${plan.managed.engineerHours ?? "Scoped"} engineer hrs/mo` : plan.grandfathered ? "Current price kept" : "Standard"}</div>
+          <div className="mt-1 text-[11px] text-neutral-400">{plan.grandfathered ? "You keep your current plan, price and limits until you choose to change." : "Billed monthly. Taxes shown at checkout."}</div>
+        </div>
+      </section>
 
       <section>
         <h2 className="text-sm font-medium text-neutral-500">This month · organization-wide</h2>

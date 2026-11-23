@@ -3,7 +3,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { proposeTests } from "@/lib/llm/generate";
 import { llmConfig } from "@/lib/llm/provider";
-import { planFor } from "@/lib/plans";
+import { entitlementsFor } from "@/lib/entitlements";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -39,8 +39,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
 
   // "Generate all possible tests, capped at the tier": the most we can propose is
   // whatever quota remains — min(monthly generations left, suite slots left).
-  const { data: org } = await supabase.from("orgs").select("plan").eq("id", project.org_id).maybeSingle();
-  const plan = planFor(org?.plan);
+  const { data: org } = await supabase.from("orgs").select("*").eq("id", project.org_id).maybeSingle();
+  const plan = entitlementsFor(org);
   const monthStart = new Date();
   monthStart.setUTCDate(1);
   monthStart.setUTCHours(0, 0, 0, 0);

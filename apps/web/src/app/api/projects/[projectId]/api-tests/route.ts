@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { createClient } from "@/lib/supabase/server";
 import { generateApiTest } from "@/lib/llm/generate";
 import { llmConfig } from "@/lib/llm/provider";
-import { planFor } from "@/lib/plans";
+import { entitlementsFor } from "@/lib/entitlements";
 import type { Json } from "@/lib/supabase/database.types";
 
 export const runtime = "nodejs";
@@ -39,8 +39,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
   if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 });
 
   // Monthly generation cap (shared budget).
-  const { data: org } = await supabase.from("orgs").select("plan").eq("id", project.org_id).maybeSingle();
-  const plan = planFor(org?.plan);
+  const { data: org } = await supabase.from("orgs").select("*").eq("id", project.org_id).maybeSingle();
+  const plan = entitlementsFor(org);
   const monthStart = new Date(); monthStart.setUTCDate(1); monthStart.setUTCHours(0, 0, 0, 0);
   const { count: used } = await supabase.from("tests").select("id", { count: "exact", head: true })
     .eq("org_id", project.org_id).gte("created_at", monthStart.toISOString());

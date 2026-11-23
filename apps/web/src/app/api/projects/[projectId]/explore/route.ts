@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { planFor } from "@/lib/plans";
+import { entitlementsFor } from "@/lib/entitlements";
 
 export const runtime = "nodejs";
 
@@ -37,8 +37,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
   const admin = createAdminClient();
 
   // Cap cloud runs per plan (cloud is intentionally limited).
-  const { data: org } = await admin.from("orgs").select("plan").eq("id", project.org_id).maybeSingle();
-  const plan = planFor(org?.plan);
+  const { data: org } = await admin.from("orgs").select("*").eq("id", project.org_id).maybeSingle();
+  const plan = entitlementsFor(org);
   const monthStart = new Date(); monthStart.setUTCDate(1); monthStart.setUTCHours(0, 0, 0, 0);
   const { count: usedThisMonth } = await admin
     .from("explorations").select("id", { count: "exact", head: true })

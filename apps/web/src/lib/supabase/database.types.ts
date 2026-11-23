@@ -260,6 +260,11 @@ export type Database = {
           name: string
           plan: Database["public"]["Enums"]["plan_tier"]
           slug: string | null
+          legacy_plan: Database["public"]["Enums"]["plan_tier"] | null
+          grandfathered: boolean
+          autonomous_plan: string | null
+          reports_plan: string | null
+          managed_plan: string | null
         }
         Insert: {
           created_at?: string
@@ -268,6 +273,11 @@ export type Database = {
           name: string
           plan?: Database["public"]["Enums"]["plan_tier"]
           slug?: string | null
+          legacy_plan?: Database["public"]["Enums"]["plan_tier"] | null
+          grandfathered?: boolean
+          autonomous_plan?: string | null
+          reports_plan?: string | null
+          managed_plan?: string | null
         }
         Update: {
           created_at?: string
@@ -276,6 +286,11 @@ export type Database = {
           name?: string
           plan?: Database["public"]["Enums"]["plan_tier"]
           slug?: string | null
+          legacy_plan?: Database["public"]["Enums"]["plan_tier"] | null
+          grandfathered?: boolean
+          autonomous_plan?: string | null
+          reports_plan?: string | null
+          managed_plan?: string | null
         }
         Relationships: []
       }
@@ -360,6 +375,8 @@ export type Database = {
           current_period_end: string | null
           id: string
           org_id: string
+          plan_key: string | null
+          product: string
           provider: string
           provider_subscription_id: string | null
           status: Database["public"]["Enums"]["subscription_status"]
@@ -371,6 +388,8 @@ export type Database = {
           current_period_end?: string | null
           id?: string
           org_id: string
+          plan_key?: string | null
+          product?: string
           provider?: string
           provider_subscription_id?: string | null
           status?: Database["public"]["Enums"]["subscription_status"]
@@ -382,11 +401,49 @@ export type Database = {
           current_period_end?: string | null
           id?: string
           org_id?: string
+          plan_key?: string | null
+          product?: string
           provider?: string
           provider_subscription_id?: string | null
           status?: Database["public"]["Enums"]["subscription_status"]
           tier?: Database["public"]["Enums"]["plan_tier"]
           updated_at?: string
+        }
+        Relationships: []
+      }
+      usage_ledger: {
+        Row: {
+          agent: string | null
+          amount: number
+          created_at: string
+          id: number
+          kind: string
+          metric: string
+          org_id: string
+          project_id: string | null
+          ref: string | null
+        }
+        Insert: {
+          agent?: string | null
+          amount: number
+          created_at?: string
+          id?: never
+          kind?: string
+          metric: string
+          org_id: string
+          project_id?: string | null
+          ref?: string | null
+        }
+        Update: {
+          agent?: string | null
+          amount?: number
+          created_at?: string
+          id?: never
+          kind?: string
+          metric?: string
+          org_id?: string
+          project_id?: string | null
+          ref?: string | null
         }
         Relationships: []
       }

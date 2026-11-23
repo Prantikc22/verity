@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { planFor } from "@/lib/plans";
+import { entitlementsFor } from "@/lib/entitlements";
 import { IngestToken } from "../IngestToken";
 
 export const metadata: Metadata = { title: "Settings", robots: { index: false } };
@@ -19,8 +19,8 @@ export default async function SettingsPage({ params }: { params: Promise<{ proje
     .eq("id", projectId)
     .maybeSingle();
   if (!project) notFound();
-  const { data: org } = await supabase.from("orgs").select("plan").eq("id", project.org_id).maybeSingle();
-  const plan = planFor(org?.plan);
+  const { data: org } = await supabase.from("orgs").select("*").eq("id", project.org_id).maybeSingle();
+  const plan = entitlementsFor(org);
 
   return (
     <div className="space-y-8">

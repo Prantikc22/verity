@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { getPrimaryOrg } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { planFor } from "@/lib/plans";
+import { entitlementsFor } from "@/lib/entitlements";
 import { CreateProjectForm } from "./CreateProjectForm";
 import { ProjectTrend } from "./projects/[projectId]/ProjectTrend";
 
@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: "Dashboard", robots: { index: false }
 export default async function DashboardPage() {
   const orgCtx = await getPrimaryOrg();
   const supabase = await createClient();
-  const plan = planFor(orgCtx?.org.plan);
+  const plan = entitlementsFor(orgCtx?.org);
   const orgId = orgCtx?.org.id;
 
   // Scope to the signed-in user's org — otherwise public projects (e.g. the

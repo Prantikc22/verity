@@ -5,7 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { generateTest } from "@/lib/llm/generate";
 import { extractPageContext } from "@/lib/llm/page-context";
 import { llmConfig } from "@/lib/llm/provider";
-import { planFor } from "@/lib/plans";
+import { entitlementsFor } from "@/lib/entitlements";
 import { projectFromToken } from "@/lib/mcp-auth";
 import type { Json } from "@/lib/supabase/database.types";
 
@@ -44,8 +44,8 @@ export async function POST(req: NextRequest) {
   const admin = createAdminClient();
 
   // Monthly generation cap per plan.
-  const { data: org } = await admin.from("orgs").select("plan").eq("id", project.org_id).maybeSingle();
-  const plan = planFor(org?.plan);
+  const { data: org } = await admin.from("orgs").select("*").eq("id", project.org_id).maybeSingle();
+  const plan = entitlementsFor(org);
   const monthStart = new Date(); monthStart.setUTCDate(1); monthStart.setUTCHours(0, 0, 0, 0);
   const { count: used } = await admin
     .from("tests").select("id", { count: "exact", head: true })
