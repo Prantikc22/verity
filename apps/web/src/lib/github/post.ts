@@ -8,7 +8,7 @@ const COMMENT_MARKER = "<!-- verity-test-report -->";
 const DISCIPLINE_MARKER = "<!-- verity-discipline-report -->";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://verity.qashift.com";
 
-function parseRepo(repo: string | null): { owner: string; repo: string } | null {
+export function parseRepo(repo: string | null): { owner: string; repo: string } | null {
   if (!repo) return null;
   const cleaned = repo
     .replace(/^https?:\/\/(www\.)?github\.com\//i, "")
@@ -20,7 +20,7 @@ function parseRepo(repo: string | null): { owner: string; repo: string } | null 
   return owner && name ? { owner, repo: name } : null;
 }
 
-async function resolveInstallationId(project: Tables<"projects">): Promise<number | null> {
+export async function resolveInstallationId(project: Tables<"projects">): Promise<number | null> {
   if (project.github_installation_id) return project.github_installation_id;
   const owner = parseRepo(project.repo)?.owner;
   if (!owner) return null;

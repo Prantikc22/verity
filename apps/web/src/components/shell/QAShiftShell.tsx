@@ -51,7 +51,7 @@ function Mark() {
   );
 }
 
-export function QAShiftShell({ org, plan, email, children }: { org: string; plan: string; email: string; children: React.ReactNode }) {
+export function QAShiftShell({ org, plan, email, credits, children }: { org: string; plan: string; email: string; credits?: number; children: React.ReactNode }) {
   const pathname = usePathname();
   const projectId = pathname.match(/^\/dashboard\/projects\/([^/]+)/)?.[1] ?? null;
   const [open, setOpen] = useState(false);
@@ -73,48 +73,47 @@ export function QAShiftShell({ org, plan, email, children }: { org: string; plan
 
   const isActive = (n: (typeof WORKSPACE_NAV)[number]) =>
     n.href === "/dashboard" ? pathname === "/dashboard"
-      : n.href === "/dashboard/projects" ? pathname.startsWith("/dashboard/projects")
+      : n.href === "/dashboard/projects" ? pathname === "/dashboard/projects"
       : pathname === n.href || pathname.startsWith(`${n.href}/`) || n.also.some((a) => pathname.startsWith(a));
 
-  const link = (active: boolean) =>
-    `flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] transition ${active ? "bg-white/10 text-white" : "text-slate-400 hover:bg-white/5 hover:text-white"}`;
+  const item = (active: boolean) =>
+    `group flex h-8 items-center gap-2.5 rounded-md px-2.5 text-[13px] transition-colors ${active
+      ? "bg-neutral-900/[0.06] font-medium text-neutral-950 dark:bg-white/10 dark:text-white"
+      : "text-neutral-600 hover:bg-neutral-900/[0.04] hover:text-neutral-950 dark:text-neutral-400 dark:hover:bg-white/5 dark:hover:text-white"}`;
 
   const sidebar = (
-    <div className="flex h-full flex-col bg-[#0A0D18] text-slate-200">
-      <div className="flex items-center gap-2 px-5 py-5">
-        <Link href="/dashboard" className="flex items-center gap-2 text-white"><Mark /><span className="text-[17px] font-semibold tracking-tight">QAShift</span></Link>
-      </div>
-      <div className="mx-3 mb-3 rounded-xl border border-white/10 px-3 py-2.5">
-        <div className="truncate text-[13px] font-medium text-white">{org}</div>
-        <div className="mt-0.5 truncate text-[11.5px] text-slate-400">{plan}</div>
+    <div className="flex h-full flex-col bg-[#FBFBFA] dark:bg-neutral-950">
+      <div className="flex h-[52px] items-center gap-2 border-b border-neutral-200 px-4 dark:border-neutral-800">
+        <Link href="/dashboard" className="flex min-w-0 items-center gap-2 text-neutral-950 dark:text-white">
+          <Mark />
+          <span className="truncate text-[14px] font-semibold tracking-[-0.01em]">{org}</span>
+        </Link>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-4">
-        <nav aria-label="Workspace" className="space-y-0.5">
+      <div className="min-h-0 flex-1 overflow-y-auto px-2.5 py-3">
+        <nav aria-label="Workspace" className="space-y-px">
           {WORKSPACE_NAV.map((n) => {
             const active = isActive(n);
             return (
-              <Link key={n.href} href={n.href} aria-current={active ? "page" : undefined} className={link(active)}>
-                <Icon d={n.icon} />{n.label}
+              <Link key={n.href} href={n.href} aria-current={active ? "page" : undefined} className={item(active)}>
+                <span className={active ? "text-neutral-950 dark:text-white" : "text-neutral-400 group-hover:text-neutral-700"}><Icon d={n.icon} /></span>{n.label}
               </Link>
             );
           })}
         </nav>
 
         {projectId && (
-          <div className="mt-5 border-t border-white/10 pt-4">
-            <div className="px-3 pb-2 text-[11px] font-medium text-slate-500">Project</div>
-            <div className="truncate px-3 pb-2 text-[13.5px] font-semibold text-white" title={projectName ?? undefined}>{projectName ?? "Project"}</div>
+          <div className="mt-4 border-t border-neutral-200 pt-3 dark:border-neutral-800">
+            <div className="truncate px-2.5 pb-1.5 text-[12px] font-medium text-neutral-950 dark:text-white" title={projectName ?? undefined}>{projectName ?? "Project"}</div>
             {PROJECT_GROUPS.map((group, gi) => (
-              <nav key={gi} className={`space-y-0.5 ${gi ? "mt-3" : ""}`} aria-label={group.heading ?? "Project"}>
-                {group.heading && <div className="px-3 pb-1 text-[11px] font-medium text-slate-500">{group.heading}</div>}
+              <nav key={gi} className={`space-y-px ${gi ? "mt-3" : ""}`} aria-label={group.heading ?? "Project"}>
+                {group.heading && <div className="px-2.5 pb-1 text-[11px] font-medium text-neutral-400">{group.heading}</div>}
                 {group.items.map((n) => {
                   const href = `/dashboard/projects/${projectId}${n.seg ? `/${n.seg}` : ""}`;
                   const active = isActiveItem(pathname, projectId, n);
                   return (
-                    <Link key={n.seg || "overview"} href={href} aria-current={active ? "page" : undefined}
-                      className={`flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-[13px] transition ${active ? "bg-[#6A4BFF] text-white" : "text-slate-400 hover:bg-white/5 hover:text-white"}`}>
-                      <Icon d={n.icon} />{n.label}
+                    <Link key={n.seg || "overview"} href={href} aria-current={active ? "page" : undefined} className={item(active)}>
+                      <span className={active ? "text-violet-600" : "text-neutral-400 group-hover:text-neutral-700"}><Icon d={n.icon} /></span>{n.label}
                     </Link>
                   );
                 })}
@@ -124,28 +123,41 @@ export function QAShiftShell({ org, plan, email, children }: { org: string; plan
         )}
       </div>
 
-      <div className="border-t border-white/10 p-4">
-        <div className="truncate text-[12px] text-slate-400">{email}</div>
-        <div className="mt-3 flex items-center gap-2">
-          <Link href="/docs" className="flex-1 rounded-lg border border-white/15 px-2 py-1.5 text-center text-xs text-slate-300 hover:text-white">Docs</Link>
+      <div className="border-t border-neutral-200 p-3 dark:border-neutral-800">
+        <Link href="/dashboard/usage" className="block rounded-md px-2.5 py-2 hover:bg-neutral-900/[0.04] dark:hover:bg-white/5">
+          <div className="flex items-center justify-between text-[12px]"><span className="font-medium text-neutral-900 dark:text-neutral-100">{plan}</span><span className="text-neutral-400">Plan</span></div>
+          {credits !== undefined && <div className="mt-1 text-[11.5px] text-neutral-500">{credits.toLocaleString()} agent credits / month</div>}
+        </Link>
+        <div className="mt-1 flex items-center justify-between gap-2 px-2.5 pt-1">
+          <span className="truncate text-[12px] text-neutral-500" title={email}>{email}</span>
           <SignOutButton />
         </div>
       </div>
     </div>
   );
 
+  const title = projectId ? projectName ?? "Project" : WORKSPACE_NAV.find(isActive)?.label ?? "Workspace";
+
   return (
-    <div className="flex min-h-screen bg-[#FAF9F5] text-[#0A0D18] dark:bg-neutral-950 dark:text-neutral-100">
-      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 lg:block">{sidebar}</aside>
+    <div className="flex min-h-screen bg-[#F7F7F5] text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100">
+      <aside className="sticky top-0 hidden h-screen w-[232px] shrink-0 border-r border-neutral-200 lg:block dark:border-neutral-800">{sidebar}</aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="flex items-center justify-between bg-[#0A0D18] px-4 py-3 text-white lg:hidden">
-          <Link href="/dashboard" className="flex items-center gap-2"><Mark /><span className="font-semibold">QAShift</span></Link>
-          <button onClick={() => setOpen((o) => !o)} className="rounded-lg border border-white/20 p-2" aria-label={open ? "Close menu" : "Open menu"} aria-expanded={open}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d={open ? "M6 6l12 12M18 6L6 18" : "M3 6h18M3 12h18M3 18h18"} /></svg>
-          </button>
-        </div>
-        {open && <div className="lg:hidden">{sidebar}</div>}
-        <main id="main" className="flex-1 px-5 py-8 lg:px-10">{children}</main>
+        <header className="sticky top-0 z-20 flex h-[52px] items-center justify-between gap-3 border-b border-neutral-200 bg-[#F7F7F5]/90 px-4 backdrop-blur lg:px-8 dark:border-neutral-800 dark:bg-neutral-950/90">
+          <div className="flex min-w-0 items-center gap-2">
+            <button onClick={() => setOpen((o) => !o)} className="rounded-md border border-neutral-200 p-1.5 lg:hidden dark:border-neutral-800" aria-label={open ? "Close menu" : "Open menu"} aria-expanded={open}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d={open ? "M6 6l12 12M18 6L6 18" : "M3 6h18M3 12h18M3 18h18"} /></svg>
+            </button>
+            <span className="truncate text-[13px] text-neutral-500">{projectId ? <><Link href="/dashboard/projects" className="hover:text-neutral-900">Projects</Link><span className="mx-1.5 text-neutral-300">/</span></> : null}<span className="font-medium text-neutral-900 dark:text-white">{title}</span></span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link href="/docs" className="hidden h-8 items-center rounded-md px-2.5 text-[13px] text-neutral-600 hover:bg-neutral-900/[0.04] sm:inline-flex">Docs</Link>
+            <Link href="/dashboard/projects" className="inline-flex h-8 items-center gap-1.5 rounded-md bg-neutral-950 px-3 text-[13px] font-medium text-white hover:bg-neutral-800 dark:bg-white dark:text-neutral-950">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>New project
+            </Link>
+          </div>
+        </header>
+        {open && <div className="border-b border-neutral-200 lg:hidden dark:border-neutral-800">{sidebar}</div>}
+        <main id="main" className="mx-auto w-full max-w-[1200px] flex-1 px-4 py-7 lg:px-8">{children}</main>
       </div>
     </div>
   );

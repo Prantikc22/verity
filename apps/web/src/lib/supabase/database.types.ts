@@ -12,6 +12,213 @@ export type Database = {
   }
   public: {
     Tables: {
+      legacy_a11y_subscriptions: {
+        Row: {
+          created_at: string
+          current_period_end: string | null
+          id: string
+          legacy_subscription_id: string | null
+          org_id: string
+          plan_tier: string
+          provider: string
+          provider_subscription_id: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          legacy_subscription_id?: string | null
+          org_id: string
+          plan_tier: string
+          provider?: string
+          provider_subscription_id?: string | null
+          status: string
+        }
+        Update: {
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          legacy_subscription_id?: string | null
+          org_id?: string
+          plan_tier?: string
+          provider?: string
+          provider_subscription_id?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
+      a11y_scans: {
+        Row: {
+          branch: string | null
+          commit_sha: string | null
+          created_at: string
+          engine: string | null
+          error: string | null
+          id: string
+          impact_critical: number
+          impact_minor: number
+          impact_moderate: number
+          impact_serious: number
+          incomplete_count: number
+          legacy_scan_id: string | null
+          org_id: string
+          overlay_vendors: string[]
+          passes_count: number
+          pr_number: number | null
+          project_id: string
+          result: Json | null
+          score: number | null
+          source: string
+          status: string
+          url: string
+          violations_count: number
+        }
+        Insert: {
+          branch?: string | null
+          commit_sha?: string | null
+          created_at?: string
+          engine?: string | null
+          error?: string | null
+          id?: string
+          impact_critical?: number
+          impact_minor?: number
+          impact_moderate?: number
+          impact_serious?: number
+          incomplete_count?: number
+          legacy_scan_id?: string | null
+          org_id: string
+          overlay_vendors?: string[]
+          passes_count?: number
+          pr_number?: number | null
+          project_id: string
+          result?: Json | null
+          score?: number | null
+          source?: string
+          status?: string
+          url: string
+          violations_count?: number
+        }
+        Update: {
+          branch?: string | null
+          commit_sha?: string | null
+          created_at?: string
+          engine?: string | null
+          error?: string | null
+          id?: string
+          impact_critical?: number
+          impact_minor?: number
+          impact_moderate?: number
+          impact_serious?: number
+          incomplete_count?: number
+          legacy_scan_id?: string | null
+          org_id?: string
+          overlay_vendors?: string[]
+          passes_count?: number
+          pr_number?: number | null
+          project_id?: string
+          result?: Json | null
+          score?: number | null
+          source?: string
+          status?: string
+          url?: string
+          violations_count?: number
+        }
+        Relationships: []
+      }
+      a11y_issues: {
+        Row: {
+          created_at: string
+          description: string | null
+          help: string | null
+          help_url: string | null
+          html: string | null
+          id: string
+          impact: string | null
+          node_count: number
+          rule_id: string
+          scan_id: string
+          selector: string | null
+          wcag_tags: string[]
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          help?: string | null
+          help_url?: string | null
+          html?: string | null
+          id?: string
+          impact?: string | null
+          node_count?: number
+          rule_id: string
+          scan_id: string
+          selector?: string | null
+          wcag_tags?: string[]
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          help?: string | null
+          help_url?: string | null
+          html?: string | null
+          id?: string
+          impact?: string | null
+          node_count?: number
+          rule_id?: string
+          scan_id?: string
+          selector?: string | null
+          wcag_tags?: string[]
+        }
+        Relationships: []
+      }
+      a11y_diffs: {
+        Row: {
+          branch: string | null
+          created_at: string
+          fixed_count: number
+          fixed_rules: Json
+          id: string
+          new_count: number
+          new_rules: Json
+          prev_scan_id: string | null
+          project_id: string
+          scan_id: string
+          unchanged_count: number
+          worsened_count: number
+          worsened_rules: Json
+        }
+        Insert: {
+          branch?: string | null
+          created_at?: string
+          fixed_count?: number
+          fixed_rules?: Json
+          id?: string
+          new_count?: number
+          new_rules?: Json
+          prev_scan_id?: string | null
+          project_id: string
+          scan_id: string
+          unchanged_count?: number
+          worsened_count?: number
+          worsened_rules?: Json
+        }
+        Update: {
+          branch?: string | null
+          created_at?: string
+          fixed_count?: number
+          fixed_rules?: Json
+          id?: string
+          new_count?: number
+          new_rules?: Json
+          prev_scan_id?: string | null
+          project_id?: string
+          scan_id?: string
+          unchanged_count?: number
+          worsened_count?: number
+          worsened_rules?: Json
+        }
+        Relationships: []
+      }
       deploy_confidence: {
         Row: {
           breakdown: Json
@@ -296,11 +503,15 @@ export type Database = {
       }
       projects: {
         Row: {
+          a11y_fail_on: string
+          a11y_ingest_token: string | null
+          a11y_scan_urls: string[]
           created_at: string
           default_branch: string
           github_installation_id: number | null
           id: string
           ingest_token: string
+          legacy_a11y_project_id: string | null
           name: string
           org_id: string
           regression_threshold: number
@@ -310,11 +521,15 @@ export type Database = {
           visibility: Database["public"]["Enums"]["project_visibility"]
         }
         Insert: {
+          a11y_fail_on?: string
+          a11y_ingest_token?: string | null
+          a11y_scan_urls?: string[]
           created_at?: string
           default_branch?: string
           github_installation_id?: number | null
           id?: string
           ingest_token?: string
+          legacy_a11y_project_id?: string | null
           name: string
           org_id: string
           regression_threshold?: number
@@ -324,11 +539,15 @@ export type Database = {
           visibility?: Database["public"]["Enums"]["project_visibility"]
         }
         Update: {
+          a11y_fail_on?: string
+          a11y_ingest_token?: string | null
+          a11y_scan_urls?: string[]
           created_at?: string
           default_branch?: string
           github_installation_id?: number | null
           id?: string
           ingest_token?: string
+          legacy_a11y_project_id?: string | null
           name?: string
           org_id?: string
           regression_threshold?: number

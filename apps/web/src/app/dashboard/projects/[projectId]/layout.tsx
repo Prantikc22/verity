@@ -19,15 +19,13 @@ export default async function ProjectLayout({
   if (!project) notFound();
 
   return (
-    <div className="mx-auto max-w-5xl">
-      <div className="border-b border-neutral-200 pb-4 dark:border-neutral-800">
-        <Link href="/dashboard" className="text-xs text-neutral-400 hover:text-neutral-600">← All projects</Link>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">{project.name}</h1>
-        <p className="text-sm text-neutral-500">
-          {project.repo ?? "no repo linked"} · {project.default_branch} · reruns ×{project.rerun_count}
-        </p>
+    <div>
+      <div className="mb-6 flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-neutral-200 pb-4 dark:border-neutral-800">
+        <h1 className="text-[18px] font-semibold tracking-[-0.01em] text-neutral-950 dark:text-white">{project.name}</h1>
+        <span className="font-mono text-[12px] text-neutral-500">{project.repo ?? "no repo linked"} · {project.default_branch} · retries ×{project.rerun_count}</span>
+        <Link href="/dashboard/projects" className="ml-auto text-[12.5px] text-neutral-500 hover:text-neutral-900">All projects</Link>
       </div>
-      <div className="mt-6">{children}</div>
+      {children}
     </div>
   );
 }

@@ -31,6 +31,7 @@ export const PROJECT_GROUPS: { heading?: string; items: ProjectItem[] }[] = [
   { heading: "Results", items: [
     { seg: "performance", label: "Performance", icon: "M3 17l6-6 4 4 8-8M14 7h7v7" },
     { seg: "security", label: "Security", icon: "M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z" },
+    { seg: "accessibility", label: "Accessibility", icon: "M12 4a1.5 1.5 0 100 3 1.5 1.5 0 000-3zM5 9l7 1.5L19 9M12 10.5V15l-3 5M12 15l3 5", also: ["accessibility/scans"] },
     { seg: "api/results", label: "API coverage", icon: "M3 12h4l3 8 4-16 3 8h4" },
     { seg: "predictions", label: "Predictions", icon: "M9 18h6M10 22h4M12 2a7 7 0 00-4 12.7V17h8v-2.3A7 7 0 0012 2z" },
   ] },
@@ -47,7 +48,7 @@ export function isActiveItem(pathname: string, projectId: string, item: ProjectI
   const rest = pathname === base ? "" : pathname.startsWith(`${base}/`) ? pathname.slice(base.length + 1) : null;
   if (rest === null) return false;
   if (item.seg === "") return rest === "";
-  return [item.seg, ...(item.also ?? [])].some((seg) => rest === seg || (seg === "runs" && rest.startsWith("runs/")));
+  return [item.seg, ...(item.also ?? [])].some((seg) => rest === seg || ((seg === "runs" || seg === "accessibility/scans") && rest.startsWith(`${seg}/`)));
 }
 
 export function DashboardShell({

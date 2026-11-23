@@ -31,7 +31,7 @@ export const AGENTS: AgentDef[] = [
   { key: "ui", codename: "Scout", name: "UI Agent", status: "live", disciplines: ["ui"], projectPath: "generate", summary: "Journeys and functional regressions in a real browser." },
   { key: "api", codename: "Relay", name: "API Agent", status: "live", disciplines: ["api", "contract"], projectPath: "api/generate", summary: "Contracts, auth rules and multi-step API workflows." },
   { key: "visual", codename: "Prism", name: "Visual Agent", status: "live", disciplines: ["visual"], projectPath: "visual", summary: "Screenshot baselines and reviewable diffs." },
-  { key: "accessibility", codename: "Lumen", name: "Accessibility Agent", status: "live", disciplines: ["accessibility"], projectPath: null, summary: "WCAG regressions per deploy, gated in the PR." },
+  { key: "accessibility", codename: "Lumen", name: "Accessibility Agent", status: "live", disciplines: ["accessibility"], projectPath: "accessibility", summary: "WCAG regressions per deploy, gated in the PR." },
   { key: "performance", codename: "Pulse", name: "Performance Agent", status: "beta", disciplines: ["performance"], projectPath: "performance", summary: "Latency smoke checks and scoped load profiles." },
   { key: "security", codename: "Warden", name: "Security Agent", status: "beta", disciplines: ["security"], projectPath: "security", summary: "Authorised, non-destructive dynamic and static checks." },
 ];

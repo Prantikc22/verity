@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { getPrimaryOrg } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { ACCESSIBILITY_APP_URL, type AgentStatus } from "@/lib/catalog";
+import type { AgentStatus } from "@/lib/catalog";
 import { Card, PageHeader, StatusPill } from "@/components/shell/ui";
 
 export const metadata: Metadata = { title: "Integrations", robots: { index: false } };
@@ -26,7 +26,7 @@ export default async function IntegrationsPage() {
     { name: "GitLab CI", desc: "Generated pipeline config posting to the same endpoint.", status: "live", href: ci },
     { name: "Jenkins", desc: "Generated Jenkinsfile stage.", status: "live", href: ci },
     { name: "CLI and MCP", desc: "Run from your terminal, Claude, Cursor or VS Code.", status: "live", href: mcp },
-    { name: "Accessibility workspace", desc: "Lumen, the Accessibility Agent, runs here until accounts are merged.", status: "live", href: ACCESSIBILITY_APP_URL, external: true },
+    { name: "Accessibility in CI", desc: "Lumen scans each deploy and posts regressions to the pull request.", status: "live", href: project ? `/dashboard/projects/${project.id}/accessibility` : "/dashboard/projects" },
     { name: "Slack", desc: "Release summaries in a channel.", status: "roadmap" },
     { name: "Jira", desc: "File real failures as issues.", status: "roadmap" },
     { name: "Linear", desc: "File real failures as issues.", status: "roadmap" },

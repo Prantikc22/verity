@@ -5,6 +5,7 @@ import { postRunResults, postDisciplineResults } from "@/lib/github/post";
 import { entitlementsFor } from "@/lib/entitlements";
 import { captureServer } from "@/lib/analytics/posthog-server";
 import { FUNNEL_EVENTS } from "@/lib/analytics/events";
+import { handleA11yIngest, projectForA11yToken } from "@/lib/a11y/handler";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -28,6 +29,14 @@ export async function POST(req: NextRequest) {
     .eq("ingest_token", token)
     .maybeSingle();
   if (!project) {
+    // Accessibility pipelines (Lumen) post axe results with their own token to this
+    // same path; route them to the accessibility ingest. The test-results contract is unchanged.
+    const a11yProject = await projectForA11yToken(token);
+    if (a11yProject) {
+      let body: unknown;
+      try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }
+      return handleA11yIngest(a11yProject, body, new URL(req.url).origin);
+    }
     return NextResponse.json({ error: "Invalid ingest token" }, { status: 401 });
   }
 

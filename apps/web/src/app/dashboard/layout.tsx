@@ -22,7 +22,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   if (await qashiftShellEnabled()) {
     return (
-      <QAShiftShell org={orgCtx?.org.name ?? "Your org"} plan={plan.label} email={user.email ?? ""}>
+      <QAShiftShell org={orgCtx?.org.name ?? "Your org"} plan={plan.label} email={user.email ?? ""} credits={plan.creditsPerMonth}>
         {children}
       </QAShiftShell>
     );

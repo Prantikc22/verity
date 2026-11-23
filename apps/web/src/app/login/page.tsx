@@ -20,16 +20,14 @@ export default async function LoginPage({
   return (
     <main className="grid min-h-screen lg:grid-cols-2">
       <aside className="relative hidden overflow-hidden bg-[#0A0D18] p-12 text-white lg:flex lg:flex-col lg:justify-between">
-        <div className="pointer-events-none absolute -left-24 -top-32 h-[480px] w-[480px] rounded-full bg-[#6A4BFF]/30 blur-[100px]" aria-hidden />
-        <div className="pointer-events-none absolute -bottom-40 right-0 h-[380px] w-[380px] rounded-full bg-[#22C985]/10 blur-[100px]" aria-hidden />
         <div className="relative"><Link href="/" className="text-white"><Logo /></Link></div>
 
         <div className="relative">
-          <h2 className="max-w-md text-4xl font-semibold leading-[1.05] tracking-tight">Find the bugs.<br /><span className="font-serif italic font-normal text-[#C7BCFF]">Ship the good stuff.</span></h2>
+          <h2 className="max-w-md text-4xl font-semibold leading-[1.05] tracking-tight">Find the bugs.<br /><span className="font-serif italic font-normal text-neutral-300">Ship the good stuff.</span></h2>
           <p className="mt-4 max-w-sm text-sm text-slate-400">Six specialist agents, one workspace. Every agent is included in every plan.</p>
           <ul className="mt-8 grid max-w-md grid-cols-2 gap-2">
             {AGENTS.map(([n, r]) => (
-              <li key={n} className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5">
+              <li key={n} className="rounded-md border border-white/10 px-3 py-2.5">
                 <div className="text-sm font-semibold">{n}</div>
                 <div className="font-mono text-[11px] text-slate-400">{r}</div>
               </li>
