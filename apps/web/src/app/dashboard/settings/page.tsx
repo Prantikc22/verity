@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { getPrimaryOrg, getUser } from "@/lib/auth";
 import { entitlementsFor } from "@/lib/entitlements";
 import { Card, PageHeader } from "@/components/shell/ui";
+import { WorkspaceModeSwitch } from "@/components/shell/WorkspaceModeSwitch";
+import { workspaceModeOf } from "@/lib/workspace";
 
 export const metadata: Metadata = { title: "Settings", robots: { index: false } };
 
@@ -22,6 +24,11 @@ export default async function SettingsPage() {
         <dl className="grid gap-3 text-sm sm:grid-cols-[160px_1fr]">
           {rows.map(([k, v]) => <div key={k} className="contents"><dt className="text-neutral-500">{k}</dt><dd className="font-medium capitalize-first">{v}</dd></div>)}
         </dl>
+      </Card>
+      <Card className="mt-4">
+        <div className="font-medium">Workspace</div>
+        <p className="mb-3 mt-1 text-sm text-neutral-500">Choose what your team sees. One login and the same data either way.</p>
+        <WorkspaceModeSwitch initial={workspaceModeOf(orgCtx?.org)} canEdit={orgCtx?.role === "owner" || orgCtx?.role === "admin"} />
       </Card>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <Link href="/dashboard/team"><Card className="transition hover:border-[#D6D1C2]"><div className="font-medium">Members</div><p className="mt-1 text-sm text-neutral-500">Invite teammates and manage roles.</p></Card></Link>

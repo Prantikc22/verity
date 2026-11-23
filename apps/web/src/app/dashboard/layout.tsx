@@ -7,6 +7,8 @@ import { DashboardShell } from "@/components/DashboardShell";
 import { QAShiftShell } from "@/components/shell/QAShiftShell";
 import { qashiftShellEnabled } from "@/lib/flags";
 import { creditsUsed, UNLIMITED_CREDITS } from "@/lib/credits";
+import { workspaceModeOf } from "@/lib/workspace";
+import { REPORTS, isReportsKey } from "@/lib/catalog";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const user = await getUser();
@@ -26,8 +28,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
     let used: number | undefined;
     if (orgCtx?.org.id) { try { used = await creditsUsed(orgCtx.org.id); } catch { used = undefined; } }
     const credits = { limit: plan.creditsPerMonth, used, unlimited: plan.creditsPerMonth >= UNLIMITED_CREDITS };
+    const mode = workspaceModeOf(orgCtx?.org);
+    const reportsKey = orgCtx?.org.reports_plan;
+    const label = mode === "reports" ? (isReportsKey(reportsKey) ? REPORTS[reportsKey].name : "Reports Free") : plan.label;
     return (
-      <QAShiftShell org={orgCtx?.org.name ?? "Your org"} plan={plan.label} email={user.email ?? ""} credits={credits}>
+      <QAShiftShell org={orgCtx?.org.name ?? "Your org"} plan={label} email={user.email ?? ""} credits={credits} mode={mode}>
         {children}
       </QAShiftShell>
     );

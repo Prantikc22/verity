@@ -38,6 +38,38 @@ export const WORKSPACE_NAV = [
   { href: "/dashboard/settings", label: "Settings", icon: P.settings, also: ["/dashboard/team"] },
 ];
 
+/** Reports-only workspace: just what a team sending test results needs. */
+export const REPORTS_NAV = [
+  { href: "/dashboard/reports", label: "Reports", icon: P.reports, also: ["/dashboard/trends"] },
+  { href: "/dashboard/runs", label: "Test Runs", icon: P.runs, also: [] as string[] },
+  { href: "/dashboard/projects", label: "Projects", icon: P.projects, also: [] },
+  { href: "/dashboard/usage", label: "Usage & Billing", icon: P.billing, also: [] },
+  { href: "/dashboard/settings", label: "Settings", icon: P.settings, also: ["/dashboard/team"] },
+];
+const REPORTS_PROJECT_SEGS = new Set(["runs", "ci", "settings"]);
+
+function AddAgents() {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const go = async () => {
+    setBusy(true); setErr(null);
+    const res = await fetch("/api/workspace/mode", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ mode: "full" }) });
+    if (res.ok) { window.location.href = "/dashboard/agents"; return; }
+    setErr((await res.json().catch(() => ({}))).error ?? "Couldn't switch. Try again.");
+    setBusy(false);
+  };
+  return (
+    <div className="mb-2 rounded-lg border border-neutral-200 bg-white p-3 dark:border-neutral-800 dark:bg-neutral-900">
+      <div className="text-[12.5px] font-medium text-neutral-900 dark:text-neutral-100">Want tests written for you?</div>
+      <p className="mt-0.5 text-[11.5px] leading-snug text-neutral-500">AI agents write, run and fix tests. Same login, same data. Free to try.</p>
+      <button type="button" onClick={go} disabled={busy} className="mt-2 w-full rounded-md bg-neutral-900 px-2.5 py-1.5 text-[12px] font-medium text-white hover:bg-neutral-800 disabled:opacity-60 dark:bg-white dark:text-neutral-900">
+        {busy ? "Turning on…" : "Add AI agents"}
+      </button>
+      {err && <p className="mt-1.5 text-[11px] text-red-600">{err}</p>}
+    </div>
+  );
+}
+
 function Icon({ d }: { d: string }) {
   return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={d} /></svg>;
 }
@@ -51,7 +83,9 @@ function Mark() {
   );
 }
 
-export function QAShiftShell({ org, plan, email, credits, children }: { org: string; plan: string; email: string; credits?: { limit: number; used?: number; unlimited: boolean }; children: React.ReactNode }) {
+export function QAShiftShell({ org, plan, email, credits, mode = "full", children }: { org: string; plan: string; email: string; credits?: { limit: number; used?: number; unlimited: boolean }; mode?: "full" | "reports"; children: React.ReactNode }) {
+  const reportsOnly = mode === "reports";
+  const NAV = reportsOnly ? REPORTS_NAV : WORKSPACE_NAV;
   const pathname = usePathname();
   const projectId = pathname.match(/^\/dashboard\/projects\/([^/]+)/)?.[1] ?? null;
   const [open, setOpen] = useState(false);
@@ -71,7 +105,7 @@ export function QAShiftShell({ org, plan, email, credits, children }: { org: str
   // eslint-disable-next-line react-hooks/set-state-in-effect -- close the mobile menu on navigation
   useEffect(() => { setOpen(false); }, [pathname]);
 
-  const isActive = (n: (typeof WORKSPACE_NAV)[number]) =>
+  const isActive = (n: (typeof NAV)[number]) =>
     n.href === "/dashboard" ? pathname === "/dashboard"
       : n.href === "/dashboard/projects" ? pathname === "/dashboard/projects"
       : pathname === n.href || pathname.startsWith(`${n.href}/`) || n.also.some((a) => pathname.startsWith(a));
@@ -84,7 +118,7 @@ export function QAShiftShell({ org, plan, email, credits, children }: { org: str
   const sidebar = (
     <div className="flex h-full flex-col bg-[#FBFBFA] dark:bg-neutral-950">
       <div className="flex h-[52px] items-center gap-2 border-b border-neutral-200 px-4 dark:border-neutral-800">
-        <Link href="/dashboard" className="flex min-w-0 items-center gap-2 text-neutral-950 dark:text-white">
+        <Link href={reportsOnly ? "/dashboard/reports" : "/dashboard"} className="flex min-w-0 items-center gap-2 text-neutral-950 dark:text-white">
           <Mark />
           <span className="truncate text-[14px] font-semibold tracking-[-0.01em]">{org}</span>
         </Link>
@@ -92,7 +126,7 @@ export function QAShiftShell({ org, plan, email, credits, children }: { org: str
 
       <div className="min-h-0 flex-1 overflow-y-auto px-2.5 py-3">
         <nav aria-label="Workspace" className="space-y-px">
-          {WORKSPACE_NAV.map((n) => {
+          {NAV.map((n) => {
             const active = isActive(n);
             return (
               <Link key={n.href} href={n.href} aria-current={active ? "page" : undefined} className={item(active)}>
@@ -105,7 +139,9 @@ export function QAShiftShell({ org, plan, email, credits, children }: { org: str
         {projectId && (
           <div className="mt-4 border-t border-neutral-200 pt-3 dark:border-neutral-800">
             <div className="truncate px-2.5 pb-1.5 text-[12px] font-medium text-neutral-950 dark:text-white" title={projectName ?? undefined}>{projectName ?? "Project"}</div>
-            {PROJECT_GROUPS.map((group, gi) => (
+            {(reportsOnly
+              ? [{ items: PROJECT_GROUPS.flatMap((g) => g.items).filter((n) => REPORTS_PROJECT_SEGS.has(n.seg)).map((n) => (n.seg === "ci" ? { ...n, label: "Connect tests" } : n)) }]
+              : PROJECT_GROUPS).map((group: { heading?: string; items: typeof PROJECT_GROUPS[number]["items"] }, gi) => (
               <nav key={gi} className={`space-y-px ${gi ? "mt-3" : ""}`} aria-label={group.heading ?? "Project"}>
                 {group.heading && <div className="px-2.5 pb-1 text-[11px] font-medium text-neutral-400">{group.heading}</div>}
                 {group.items.map((n) => {
@@ -124,9 +160,10 @@ export function QAShiftShell({ org, plan, email, credits, children }: { org: str
       </div>
 
       <div className="border-t border-neutral-200 p-3 dark:border-neutral-800">
+        {reportsOnly && <AddAgents />}
         <Link href="/dashboard/usage" className="block rounded-md px-2.5 py-2 hover:bg-neutral-900/[0.04] dark:hover:bg-white/5">
           <div className="flex items-center justify-between text-[12px]"><span className="font-medium text-neutral-900 dark:text-neutral-100">{plan}</span><span className="text-neutral-400">Plan</span></div>
-          {credits && (credits.unlimited ? (
+          {credits && !reportsOnly && (credits.unlimited ? (
             <div className="mt-1 text-[11.5px] text-neutral-500">Unlimited agent credits</div>
           ) : credits.used === undefined ? (
             <div className="mt-1 text-[11.5px] text-neutral-500">{credits.limit.toLocaleString()} agent credits / month</div>

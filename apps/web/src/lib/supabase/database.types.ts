@@ -507,6 +507,7 @@ export type Database = {
           grandfathered: boolean
           autonomous_plan: string | null
           reports_plan: string | null
+          workspace_mode: string
           managed_plan: string | null
         }
         Insert: {
@@ -520,6 +521,7 @@ export type Database = {
           grandfathered?: boolean
           autonomous_plan?: string | null
           reports_plan?: string | null
+          workspace_mode?: string
           managed_plan?: string | null
         }
         Update: {
@@ -533,6 +535,7 @@ export type Database = {
           grandfathered?: boolean
           autonomous_plan?: string | null
           reports_plan?: string | null
+          workspace_mode?: string
           managed_plan?: string | null
         }
         Relationships: []

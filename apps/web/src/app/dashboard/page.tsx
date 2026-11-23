@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { getPrimaryOrg } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { workspaceModeOf } from "@/lib/workspace";
 import { createClient } from "@/lib/supabase/server";
 import { entitlementsFor } from "@/lib/entitlements";
 import { AGENTS } from "@/lib/catalog";
@@ -11,6 +13,7 @@ export const metadata: Metadata = { title: "Overview", robots: { index: false } 
 
 export default async function OverviewPage() {
   const orgCtx = await getPrimaryOrg();
+  if (workspaceModeOf(orgCtx?.org) === "reports") redirect("/dashboard/reports");
   const ent = entitlementsFor(orgCtx?.org);
   const orgId = orgCtx?.org.id;
   const supabase = await createClient();
