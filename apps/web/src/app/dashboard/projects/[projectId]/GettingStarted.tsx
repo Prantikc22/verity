@@ -34,7 +34,7 @@ export function GettingStarted({ projectId, hasTests, hasRuns }: { projectId: st
     <section className="mb-8 border border-indigo-200 bg-indigo-50/50 p-5 dark:border-indigo-900/60 dark:bg-indigo-950/20">
       <div className="flex items-start justify-between">
         <div>
-          <h2 className="text-sm font-semibold">👋 Get started with QAShift</h2>
+          <h2 className="text-sm font-semibold">Get started with QAShift</h2>
           <p className="text-xs text-neutral-500">You&apos;re {pct}% set up · {doneCount}/{steps.length} done</p>
         </div>
         <button onClick={() => { localStorage.setItem(key, "1"); setHidden(true); }} className="text-xs text-neutral-400 hover:text-neutral-600">Dismiss</button>

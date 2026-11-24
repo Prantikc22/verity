@@ -52,7 +52,7 @@ export default async function VisualPage({ params }: { params: Promise<{ project
           <h2 className="text-lg font-semibold tracking-tight">Visual</h2>
           <p className="text-xs text-neutral-500">Pixel/screenshot regression — every PR is diffed against a committed baseline. A <strong>change</strong> means the UI shifted; you approve or reject the new baseline.</p>
         </div>
-        <Link href={`/dashboard/projects/${projectId}/ci`} className="shrink-0 border border-indigo-300 px-3 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 dark:border-indigo-800 dark:hover:bg-indigo-950/30">⚙️ Turn on Visual in CI →</Link>
+        <Link href={`/dashboard/projects/${projectId}/ci`} className="shrink-0 border border-indigo-300 px-3 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 dark:border-indigo-800 dark:hover:bg-indigo-950/30">Turn on Visual in CI →</Link>
       </div>
 
       <VisualGenerate projectId={projectId} />

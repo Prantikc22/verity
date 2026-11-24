@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { projectTokens } from "@/lib/tokens";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { IngestToken } from "../IngestToken";
@@ -10,13 +11,14 @@ export default async function McpPage({ params }: { params: Promise<{ projectId:
   const supabase = await createClient();
 
   const [{ data: project }, { data: tests }, { data: localRuns }] = await Promise.all([
-    supabase.from("projects").select("ingest_token").eq("id", projectId).maybeSingle(),
+    supabase.from("projects").select("id").eq("id", projectId).maybeSingle(),
     supabase.from("tests").select("id, name, spec_path, status, created_at").eq("project_id", projectId).eq("origin", "mcp").order("created_at", { ascending: false }),
     // Local/MCP runs use trigger="manual" — but so do cloud runs (branch "cloud"/"cloud-trial").
     // Exclude those so this list shows ONLY runs from the local MCP (verity_run in your IDE).
     supabase.from("test_runs").select("id, passed, failed, flaky, branch, created_at").eq("project_id", projectId).eq("trigger", "manual").neq("branch", "cloud").neq("branch", "cloud-trial").order("created_at", { ascending: false }).limit(10),
   ]);
   if (!project) notFound();
+  const { ingest: ingestToken } = await projectTokens(supabase, projectId);
 
   const config = `{
   "mcpServers": {
@@ -41,7 +43,7 @@ export default async function McpPage({ params }: { params: Promise<{ projectId:
       <section className="border border-neutral-200 p-5 dark:border-neutral-800">
         <h3 className="text-sm font-medium">1 · Your project token</h3>
         <p className="mt-1 text-xs text-neutral-500">The MCP authenticates with this (same token your CI uses). Keep it secret.</p>
-        <div className="mt-3"><IngestToken token={project.ingest_token} /></div>
+        <div className="mt-3">{ingestToken ? <IngestToken token={ingestToken} /> : <p className="text-sm text-neutral-500">Only members of this project can see its token.</p>}</div>
       </section>
 
       <section className="border border-neutral-200 p-5 dark:border-neutral-800">

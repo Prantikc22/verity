@@ -1,4 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { canUseProject } from "@/lib/project-access";
+import { runnerFetch, RUNNER_BUSY } from "@/lib/runner-fetch";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { createClient } from "@/lib/supabase/server";
@@ -40,8 +42,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
-  const { data: project } = await supabase.from("projects").select("*").eq("id", projectId).maybeSingle();
-  if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 });
+  const { data: project } = await supabase.from("projects").select("id, org_id, name, rerun_count, regression_threshold, default_branch").eq("id", projectId).maybeSingle();
+  // Seeing a project (public ones are visible to all) is not the same as being allowed to act on it.
+  if (!project || !(await canUseProject(supabase, projectId))) return NextResponse.json({ error: "Project not found" }, { status: 404 });
 
   const runnerUrl = process.env.RUNNER_SERVICE_URL;
   const runnerToken = process.env.RUNNER_SERVICE_TOKEN;
@@ -97,13 +100,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
       const send = (obj: unknown) => controller.enqueue(encoder.encode(JSON.stringify(obj) + "\n"));
 
       const callRunner = async (specs: { name: string; spec_path: string; spec_content: string }[]): Promise<RunnerResult[]> => {
-        const res = await fetch(`${runnerUrl.replace(/\/$/, "")}/run`, {
+        const res = await runnerFetch(`${runnerUrl.replace(/\/$/, "")}/run`, {
           method: "POST",
           headers: { "content-type": "application/json", authorization: `Bearer ${runnerToken}` },
           body: JSON.stringify({ tests: specs, baseURL, reruns: rerunCount }),
         });
         const data = await res.json();
-        if (!res.ok || !data.ok) throw new Error(data.error ?? `runner ${res.status}`);
+        if (!res.ok || !data.ok) throw new Error(res.status === 503 ? RUNNER_BUSY : data.error ?? `runner ${res.status}`);
         return data.results as RunnerResult[];
       };
 

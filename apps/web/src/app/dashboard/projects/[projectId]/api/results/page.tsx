@@ -104,7 +104,7 @@ export default async function ApiResultsPage({ params }: { params: Promise<{ pro
             {endpoints.sort((a, b) => (a.status === "failed" ? -1 : 1) - (b.status === "failed" ? -1 : 1)).map((g) => (
               <details key={g.endpoint} className="group border border-neutral-200 dark:border-neutral-800" open={g.status !== "passed"}>
                 <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-2.5">
-                  <span className={`text-sm ${g.status === "passed" ? "text-emerald-600" : g.status === "flaky" ? "text-amber-500" : "text-red-600"}`}>{g.status === "passed" ? "✓" : g.status === "flaky" ? "⚠" : "✗"}</span>
+                  <span className={`text-sm ${g.status === "passed" ? "text-emerald-600" : g.status === "flaky" ? "text-amber-500" : "text-red-600"}`}>{g.status === "passed" ? "✓" : g.status === "flaky" ? "!" : "✗"}</span>
                   <span className="font-mono text-xs font-semibold">{g.endpoint}</span>
                   <span className="ml-auto text-[11px] text-neutral-400">{g.status === "passed" ? `${g.total} checks pass` : g.failing > 0 ? `${g.failing} failing` : `${g.flaky} flaky`}</span>
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-neutral-400 transition-transform group-open:rotate-180"><path d="M6 9l6 6 6-6" /></svg>
@@ -112,7 +112,7 @@ export default async function ApiResultsPage({ params }: { params: Promise<{ pro
                 <div className="divide-y divide-neutral-100 border-t border-neutral-100 dark:divide-neutral-800/60 dark:border-neutral-800">
                   {g.entries.map((e, i) => (
                     <div key={i} className="flex items-start gap-3 px-4 py-2">
-                      <span className={`mt-0.5 text-xs ${e.status === "passed" ? "text-emerald-600" : e.status === "flaky" ? "text-amber-500" : "text-red-600"}`}>{e.status === "passed" ? "✓" : e.status === "flaky" ? "⚠" : "✗"}</span>
+                      <span className={`mt-0.5 text-xs ${e.status === "passed" ? "text-emerald-600" : e.status === "flaky" ? "text-amber-500" : "text-red-600"}`}>{e.status === "passed" ? "✓" : e.status === "flaky" ? "!" : "✗"}</span>
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-baseline gap-x-2">
                           <span className="text-sm">{e.description}</span>

@@ -1,4 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { canUseProject } from "@/lib/project-access";
+import { testName } from "@/lib/test-name";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { createClient } from "@/lib/supabase/server";
@@ -37,7 +39,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
   if (!llmConfig().configured) return NextResponse.json({ error: "LLM is not configured (set LLM_API_KEY)." }, { status: 503 });
 
   const { data: project } = await supabase.from("projects").select("id, org_id").eq("id", projectId).maybeSingle();
-  if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 });
+  // Seeing a project (public ones are visible to all) is not the same as being allowed to act on it.
+  if (!project || !(await canUseProject(supabase, projectId))) return NextResponse.json({ error: "Project not found" }, { status: 404 });
 
   // Monthly generation cap (shared budget).
   const { data: org } = await supabase.from("orgs").select("*").eq("id", project.org_id).maybeSingle();
@@ -52,7 +55,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Provide a description." }, { status: 400 });
   const { description, baseUrl, spec, auth, criticalPath } = parsed.data;
-  const name = (parsed.data.name ?? description.slice(0, 60)).slice(0, 60);
+  const name = testName(parsed.data.name ?? description);
 
   const hold = await reserveCredits({ orgId: project.org_id, plan, cost: CREDITS.apiTest, agent: "api", projectId: project.id, ref: "api-test" });
   if (!hold.ok) return hold.response;

@@ -22,7 +22,7 @@ export default async function ApiRunPage({ params }: { params: Promise<{ project
         <h2 className="text-lg font-semibold tracking-tight">Cloud run · API tests</h2>
         <p className="text-xs text-neutral-500">
           Execute your saved <strong>API tests</strong> (Playwright request specs) on our infra with real assertions.
-          Failures are auto-healed and re-run. Capped per plan; for unlimited execution use your <Link href={`/dashboard/projects/${projectId}/settings`} className="text-indigo-600 underline">CI</Link>.
+          Failures stay visible for review, never rewritten to pass. Cloud runs don&apos;t use credits and are capped per plan; for unlimited execution use your <Link href={`/dashboard/projects/${projectId}/settings`} className="text-indigo-600 underline">CI</Link>.
         </p>
       </div>
 

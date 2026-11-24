@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { testName } from "@/lib/test-name";
 import { z } from "zod";
 import { generateTest } from "@/lib/llm/generate";
 import { llmConfig } from "@/lib/llm/provider";
@@ -79,7 +80,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: err instanceof Error ? err.message : "generation failed" }, { status: 500 });
   }
 
-  const name = (isUrl ? `Smoke: ${input.trim()}` : input.trim()).slice(0, 60);
+  const name = testName(isUrl ? `Smoke: ${input.trim()}` : input);
   const specPath = specPathFor(name);
   const { data: test, error } = await admin
     .from("tests")

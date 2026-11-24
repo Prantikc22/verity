@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { canUseProject } from "@/lib/project-access";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { proposeTests } from "@/lib/llm/generate";
@@ -33,7 +34,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
   if (!llmConfig().configured) return NextResponse.json({ error: "LLM is not configured." }, { status: 503 });
 
   const { data: project } = await supabase.from("projects").select("id, org_id").eq("id", projectId).maybeSingle();
-  if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 });
+  // Seeing a project (public ones are visible to all) is not the same as being allowed to act on it.
+  if (!project || !(await canUseProject(supabase, projectId))) return NextResponse.json({ error: "Project not found" }, { status: 404 });
 
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Provide a url and/or a PRD." }, { status: 400 });

@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { canUseProject } from "@/lib/project-access";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { installationOctokit } from "@/lib/github/app";
@@ -183,7 +184,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ pr
 
   const { data: project } = await supabase
     .from("projects").select("id, repo, default_branch, github_installation_id").eq("id", projectId).maybeSingle();
-  if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 });
+  if (!project || !(await canUseProject(supabase, projectId))) return NextResponse.json({ error: "Project not found" }, { status: 404 });
 
   const repo = parseRepo(project.repo);
   if (!repo) return NextResponse.json({ error: "Link a GitHub repo to this project first." }, { status: 400 });

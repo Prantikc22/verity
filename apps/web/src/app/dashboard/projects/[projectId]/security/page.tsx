@@ -43,7 +43,7 @@ export default async function SecurityPage({ params }: { params: Promise<{ proje
           <h2 className="text-lg font-semibold tracking-tight">Security</h2>
           <p className="text-xs text-neutral-500">Dynamic (running-app) + static (code) findings, ranked by severity — <strong>issues, not pass/fail tests</strong>.</p>
         </div>
-        <Link href={`/dashboard/projects/${projectId}/ci`} className="shrink-0 border border-indigo-300 px-3 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 dark:border-indigo-800 dark:hover:bg-indigo-950/30">⚙️ Turn on Security in CI →</Link>
+        <Link href={`/dashboard/projects/${projectId}/ci`} className="shrink-0 border border-indigo-300 px-3 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 dark:border-indigo-800 dark:hover:bg-indigo-950/30">Turn on Security in CI →</Link>
       </div>
 
       <details className="border border-neutral-200 dark:border-neutral-800">
@@ -71,7 +71,7 @@ export default async function SecurityPage({ params }: { params: Promise<{ proje
 
       {!latestRun || all.length === 0 ? (
         <div className="border border-dashed border-neutral-300 p-8 text-center dark:border-neutral-700">
-          <p className="text-sm text-neutral-500">{latestRun ? "No findings in the latest scan. 🎉" : "No security scans yet."}</p>
+          <p className="text-sm text-neutral-500">{latestRun ? "No findings in the latest scan." : "No security scans yet."}</p>
           {!latestRun && <p className="mt-1 text-xs text-neutral-400">Enable <strong>Security</strong> in <Link href={`/dashboard/projects/${projectId}/ci`} className="text-indigo-600 underline">CI Setup</Link> — static analysis of your code + dynamic scans against staging.</p>}
         </div>
       ) : (

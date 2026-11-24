@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ActionError } from "@/components/shell/ActionError";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -136,7 +137,7 @@ export function ApiGenerateWizard({ projectId }: { projectId: string }) {
                 className="mt-1.5 w-full border border-neutral-300 bg-transparent px-3 py-2 text-sm outline-none focus:border-indigo-500 dark:border-neutral-700" />
             </label>
 
-            {error && <p className="text-sm text-red-600">{error}</p>}
+            {error && <ActionError error={error} className="" />}
             <button type="submit" className="bg-indigo-600 px-5 py-2 text-sm font-medium text-white">Propose API tests →</button>
           </form>
         )}
@@ -155,7 +156,7 @@ export function ApiGenerateWizard({ projectId }: { projectId: string }) {
               <div className="text-center">
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-2xl dark:bg-emerald-950">✓</div>
                 <h3 className="mt-3 text-base font-semibold">Saved {added} API test{added === 1 ? "" : "s"}</h3>
-                {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+                {error && <ActionError error={error} className="mt-1" />}
                 <div className="mt-4 flex justify-center gap-2">
                   <Link href={`/dashboard/projects/${projectId}/api/tests`} className="bg-indigo-600 px-4 py-2 text-sm font-medium text-white">View API tests →</Link>
                   <Link href={`/dashboard/projects/${projectId}/api/run`} className="border border-neutral-300 px-4 py-2 text-sm dark:border-neutral-700">Run in cloud</Link>
@@ -174,10 +175,11 @@ export function ApiGenerateWizard({ projectId }: { projectId: string }) {
                       <input value={setName} onChange={(e) => setSetName(e.target.value)} placeholder="Suite name (optional)"
                         className="border border-neutral-300 bg-transparent px-2 py-1.5 text-xs outline-none focus:border-indigo-500 dark:border-neutral-700" />
                       <button onClick={saveAll} disabled={selected.size === 0} className="bg-emerald-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50">Save {selected.size} to test plan →</button>
+                      <span className="text-[11.5px] text-neutral-500" title="Credits are only used for tests you keep. Runs in your own CI are free.">Uses {selected.size} credit{selected.size === 1 ? "" : "s"}</span>
                     </div>
                   )}
                 </div>
-                {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+                {error && <ActionError error={error} />}
                 <div className="mt-3 space-y-2">
                   {candidates.map((c, i) => {
                     const st = statuses[i];

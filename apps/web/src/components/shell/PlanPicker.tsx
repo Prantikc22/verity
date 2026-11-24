@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-type P = { key: string; product: "autonomous" | "reports" | "managed"; name: string; usd: number; inr: number; requiresScope?: boolean; current: boolean };
+type P = { key: string; product: "autonomous" | "reports" | "managed"; name: string; usd: number; inr: number; requiresScope?: boolean; current: boolean; /** One plain line: what you get. */ summary?: string };
 type RzpOptions = { key: string; subscription_id: string; name: string; description: string; prefill?: { email?: string }; theme?: { color: string }; handler: (r: Record<string, string>) => void; modal?: { ondismiss?: () => void } };
 type RzpCtor = new (o: RzpOptions) => { open: () => void };
 const rzpWin = () => window as unknown as { Razorpay?: RzpCtor };
@@ -88,7 +88,7 @@ export function PlanPicker({ plans, initial }: { plans: P[]; initial?: string })
           <ul className="divide-y divide-neutral-100 dark:divide-neutral-800">
             {plans.filter((p) => p.product === g).map((p) => (
               <li key={p.key} id={`plan-${p.key}`} className={`flex flex-wrap items-center justify-between gap-3 px-4 py-3 ${initial === p.key ? "bg-violet-50/60 dark:bg-violet-950/30" : ""}`}>
-                <span className="text-[13.5px]"><span className="font-medium">{p.name}</span> <span className="tnum text-neutral-500">{price(p)}/mo</span></span>
+                <span className="min-w-0 text-[13.5px]"><span className="font-medium">{p.name}</span> <span className="tnum text-neutral-500">{price(p)}/mo</span>{p.summary && <span className="mt-0.5 block text-[12px] text-neutral-500">{p.summary}</span>}</span>
                 {p.current ? (
                   <span className="text-[12.5px] font-medium text-emerald-700">Current plan</span>
                 ) : (

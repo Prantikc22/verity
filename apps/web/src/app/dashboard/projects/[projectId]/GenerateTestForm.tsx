@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ActionError } from "@/components/shell/ActionError";
 import { useRouter } from "next/navigation";
 import { PrdUpload } from "./PrdUpload";
 
@@ -118,7 +119,7 @@ export function GenerateTestForm({ projectId }: { projectId: string }) {
         This test covers a critical path (feeds confidence scoring)
       </label>
 
-      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+      {error && <ActionError error={error} />}
       {result && (
         <p className="mt-2 text-sm text-emerald-600">
           Saved “{result.name}”. {result.live ? "Locators built from the live page ✓" : "Generated from your description."}

@@ -1,4 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { canUseProject } from "@/lib/project-access";
+import { testName } from "@/lib/test-name";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { createClient } from "@/lib/supabase/server";
@@ -44,7 +46,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
   if (!llmConfig().configured) return NextResponse.json({ error: "LLM is not configured (set LLM_API_KEY)." }, { status: 503 });
 
   const { data: project } = await supabase.from("projects").select("id, org_id").eq("id", projectId).maybeSingle();
-  if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 });
+  // Seeing a project (public ones are visible to all) is not the same as being allowed to act on it.
+  if (!project || !(await canUseProject(supabase, projectId))) return NextResponse.json({ error: "Project not found" }, { status: 404 });
 
   const { data: org } = await supabase.from("orgs").select("*").eq("id", project.org_id).maybeSingle();
   const plan = entitlementsFor(org);
@@ -110,7 +113,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
       const specPath = specPathFor(c.title);
       const { error } = await supabase.from("tests").insert({
         project_id: project.id, org_id: project.org_id, kind: "agent",
-        name: c.title.slice(0, 60), suite: "Agent", description: c.intent,
+        name: testName(c.title), suite: "Agent", description: c.intent,
         source_url: endpoint ?? null, spec_path: specPath, spec_content: gen.specContent,
         plan: gen.plan as unknown as Json, source_files: [], generated_model: gen.model, critical_path: false, status: "draft",
       });

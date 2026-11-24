@@ -19,7 +19,7 @@ export default async function PerformanceConfigurePage({ params }: { params: Pro
           <h2 className="text-lg font-semibold tracking-tight">Configure performance testing</h2>
           <p className="text-xs text-neutral-500">Generate load-test configs from your OpenAPI spec, try a quick public-URL trial, and wire it into CI. Results appear under <Link href={`/dashboard/projects/${projectId}/performance`} className="text-indigo-600 underline">Performance → Results</Link>.</p>
         </div>
-        <Link href={`/dashboard/projects/${projectId}/ci`} className="shrink-0 border border-indigo-300 px-3 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 dark:border-indigo-800 dark:hover:bg-indigo-950/30">⚙️ Turn on Performance in CI →</Link>
+        <Link href={`/dashboard/projects/${projectId}/ci`} className="shrink-0 border border-indigo-300 px-3 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 dark:border-indigo-800 dark:hover:bg-indigo-950/30">Turn on Performance in CI →</Link>
       </div>
 
       <details className="border border-neutral-200 dark:border-neutral-800" open>

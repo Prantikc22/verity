@@ -943,6 +943,8 @@ export type Database = {
           id: string
           is_pom: boolean
           kind: string
+          last_verify_error: string | null
+          last_verified_at: string | null
           name: string
           org_id: string
           origin: string
@@ -965,6 +967,8 @@ export type Database = {
           id?: string
           is_pom?: boolean
           kind?: string
+          last_verify_error?: string | null
+          last_verified_at?: string | null
           name: string
           org_id: string
           origin?: string
@@ -987,6 +991,8 @@ export type Database = {
           id?: string
           is_pom?: boolean
           kind?: string
+          last_verify_error?: string | null
+          last_verified_at?: string | null
           name?: string
           org_id?: string
           origin?: string
@@ -1075,6 +1081,7 @@ export type Database = {
         Returns: { ok: boolean; used: number; ledger_id: number | null }[]
       }
       credits_used_this_month: { Args: { p_org: string }; Returns: number }
+      project_tokens: { Args: { p_project: string }; Returns: { ingest_token: string | null; a11y_ingest_token: string | null }[] }
       ensure_personal_org: { Args: { p_name: string }; Returns: string }
       is_org_admin: { Args: { target_org: string }; Returns: boolean }
       is_org_member: { Args: { target_org: string }; Returns: boolean }

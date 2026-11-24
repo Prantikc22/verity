@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { canUseProject } from "@/lib/project-access";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 
@@ -20,6 +21,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  if (!(await canUseProject(supabase, projectId))) return NextResponse.json({ error: "Project not found" }, { status: 404 });
 
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Provide { ids[], action }." }, { status: 400 });

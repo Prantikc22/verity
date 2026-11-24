@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { testName } from "@/lib/test-name";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -59,7 +60,7 @@ export async function POST(req: NextRequest) {
   const flow = description;
   const genInput = flow ?? url!;
   const isUrl = !flow && Boolean(url);
-  const name = parsed.data.name ?? (flow ? flow.slice(0, 60) : `Smoke: ${url}`).slice(0, 60);
+  const name = parsed.data.name ?? testName(flow ?? `Smoke: ${url}`);
   // The MCP fetched the page on the user's machine — use that context (our server
   // can't reach their localhost).
   const pageContext = parsed.data.pageHtml && url ? extractPageContext(parsed.data.pageHtml, url)?.summary : undefined;

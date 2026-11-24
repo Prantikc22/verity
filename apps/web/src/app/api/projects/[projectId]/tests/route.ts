@@ -1,4 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { canUseProject } from "@/lib/project-access";
+import { testName } from "@/lib/test-name";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { createClient } from "@/lib/supabase/server";
@@ -59,7 +61,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
     .select("id, org_id")
     .eq("id", projectId)
     .maybeSingle();
-  if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 });
+  // Seeing a project (public ones are visible to all) is not the same as being allowed to act on it.
+  if (!project || !(await canUseProject(supabase, projectId))) return NextResponse.json({ error: "Project not found" }, { status: 404 });
 
   // Per-tier monthly generation cap.
   const { data: org } = await supabase.from("orgs").select("*").eq("id", project.org_id).maybeSingle();
@@ -93,7 +96,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
   // If only a URL, generate a smoke test from the fetched page.
   const genInput = flow ?? url!;
   const isUrl = !flow && Boolean(url);
-  const name = parsed.data.name ?? (flow ? flow.slice(0, 60) : `Smoke: ${url}`).slice(0, 60);
+  const name = parsed.data.name ?? testName(flow ?? `Smoke: ${url}`);
 
   const credentials = (parsed.data.username || parsed.data.password)
     ? { username: parsed.data.username, password: parsed.data.password }

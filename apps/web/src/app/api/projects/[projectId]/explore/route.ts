@@ -1,4 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { canUseProject } from "@/lib/project-access";
+import { runnerFetch, RUNNER_BUSY } from "@/lib/runner-fetch";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -22,7 +24,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   const { data: project } = await supabase.from("projects").select("id, org_id").eq("id", projectId).maybeSingle();
-  if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 });
+  // Seeing a project (public ones are visible to all) is not the same as being allowed to act on it.
+  if (!project || !(await canUseProject(supabase, projectId))) return NextResponse.json({ error: "Project not found" }, { status: 404 });
 
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Provide { url }." }, { status: 400 });
@@ -60,7 +63,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
 
   // Kick off the run on the Fly runner; it streams frames back via the callback.
   try {
-    const res = await fetch(`${runnerUrl.replace(/\/$/, "")}/explore`, {
+    const res = await runnerFetch(`${runnerUrl.replace(/\/$/, "")}/explore`, {
       method: "POST",
       headers: { "content-type": "application/json", authorization: `Bearer ${runnerToken}` },
       body: JSON.stringify({
@@ -70,7 +73,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
         callbackToken: runnerToken,
       }),
     });
-    if (!res.ok && res.status !== 202) throw new Error(`runner responded ${res.status}`);
+    if (!res.ok && res.status !== 202) throw new Error(res.status === 503 ? RUNNER_BUSY : `runner responded ${res.status}`);
   } catch (err) {
     await admin.from("explorations").update({
       status: "error",

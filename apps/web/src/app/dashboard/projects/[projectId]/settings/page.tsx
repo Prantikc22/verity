@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { projectTokens } from "@/lib/tokens";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -15,10 +16,11 @@ export default async function SettingsPage({ params }: { params: Promise<{ proje
   const supabase = await createClient();
   const { data: project } = await supabase
     .from("projects")
-    .select("ingest_token, repo, default_branch, rerun_count, regression_threshold, org_id")
+    .select("repo, default_branch, rerun_count, regression_threshold, org_id")
     .eq("id", projectId)
     .maybeSingle();
   if (!project) notFound();
+  const { ingest: ingestToken } = await projectTokens(supabase, projectId);
   const { data: org } = await supabase.from("orgs").select("*").eq("id", project.org_id).maybeSingle();
   const plan = entitlementsFor(org);
 
@@ -39,7 +41,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ proje
           <Link href={`/dashboard/projects/${projectId}/ci`} className="text-xs text-indigo-600 hover:underline">Set up CI →</Link>
         </div>
         <p className="mt-1 text-xs text-neutral-500">Store as <code>VERITY_INGEST_TOKEN</code> in your CI secrets. It links runs to this project. Full setup instructions live in CI Setup.</p>
-        <div className="mt-3"><IngestToken token={project.ingest_token} /></div>
+        <div className="mt-3">{ingestToken ? <IngestToken token={ingestToken} /> : <p className="text-sm text-neutral-500">Only members of this project can see its token.</p>}</div>
         <p className="mt-3 text-[11px] text-neutral-500">Ingest endpoint: <code>{APP}/api/ingest</code></p>
       </section>
 

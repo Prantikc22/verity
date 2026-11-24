@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { projectTokens } from "@/lib/tokens";
 import type { Metadata } from "next";
 import { getPrimaryOrg } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -22,11 +23,12 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   const ent = entitlementsFor(orgCtx?.org);
   const supabase = await createClient();
 
-  const { data: projects } = orgId ? await supabase.from("projects").select("id, name, ingest_token").eq("org_id", orgId).order("name") : { data: [] };
+  const { data: projects } = orgId ? await supabase.from("projects").select("id, name").eq("org_id", orgId).order("name") : { data: [] };
   const projectIds = (projects ?? []).map((p) => p.id).filter((id) => !sp.project || id === sp.project);
   const pName = new Map((projects ?? []).map((p) => [p.id, p.name]));
   const data = await buildReport(supabase, projectIds, pName, days);
-  const tokens = (projects ?? []).filter((p) => p.ingest_token && (!sp.project || p.id === sp.project)).map((p) => ({ id: p.id, name: p.name, token: p.ingest_token as string }));
+  const tokenRows = await Promise.all((projects ?? []).filter((p) => !sp.project || p.id === sp.project).slice(0, 20).map(async (p) => ({ id: p.id, name: p.name, token: (await projectTokens(supabase, p.id)).ingest })));
+  const tokens = tokenRows.filter((p): p is { id: string; name: string; token: string } => !!p.token);
   const historyDays = ent.reports?.historyDays ?? ent.maxRunHistory;
 
   const q = (o: { project?: string; days?: number }) => {

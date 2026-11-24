@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { projectTokens } from "@/lib/tokens";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -11,7 +12,8 @@ type Delta = { ruleId: string; impact: string | null; prevCount: number; currCou
 export default async function AccessibilityPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = await params;
   const supabase = await createClient();
-  const { data: project } = await supabase.from("projects").select("id, name, repo, default_branch, a11y_fail_on, a11y_scan_urls, a11y_ingest_token").eq("id", projectId).maybeSingle();
+  const { data: project } = await supabase.from("projects").select("id, name, repo, default_branch, a11y_fail_on, a11y_scan_urls").eq("id", projectId).maybeSingle();
+  const { a11y: a11yToken } = await projectTokens(supabase, projectId);
   if (!project) notFound();
 
   const [{ data: scans }, { data: diffs }] = await Promise.all([
@@ -42,7 +44,7 @@ export default async function AccessibilityPage({ params }: { params: Promise<{ 
       {list.length === 0 ? (
         <>
           <Empty title="No accessibility scans yet" body="Add the step below to your pipeline. Each deploy is scanned and compared with the previous deploy of the same page." />
-          <ConnectLumen token={project.a11y_ingest_token} urls={project.a11y_scan_urls} />
+          <ConnectLumen token={a11yToken} urls={project.a11y_scan_urls} />
         </>
       ) : (
         <>
@@ -100,7 +102,7 @@ export default async function AccessibilityPage({ params }: { params: Promise<{ 
             </div>
           </div>
 
-          <ConnectLumen token={project.a11y_ingest_token} urls={project.a11y_scan_urls} collapsed />
+          <ConnectLumen token={a11yToken} urls={project.a11y_scan_urls} collapsed />
           <Panel className="mt-5" title="Scan history" flush>
             <ul className="divide-y divide-neutral-100 dark:divide-neutral-800">
               {list.slice(0, 20).map((s) => (

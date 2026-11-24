@@ -43,6 +43,7 @@ export default async function TestsPage({ params }: { params: Promise<{ projectI
       status: t.status,
       kind: t.kind,
       verifiable: VERIFIABLE_KINDS.has(t.kind),
+      reason: t.last_verify_error,
       critical_path: t.critical_path,
       is_pom: t.is_pom,
       confidence: conf,
@@ -56,6 +57,7 @@ export default async function TestsPage({ params }: { params: Promise<{ projectI
   });
 
   const draftCount = all.filter((t) => t.status === "draft" && VERIFIABLE_KINDS.has(t.kind)).length;
+  const reviewIds = all.filter((t) => t.status === "quarantined" && t.kind === "ui").map((t) => t.id);
 
   return (
     <div>
@@ -71,10 +73,10 @@ export default async function TestsPage({ params }: { params: Promise<{ projectI
         </div>
       </div>
 
-      {draftCount > 0 && (
+      {(draftCount > 0 || reviewIds.length > 0) && (
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border border-emerald-200 bg-emerald-50/40 px-4 py-2.5 dark:border-emerald-900/50 dark:bg-emerald-950/20">
-          <p className="text-xs text-neutral-600 dark:text-neutral-300"><strong>Verified generation:</strong> run drafts in a real browser and self-heal them — a <span className="text-emerald-600">Verified ✓</span> test has actually passed, not just been generated.</p>
-          <VerifyDrafts projectId={projectId} draftCount={draftCount} />
+          <p className="text-xs text-neutral-600 dark:text-neutral-300">{reviewIds.length > 0 && draftCount === 0 ? <><strong>{reviewIds.length} test{reviewIds.length === 1 ? "" : "s"} need{reviewIds.length === 1 ? "s" : ""} review.</strong> Open one to see why, then check it again.</> : <><strong>Verify before you trust:</strong> we run each draft in a real browser and fix ambiguous steps automatically. A <span className="text-emerald-600">Verified ✓</span> test has actually passed.</>}</p>
+          <VerifyDrafts projectId={projectId} draftCount={draftCount} reviewIds={reviewIds} />
         </div>
       )}
 

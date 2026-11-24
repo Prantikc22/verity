@@ -1,3 +1,4 @@
+import { runnerFetch } from "@/lib/runner-fetch";
 /**
  * Fetches a URL and extracts a compact, accessibility-tree-style summary of the
  * page's interactive elements, so the LLM generates locators from what's ACTUALLY
@@ -56,9 +57,9 @@ async function fetchRenderedContext(url: string, credentials?: PageCredentials):
   const runnerToken = process.env.RUNNER_SERVICE_TOKEN;
   if (!runnerUrl || !runnerToken) return null;
   try {
-    const res = await fetch(`${runnerUrl.replace(/\/$/, "")}/context`, {
+    const res = await runnerFetch(`${runnerUrl.replace(/\/$/, "")}/context`, {
       method: "POST",
-      signal: AbortSignal.timeout(45000),
+      attemptTimeoutMs: 45000,
       headers: { "content-type": "application/json", authorization: `Bearer ${runnerToken}` },
       body: JSON.stringify({ url, credentials }),
     });
@@ -94,7 +95,7 @@ async function fetchRenderedContext(url: string, credentials?: PageCredentials):
  */
 export async function fetchPageContext(url: string, credentials?: PageCredentials): Promise<PageContext | null> {
   const rendered = await fetchRenderedContext(url, credentials);
-  if (!rendered) throw new Error("Live browser inspection failed. No tests were generated from guessed or static page content. Check the cloud runner and retry.");
+  if (!rendered) throw new Error(`We couldn't open ${url} in our browser, so no tests were written (we never guess from static HTML). Check the address is public and loads, then try again.`);
 
   const hasCredentials = Boolean(credentials?.username || credentials?.password);
   if (!hasCredentials) return rendered.context;

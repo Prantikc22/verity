@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { ActionError } from "@/components/shell/ActionError";
+import { Ico } from "@/components/shell/icons";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PrdUpload } from "../PrdUpload";
@@ -38,12 +40,14 @@ export function GenerateWizard({ projectId }: { projectId: string }) {
   const [rows, setRows] = useState<GenRow[]>([]);
   const [added, setAdded] = useState(0);
 
-  // exploring animation
+  // Elapsed time while exploring. We show what the agent does, never fake per-step progress.
   const [exStep, setExStep] = useState(0);
   const exTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   useEffect(() => {
     if (phase === "exploring") {
-      exTimer.current = setInterval(() => setExStep((s) => Math.min(s + 1, EXPLORE_STEPS.length - 1)), 1400);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset the timer for a new exploration
+      setExStep(0);
+      exTimer.current = setInterval(() => setExStep((s) => s + 1), 1000);
     }
     return () => { if (exTimer.current) clearInterval(exTimer.current); };
   }, [phase]);
@@ -60,8 +64,11 @@ export function GenerateWizard({ projectId }: { projectId: string }) {
           username: username.trim() || undefined,
           password: password.trim() || undefined,
         }),
+        signal: AbortSignal.timeout(150_000),
+      }).catch((e: unknown) => {
+        throw new Error(e instanceof DOMException && e.name === "TimeoutError" ? "Exploring took too long. Check the page loads in your browser, then try again." : "Couldn't reach QAShift. Check your connection and try again.");
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? "Couldn't propose tests.");
       const cands: Candidate[] = data.candidates ?? [];
       setCandidates(cands);
@@ -194,7 +201,7 @@ function Choose({ onPick }: { onPick: (m: "mcp" | "web") => void }) {
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <button onClick={() => onPick("web")} className="group border border-neutral-200 p-4 text-left transition hover:border-indigo-400 dark:border-neutral-800">
           <div className="flex items-center gap-2">
-            <span className="text-lg">🌐</span>
+            <span className="grid h-8 w-8 place-items-center rounded-md bg-indigo-50 text-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-300"><Ico name="globe" size={17} /></span>
             <span className="text-sm font-medium">Live Web App</span>
             <span className="ml-auto bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">Ready</span>
           </div>
@@ -202,7 +209,7 @@ function Choose({ onPick }: { onPick: (m: "mcp" | "web") => void }) {
         </button>
         <button onClick={() => onPick("mcp")} className="group border border-neutral-200 p-4 text-left transition hover:border-indigo-400 dark:border-neutral-800">
           <div className="flex items-center gap-2">
-            <span className="text-lg">💻</span>
+            <span className="grid h-8 w-8 place-items-center rounded-md bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200"><Ico name="laptop" size={17} /></span>
             <span className="text-sm font-medium">Local / IDE via MCP</span>
             <span className="ml-auto bg-neutral-100 px-1.5 py-0.5 text-[10px] font-semibold text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">For developers</span>
           </div>
@@ -264,7 +271,7 @@ function Setup(props: {
         </Field>
 
         <div className="border border-neutral-200 p-4 dark:border-neutral-800">
-          <div className="flex items-center gap-2 text-sm font-medium">🔒 Test account <span className="text-xs font-normal text-neutral-400">(optional · recommended if your app needs login)</span></div>
+          <div className="flex items-center gap-2 text-sm font-medium"><Ico name="lock" size={14} className="text-neutral-500" />Test account <span className="text-xs font-normal text-neutral-400">(optional · recommended if your app needs login)</span></div>
           <p className="mt-1 text-xs text-neutral-500">Our agent uses this to sign in and explore pages behind authentication. Baked into the generated tests.</p>
           <div className="mt-3 grid grid-cols-2 gap-2">
             <input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Username / email"
@@ -275,7 +282,7 @@ function Setup(props: {
         </div>
       </div>
 
-      {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+      {error && <ActionError error={error} className="mt-3" />}
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <button type="submit" className="bg-indigo-600 px-5 py-2 text-sm font-medium text-white">Explore &amp; propose tests →</button>
         <span className="text-[12px] text-neutral-500">Free. You pick which tests to keep; each kept UI test uses 2 credits.</span>
@@ -294,22 +301,25 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 }
 
 /* ---------- exploring ---------- */
-function Exploring({ url, step }: { url: string; step: number }) {
+function Exploring({ url, step: seconds }: { url: string; step: number }) {
   return (
     <div>
-      <h3 className="text-base font-semibold">Exploring your application</h3>
-      <p className="mt-1 text-xs text-neutral-500">Our agent is visiting your app to understand how it behaves. This usually takes under a minute.</p>
+      <div className="flex items-center gap-3">
+        <span className="h-4 w-4 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" aria-hidden="true" />
+        <h3 className="text-base font-semibold">Exploring your application</h3>
+        <span className="tnum ml-auto text-xs text-neutral-500" aria-live="off">{seconds}s</span>
+      </div>
+      <p className="mt-1 text-xs text-neutral-500">Our agent opens your app in a real browser and works out what is worth testing. Usually 20 to 60 seconds. Nothing is charged until you keep tests.</p>
       {url && <p className="mt-2 truncate font-mono text-xs text-neutral-400">{url}</p>}
-      <ul className="mt-4 space-y-2">
-        {EXPLORE_STEPS.map((s, i) => (
-          <li key={s} className="flex items-center gap-3 text-sm">
-            <span className={`flex h-4 w-4 items-center justify-center rounded-full text-[10px] ${i < step ? "bg-emerald-500 text-white" : i === step ? "bg-indigo-600 text-white" : "bg-neutral-200 dark:bg-neutral-800"}`}>
-              {i < step ? "✓" : i === step ? <span className="h-1.5 w-1.5 animate-ping rounded-full bg-white" /> : ""}
-            </span>
-            <span className={i <= step ? "" : "text-neutral-400"}>{s}</span>
+      <p className="mt-4 text-[11px] font-medium uppercase tracking-wide text-neutral-400">What the agent does</p>
+      <ul className="mt-2 space-y-1.5">
+        {EXPLORE_STEPS.map((s) => (
+          <li key={s} className="flex items-center gap-3 text-sm text-neutral-600 dark:text-neutral-300">
+            <span className="h-1.5 w-1.5 rounded-full bg-neutral-300 dark:bg-neutral-600" aria-hidden="true" />{s}
           </li>
         ))}
       </ul>
+      {seconds > 75 && <p className="mt-4 text-xs text-amber-700 dark:text-amber-400">Taking longer than usual. Large or slow pages can need up to two minutes.</p>}
     </div>
   );
 }
@@ -368,7 +378,7 @@ function Review(props: {
         )}
       </div>
 
-      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+      {error && <ActionError error={error} />}
 
       <div className="mt-3 space-y-2">
         {generating

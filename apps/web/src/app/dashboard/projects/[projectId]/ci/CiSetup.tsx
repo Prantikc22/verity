@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Ico } from "@/components/shell/icons";
 import { PERF_PROFILES } from "@qashift/verity-core";
 import {
   CAPABILITIES,
@@ -98,7 +99,7 @@ export function CiSetup({ defaultApiUrl, defaultBranch }: { defaultApiUrl: strin
           <div className="mt-3 grid gap-4 lg:grid-cols-2">
             {c.engines.perf && (
               <div className="border border-neutral-200 p-4 dark:border-neutral-800">
-                <div className="flex items-center gap-2 text-sm font-medium">⚡ Performance</div>
+                <div className="flex items-center gap-2 text-sm font-medium"><Ico name="zap" size={15} className="text-neutral-500" />Performance</div>
                 <p className="text-[11px] text-neutral-500">Choose which performance checks run.</p>
                 <div className="mt-3 space-y-2 text-xs">
                   <label className="flex items-center gap-2"><input type="checkbox" checked={c.perf.smoke} onChange={(e) => setPerf("smoke", e.target.checked)} /> <span><strong>Smoke profile</strong> on every PR <span className="text-neutral-400">— light, ~30s (never a full load test)</span></span></label>
@@ -124,7 +125,7 @@ export function CiSetup({ defaultApiUrl, defaultBranch }: { defaultApiUrl: strin
 
             {c.engines.security && (
               <div className="border border-neutral-200 p-4 dark:border-neutral-800">
-                <div className="flex items-center gap-2 text-sm font-medium">🔐 Security</div>
+                <div className="flex items-center gap-2 text-sm font-medium"><Ico name="shield" size={15} className="text-neutral-500" />Security</div>
                 <p className="text-[11px] text-neutral-500">Pick which scans run. Findings show as severity-ranked issues, never pass/fail.</p>
                 <div className="mt-3 space-y-2 text-xs">
                   <label className="flex items-center gap-2"><input type="checkbox" checked={c.security.sast} onChange={(e) => setSec("sast", e.target.checked)} /> <span><strong>Static analysis</strong> — scans your code <span className="text-neutral-400">(diff on PR, full repo on merge)</span></span></label>
@@ -146,7 +147,7 @@ export function CiSetup({ defaultApiUrl, defaultBranch }: { defaultApiUrl: strin
 
             {c.engines.visual && (
               <div className="border border-neutral-200 p-4 dark:border-neutral-800">
-                <div className="flex items-center gap-2 text-sm font-medium">🖼️ Visual</div>
+                <div className="flex items-center gap-2 text-sm font-medium"><Ico name="image" size={15} className="text-neutral-500" />Visual</div>
                 <p className="text-[11px] text-neutral-500">Screenshot regression. Baselines are committed to your repo — a diff over the threshold shows as &ldquo;changed&rdquo;.</p>
                 <div className="mt-3 space-y-2 text-xs">
                   <Field label="Snapshots / baselines directory" value={c.visual.snapshotsDir} onChange={(v) => setVis("snapshotsDir", v)} mono />
@@ -158,7 +159,7 @@ export function CiSetup({ defaultApiUrl, defaultBranch }: { defaultApiUrl: strin
 
             {c.engines.agent && (
               <div className="border border-neutral-200 p-4 dark:border-neutral-800">
-                <div className="flex items-center gap-2 text-sm font-medium">🤖 Agent (AI) evals</div>
+                <div className="flex items-center gap-2 text-sm font-medium"><Ico name="bot" size={15} className="text-neutral-500" />AI feature evals</div>
                 <p className="text-[11px] text-neutral-500">Evals for your <strong>own</strong> AI feature. QAShift calls your endpoint and asserts a property of the reply (grounding, injection resistance, tool-use).</p>
                 <div className="mt-3 space-y-2 text-xs">
                   <Field label="AI endpoint (reachable from CI)" value={c.agent.endpoint} onChange={(v) => setAgent("endpoint", v)} placeholder="https://api.example.com/chat" />
@@ -172,7 +173,7 @@ export function CiSetup({ defaultApiUrl, defaultBranch }: { defaultApiUrl: strin
 
             {c.engines.contract && (
               <div className="border border-neutral-200 p-4 dark:border-neutral-800">
-                <div className="flex items-center gap-2 text-sm font-medium">🔁 API contract testing</div>
+                <div className="flex items-center gap-2 text-sm font-medium"><Ico name="repeat" size={15} className="text-neutral-500" />API contract testing</div>
                 <p className="text-[11px] text-neutral-500">Reuses the spec you already use for API tests — no second upload. Needs a reachable base URL.</p>
                 <div className="mt-3 space-y-2">
                   <Field label="OpenAPI spec (path or URL)" value={c.contract.openapiSpec} onChange={(v) => setCon("openapiSpec", v)} mono />
@@ -214,7 +215,7 @@ export function CiSetup({ defaultApiUrl, defaultBranch }: { defaultApiUrl: strin
 
         {/* The toggles don't run anything by themselves — this is what makes it real. */}
         <div className="mt-4 border border-amber-300 bg-amber-50/60 p-4 text-xs dark:border-amber-800/60 dark:bg-amber-950/20">
-          <p className="font-semibold text-amber-800 dark:text-amber-300">⚠️ This config doesn&apos;t run until you commit it</p>
+          <p className="font-semibold text-amber-800 dark:text-amber-300"><Ico name="alert" size={14} className="mr-1 inline -mt-0.5" />This config doesn&apos;t run until you commit it</p>
           <p className="mt-1 text-neutral-600 dark:text-neutral-400">
             Toggling the cards above only <strong>regenerates the config</strong> here — it does <strong>not</strong> change what runs in CI.
             To actually run these engines, commit this file to your repo:

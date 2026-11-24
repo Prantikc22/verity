@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useMemo, useState } from "react";
+import { explainFailure } from "@/lib/verify/explain";
 import { useRouter } from "next/navigation";
 
 /** One row in the project-wide test library — any discipline. */
@@ -25,6 +26,8 @@ export interface ManagedTest {
   createdMs: number;
   plan: string[];
   spec_content: string;
+  /** Last browser error when the test needs review. */
+  reason?: string | null;
 }
 
 const KIND_META: Record<string, { label: string; badge: string; dot: string }> = {
@@ -38,9 +41,9 @@ const kindMeta = (k: string) => KIND_META[k] ?? { label: k, badge: "border-neutr
 type SortKey = "recent" | "name" | "confidence" | "flake" | "status";
 type GroupKey = "kind" | "suite" | "none";
 
-function StatusCell({ status, verifiable }: { status: string; verifiable: boolean }) {
+function StatusCell({ status, verifiable, reason }: { status: string; verifiable: boolean; reason?: string | null }) {
   if (status === "active") return <span className="text-emerald-600 dark:text-emerald-400">{verifiable ? "Verified ✓" : "Active"}</span>;
-  if (status === "quarantined") return <span className="text-amber-600 dark:text-amber-400" title="Failed in a real browser after healing — review the code/plan">Needs review</span>;
+  if (status === "quarantined") return <span className="text-amber-600 dark:text-amber-400" title={reason ? explainFailure(reason) : "Failed in a real browser. Open the test to see why."}>Needs review</span>;
   if (status === "draft") return <span className="text-neutral-400" title={verifiable ? "Generated but not yet run in a browser" : "Generated — review, then Activate"}>{verifiable ? "Unverified" : "Draft"}</span>;
   if (status === "archived") return <span className="text-neutral-400">Archived</span>;
   return <span className="text-neutral-500">{status}</span>;
@@ -282,12 +285,24 @@ export function TestManager({ projectId, rows, repoLinked }: { projectId: string
                             </td>
                             <td className="hidden py-2.5 pr-3 text-xs text-neutral-500 sm:table-cell">{t.confidenceLabel}</td>
                             <td className="hidden py-2.5 pr-3 text-xs text-neutral-500 md:table-cell">{t.flakeLabel}</td>
-                            <td className="py-2.5 pr-3 text-xs"><StatusCell status={t.status} verifiable={t.verifiable} /></td>
+                            <td className="py-2.5 pr-3 text-xs"><StatusCell status={t.status} verifiable={t.verifiable} reason={t.reason} /></td>
                             <td className="py-2.5 pr-3 text-right"><button onClick={() => { setOpen(open === t.id ? null : t.id); setTab("plan"); }} className="text-xs text-indigo-600 hover:underline">{open === t.id ? "hide" : "view"}</button></td>
                           </tr>
                           {open === t.id && (
                             <tr className="border-t border-neutral-100 dark:border-neutral-800/60">
                               <td colSpan={6} className="p-3">
+                                {t.status === "quarantined" && (
+                                  <div className="mb-2 border border-amber-200 bg-amber-50/60 p-3 text-xs dark:border-amber-900/60 dark:bg-amber-950/20">
+                                    <p className="font-medium text-amber-800 dark:text-amber-300">Why it needs review</p>
+                                    <p className="mt-0.5 text-neutral-700 dark:text-neutral-300">{explainFailure(t.reason)} Check the plan and code below, edit or regenerate it, then verify again.</p>
+                                    {t.reason && (
+                                      <details className="mt-1.5">
+                                        <summary className="cursor-pointer text-neutral-500">Show the browser error</summary>
+                                        <pre className="mt-1.5 max-h-48 overflow-auto whitespace-pre-wrap bg-neutral-950 p-3 text-[11px] text-neutral-200">{t.reason}</pre>
+                                      </details>
+                                    )}
+                                  </div>
+                                )}
                                 <div className="border border-neutral-200 dark:border-neutral-800">
                                   <div className="flex border-b border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900">
                                     {(["plan", "code"] as const).map((tb) => (

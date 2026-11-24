@@ -30,8 +30,8 @@ export default async function PerformancePage({ params }: { params: Promise<{ pr
     .order("created_at", { ascending: false })
     .limit(40);
 
-  // Load-test engines (k6 + legacy artillery) both feed the latency panel.
-  const loadRuns = (reports ?? []).filter((r) => r.engine === "k6" || r.engine === "artillery");
+  // Load-test engines (k6, legacy artillery, and the cloud smoke check) all feed the latency panel.
+  const loadRuns = (reports ?? []).filter((r) => r.engine === "k6" || r.engine === "artillery" || r.engine === "http-smoke");
   const lighthouse = (reports ?? []).filter((r) => r.engine === "lighthouse");
   const latest = loadRuns[0];
   const agg = latest ? (latest.aggregate as unknown as PerfMetrics) : null;
@@ -49,7 +49,7 @@ export default async function PerformancePage({ params }: { params: Promise<{ pr
           <h2 className="text-lg font-semibold tracking-tight">Performance</h2>
           <p className="text-xs text-neutral-500">Latency percentiles + error rates from load tests, and Core Web Vitals for page-load — posted from your CI.</p>
         </div>
-        <Link href={`/dashboard/projects/${projectId}/performance/configure`} className="shrink-0 border border-indigo-300 px-3 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 dark:border-indigo-800 dark:hover:bg-indigo-950/30">⚙️ Configure →</Link>
+        <Link href={`/dashboard/projects/${projectId}/performance/configure`} className="shrink-0 border border-indigo-300 px-3 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 dark:border-indigo-800 dark:hover:bg-indigo-950/30">Configure →</Link>
       </div>
 
       {!latest && !lhLatest ? (

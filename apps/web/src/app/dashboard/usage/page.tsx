@@ -7,6 +7,15 @@ import type { Enums } from "@/lib/supabase/database.types";
 import { QS_PLANS } from "@/lib/billing/qs-plans";
 import { PlanPicker } from "@/components/shell/PlanPicker";
 import { CREDITS, UNLIMITED_CREDITS, nextResetDate } from "@/lib/credits";
+import { AUTONOMOUS, REPORTS, MANAGED, isAutonomousKey, isReportsKey, isManagedKey } from "@/lib/catalog";
+
+/** One plain line per plan, from the catalog, so buyers see what they get. */
+function planSummary(product: string, key: string): string | undefined {
+  if (product === "autonomous" && isAutonomousKey(key)) { const a = AUTONOMOUS[key]; return `${a.creditsPerMonth.toLocaleString()} agent credits a month · ${a.maxProjects} projects · ${a.seats} seats`; }
+  if (product === "reports" && isReportsKey(key)) { const r = REPORTS[key]; return `${r.resultsPerMonth.toLocaleString()} test results a month · ${r.projects} projects · ${r.historyDays}-day history`; }
+  if (product === "managed" && isManagedKey(key)) { const m = MANAGED[key]; const inc = AUTONOMOUS[m.includes]; return `${m.engineerHours ?? "Scoped"} QA engineer hours a month${m.namedLead ? " with a named lead" : ""} · includes ${inc.name} (${inc.creditsPerMonth.toLocaleString()} credits)`; }
+  return undefined;
+}
 
 const AGENT_LABEL: Record<string, string> = {
   ui: "UI tests", api: "API tests", visual: "Visual checks", performance: "Performance",
@@ -258,7 +267,7 @@ export default async function UsagePage({ searchParams }: { searchParams: Promis
 
       <section id="plans">
         <h2 className="mb-3 text-sm font-medium text-neutral-500">Change plan</h2>
-        <PlanPicker initial={wanted} plans={QS_PLANS.filter((p) => !p.retired).map((p) => ({ key: p.key, product: p.product, name: p.name, usd: p.usd, inr: p.inr, requiresScope: p.requiresScope,
+        <PlanPicker initial={wanted} plans={QS_PLANS.filter((p) => !p.retired).map((p) => ({ key: p.key, product: p.product, name: p.name, usd: p.usd, inr: p.inr, requiresScope: p.requiresScope, summary: planSummary(p.product, p.planKey),
           current: (p.product === "autonomous" && orgCtx?.org.autonomous_plan === p.planKey) || (p.product === "reports" && orgCtx?.org.reports_plan === p.planKey) || (p.product === "managed" && orgCtx?.org.managed_plan === p.planKey) }))} />
       </section>
     </div>

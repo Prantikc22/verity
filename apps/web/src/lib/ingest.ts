@@ -92,7 +92,7 @@ const statusEnum = (c: Classification): Enums<"result_status"> => c;
  * inputs), links a deploy, and returns a summary for the PR comment.
  */
 export async function recordRun(
-  project: Tables<"projects">,
+  project: Pick<Tables<"projects">, "id" | "org_id" | "regression_threshold">,
   payload: IngestPayload,
 ): Promise<IngestResult> {
   const admin = createAdminClient();

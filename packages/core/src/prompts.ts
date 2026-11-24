@@ -36,6 +36,17 @@ Rules for the code:
 - Use "@playwright/test" (import { test, expect }).
 - Prefer role-based and user-facing locators (getByRole, getByLabel, getByText)
   over brittle CSS/XPath, so tests survive markup changes.
+- Links and buttons often appear more than once (header nav, footer, hero and a
+  repeated CTA). Playwright fails on ambiguous locators, so SCOPE them to their
+  region: page.getByRole('navigation').getByRole('link', { name: 'Pricing' }),
+  page.getByRole('contentinfo')…, page.getByRole('main')…. When the region is
+  unclear, add .first(). Never leave a common link name unscoped.
+- ASSERT ONLY WHAT YOU SAW. Exact text (headings, prices, messages) may be
+  asserted only if it appears in PAGE CONTEXT. After navigating to a page you
+  were NOT shown, never guess its copy: assert the URL (toHaveURL with a RegExp,
+  e.g. /\/pricing/) and that its main heading exists
+  (page.getByRole('heading', { level: 1 }) toBeVisible). A guessed assertion is
+  a false failure and destroys trust in the suite.
 - LOCATORS must be correct and grounded in PAGE CONTEXT:
   * Every locator must correspond to an element actually listed in PAGE CONTEXT
     (a Button, Input, Label, Link, or Heading). Never invent one.

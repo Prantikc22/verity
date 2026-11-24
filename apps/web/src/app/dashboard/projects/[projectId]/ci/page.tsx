@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { projectTokens } from "@/lib/tokens";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { IngestToken } from "../IngestToken";
@@ -14,10 +15,11 @@ export default async function CiSetupPage({ params }: { params: Promise<{ projec
   const supabase = await createClient();
   const { data: project } = await supabase
     .from("projects")
-    .select("id, name, ingest_token, default_branch")
+    .select("id, name, default_branch")
     .eq("id", projectId)
     .maybeSingle();
   if (!project) notFound();
+  const { ingest: ingestToken } = await projectTokens(supabase, projectId);
 
   return (
     <div className="space-y-8">
@@ -30,7 +32,7 @@ export default async function CiSetupPage({ params }: { params: Promise<{ projec
       </div>
 
       {/* Reporting only: the fastest path, no agents needed. */}
-      <ReporterSetup apiUrl={APP} projects={project.ingest_token ? [{ id: project.id, name: project.name, token: project.ingest_token }] : []} />
+      <ReporterSetup apiUrl={APP} projects={ingestToken ? [{ id: project.id, name: project.name, token: ingestToken }] : []} />
 
       {/* The two-tier mental model, visualized. */}
       <section className="border border-neutral-200 p-5 dark:border-neutral-800">
@@ -68,7 +70,7 @@ export default async function CiSetupPage({ params }: { params: Promise<{ projec
       <section className="border border-neutral-200 p-5 dark:border-neutral-800">
         <h3 className="text-sm font-semibold">Your ingest token</h3>
         <p className="mt-0.5 text-xs text-neutral-500">Add as <code>VERITY_INGEST_TOKEN</code> in your CI secrets. Ingest endpoint: <code>{APP}/api/ingest</code></p>
-        <div className="mt-3"><IngestToken token={project.ingest_token} /></div>
+        <div className="mt-3">{ingestToken ? <IngestToken token={ingestToken} /> : <p className="text-sm text-neutral-500">Only members of this project can see its token.</p>}</div>
       </section>
 
       <CiSetup defaultApiUrl={APP} defaultBranch={project.default_branch ?? "main"} />
