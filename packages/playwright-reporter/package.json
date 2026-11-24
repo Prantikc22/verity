@@ -1,6 +1,6 @@
 {
   "name": "@qashifthq/playwright-reporter",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "QAShift Reports for Playwright: run history, flaky-test detection, slow tests and failure triage. Add one line to playwright.config.",
   "license": "MIT",
   "type": "module",

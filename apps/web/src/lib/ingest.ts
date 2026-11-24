@@ -35,6 +35,54 @@ export interface IngestResultInput {
   endpoint?: string | null;
   /** Normalized cause for cross-layer dedup, e.g. "missing-field-returns-5xx". */
   meaning?: string | null;
+  /** Where the test lives, e.g. "tests/checkout.spec.ts:42" (reporter >= 0.2). */
+  location?: string | null;
+  /** Rich detail for the report: per-attempt outcomes and errors, stack, failing step, tags. */
+  details?: ResultDetails | null;
+}
+
+export interface ResultDetails {
+  attempts?: { ok: boolean; ms?: number; error?: string | null; step?: string | null }[];
+  stack?: string | null;
+  step?: string | null;
+  tags?: string[];
+  project?: string | null;
+}
+
+/** Run-level context sent by the reporter: where it ran and what changed. */
+export interface RunMeta {
+  ci_url?: string | null;
+  commit_message?: string | null;
+  author?: string | null;
+  repo?: string | null;
+  playwright?: string | null;
+  workers?: number | null;
+  os?: string | null;
+  wall_ms?: number | null;
+  shard?: string | null;
+}
+
+const cap = (s: unknown, n: number) => (typeof s === "string" ? s.slice(0, n) : null);
+/** Keep stored detail bounded no matter what a client sends. */
+function cleanDetails(d: ResultDetails | null | undefined): ResultDetails | null {
+  if (!d || typeof d !== "object") return null;
+  return {
+    attempts: Array.isArray(d.attempts) ? d.attempts.slice(0, 10).map((a) => ({ ok: Boolean(a?.ok), ms: typeof a?.ms === "number" ? Math.round(a.ms) : undefined, error: cap(a?.error, 4000), step: cap(a?.step, 300) })) : undefined,
+    stack: cap(d.stack, 6000),
+    step: cap(d.step, 300),
+    tags: Array.isArray(d.tags) ? d.tags.filter((t) => typeof t === "string").slice(0, 20).map((t) => t.slice(0, 60)) : undefined,
+    project: cap(d.project, 80),
+  };
+}
+function cleanMeta(m: RunMeta | null | undefined): RunMeta | null {
+  if (!m || typeof m !== "object") return null;
+  const url = cap(m.ci_url, 500);
+  return {
+    ci_url: url && /^https:\/\//.test(url) ? url : null,
+    commit_message: cap(m.commit_message, 500), author: cap(m.author, 120), repo: cap(m.repo, 200),
+    playwright: cap(m.playwright, 40), workers: typeof m.workers === "number" ? m.workers : null, os: cap(m.os, 60),
+    wall_ms: typeof m.wall_ms === "number" ? Math.round(m.wall_ms) : null, shard: cap(m.shard, 20),
+  };
 }
 
 export interface IngestPayload {
@@ -55,6 +103,8 @@ export interface IngestPayload {
   findings?: Finding[];
   /** Performance report (Artillery/Lighthouse). Surfaced in the Performance panel. */
   perf?: PerfReport;
+  /** Where the run happened and what changed (reporter >= 0.2). */
+  meta?: RunMeta | null;
 }
 
 export interface RegressionFlagOut {
@@ -142,6 +192,7 @@ export async function recordRun(
       status: "running",
       total: payload.results.length,
       selected_count: payload.tier === "fast" ? payload.results.length : null,
+      meta: cleanMeta(payload.meta) as unknown as TablesInsert<"test_runs">["meta"],
     })
     .select("*")
     .single();
@@ -159,7 +210,9 @@ export async function recordRun(
   const healed = 0;
   const realFailures: IngestResult["realFailures"] = [];
 
-  // 3. Per-test results + flake-stat rollup.
+  // 3. Per-test results + flake-stat rollup. Rows are written in batches after
+  //    the loop: one round trip per 500 tests instead of one per test.
+  const resultRows: TablesInsert<"test_results">[] = [];
   for (const r of payload.results) {
     const cls = classifyOutcome({ attempts: r.attempts });
     if (cls === "passed") passed++;
@@ -185,8 +238,10 @@ export async function recordRun(
       layer: r.layer ?? null,
       endpoint: r.endpoint ?? null,
       meaning: r.meaning ?? null,
+      location: cap(r.location, 300),
+      details: cleanDetails(r.details) as unknown as TablesInsert<"test_results">["details"],
     };
-    await admin.from("test_results").insert(row);
+    resultRows.push(row);
 
     // Roll up flake counters for this test.
     let flakeRate = 0, runsTotal = 0;
@@ -218,6 +273,11 @@ export async function recordRun(
         runsTotal,
       });
     }
+  }
+
+  for (let i = 0; i < resultRows.length; i += 500) {
+    const { error } = await admin.from("test_results").insert(resultRows.slice(i, i + 500));
+    if (error) throw new Error(`Failed to record results: ${error.message}`);
   }
 
   const hadRealFailure = failed > 0;

@@ -724,6 +724,8 @@ export type Database = {
           error_message: string | null
           failing_selector: string | null
           id: string
+          location: string | null
+          details: Json | null
           layer: string | null
           meaning: string | null
           project_id: string
@@ -741,6 +743,8 @@ export type Database = {
           error_message?: string | null
           failing_selector?: string | null
           id?: string
+          location?: string | null
+          details?: Json | null
           layer?: string | null
           meaning?: string | null
           name?: string | null
@@ -760,6 +764,8 @@ export type Database = {
           error_message?: string | null
           failing_selector?: string | null
           id?: string
+          location?: string | null
+          details?: Json | null
           layer?: string | null
           meaning?: string | null
           name?: string | null
@@ -880,6 +886,7 @@ export type Database = {
           flaky: number
           healed: number
           id: string
+          meta: Json | null
           org_id: string
           passed: number
           pr_number: number | null
@@ -903,6 +910,7 @@ export type Database = {
           flaky?: number
           healed?: number
           id?: string
+          meta?: Json | null
           org_id: string
           passed?: number
           pr_number?: number | null
@@ -926,6 +934,7 @@ export type Database = {
           flaky?: number
           healed?: number
           id?: string
+          meta?: Json | null
           org_id?: string
           passed?: number
           pr_number?: number | null

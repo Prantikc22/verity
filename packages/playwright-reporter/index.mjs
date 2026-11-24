@@ -16,6 +16,21 @@ const git = (args) => { try { return execSync(`git ${args}`, { encoding: "utf8",
 // eslint-disable-next-line no-control-regex
 const stripAnsi = (s) => s.replace(/\u001b\[[0-9;]*m/g, "");
 
+/**
+ * The innermost *named* step that failed (test.step), e.g. "Click Pay". Assertion
+ * and API-call steps are skipped so the name reads like the test author wrote it.
+ */
+function failingStep(steps) {
+  for (const st of steps ?? []) {
+    if (st.error) {
+      const inner = failingStep(st.steps);
+      if (inner) return inner;
+      return st.category === "test.step" ? st.title : null;
+    }
+  }
+  return null;
+}
+
 export default class QAShiftReporter {
   constructor(options = {}) {
     this.token = options.token ?? env.QASHIFT_TOKEN ?? env.VERITY_INGEST_TOKEN;
@@ -27,8 +42,10 @@ export default class QAShiftReporter {
 
   printsToStdio() { return false; }
 
-  onBegin(_config, suite) {
+  onBegin(config, suite) {
     this.total = suite.allTests().length;
+    this.config = config;
+    this.started = Date.now();
   }
 
   onTestEnd(test, result) {
@@ -40,14 +57,26 @@ export default class QAShiftReporter {
     const name = [project, ...test.titlePath().slice(3)].filter(Boolean).join(" › ") || test.title;
     const key = test.id;
     const passed = result.status === "passed";
-    const entry = this.tests.get(key) ?? { spec_path: rel, name, attempts: [], duration_ms: 0, error_message: null };
+    const line = test.location?.line;
+    const entry = this.tests.get(key) ?? {
+      spec_path: rel, name, attempts: [], duration_ms: 0, error_message: null,
+      location: line ? `${rel}:${line}` : rel,
+      details: { attempts: [], stack: null, step: null, tags: test.tags ?? [], project: project ?? null },
+    };
+    const full = result.error?.message ? stripAnsi(result.error.message).slice(0, 4000) : null;
+    const step = failingStep(result.steps);
     entry.attempts.push(passed);
     entry.duration_ms += result.duration ?? 0;
-    if (!passed && result.error?.message) entry.error_message = stripAnsi(result.error.message).split("\n")[0].slice(0, 500);
+    entry.details.attempts.push({ ok: passed, ms: result.duration ?? 0, error: passed ? null : full, step: passed ? null : step });
+    if (!passed && full) {
+      entry.error_message = full.split("\n")[0].slice(0, 500);
+      entry.details.stack = result.error?.stack ? stripAnsi(result.error.stack).slice(0, 6000) : null;
+      entry.details.step = step;
+    }
     this.tests.set(key, entry);
   }
 
-  async onEnd() {
+  async onEnd(fullResult) {
     const results = [...this.tests.values()];
     const log = (m) => { if (!this.silent) console.log(m); };
     if (!this.token) { log("[qashift] No QASHIFT_TOKEN set, skipping upload."); return; }
@@ -60,6 +89,17 @@ export default class QAShiftReporter {
       branch: env.GITHUB_HEAD_REF || env.GITHUB_REF_NAME || env.CI_COMMIT_REF_NAME || env.BRANCH_NAME || env.GIT_BRANCH || env.CIRCLE_BRANCH || git("rev-parse --abbrev-ref HEAD") || "unknown",
       pr_number: pr ? Number(pr) : null,
       results,
+      meta: {
+        ci_url: env.GITHUB_RUN_ID && env.GITHUB_REPOSITORY ? `${env.GITHUB_SERVER_URL || "https://github.com"}/${env.GITHUB_REPOSITORY}/actions/runs/${env.GITHUB_RUN_ID}` : env.CI_JOB_URL || env.BUILD_URL || env.CIRCLE_BUILD_URL || null,
+        commit_message: git("log -1 --pretty=%s") || null,
+        author: git("log -1 --pretty=%an") || env.GITHUB_ACTOR || null,
+        repo: env.GITHUB_REPOSITORY || env.CI_PROJECT_PATH || null,
+        playwright: this.config?.version ?? null,
+        workers: this.config?.workers ?? null,
+        os: `${process.platform}-${process.arch}`,
+        wall_ms: fullResult?.duration ?? (this.started ? Date.now() - this.started : null),
+        shard: this.config?.shard ? `${this.config.shard.current}/${this.config.shard.total}` : null,
+      },
     };
     try {
       const res = await fetch(`${this.apiUrl}/api/ingest`, {
