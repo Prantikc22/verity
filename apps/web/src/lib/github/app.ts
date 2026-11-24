@@ -1,4 +1,5 @@
 import { App } from "@octokit/app";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 let appInstance: App | null = null;
 
@@ -31,4 +32,44 @@ export async function installationOctokit(installationId: number) {
   const app = getApp();
   if (!app) return null;
   return app.getInstallationOctokit(installationId);
+}
+
+/**
+ * Which installation of our GitHub App can reach owner/repo? Asks GitHub
+ * directly (authoritative), so a stale id saved on a project (app removed and
+ * reinstalled) can't break pushes. Fixes the saved id when it has drifted.
+ */
+export async function repoInstallationId(owner: string, repo: string, opts: { projectId?: string; saved?: number | null } = {}): Promise<number | null> {
+  const app = getApp();
+  if (!app) return opts.saved ?? null;
+  try {
+    const { data } = await app.octokit.request("GET /repos/{owner}/{repo}/installation", { owner, repo });
+    const id = (data as { id: number }).id;
+    if (opts.projectId && opts.saved !== id) {
+      await createAdminClient().from("projects").update({ github_installation_id: id }).eq("id", opts.projectId);
+    }
+    return id;
+  } catch {
+    return null; // not installed on this repo (or no access)
+  }
+}
+
+let installUrlCache: string | null = null;
+/** Link that installs the GitHub App on more repos. */
+export async function appInstallUrl(): Promise<string> {
+  if (installUrlCache) return installUrlCache;
+  const app = getApp();
+  try {
+    const { data } = await app!.octokit.request("GET /app");
+    installUrlCache = `https://github.com/apps/${(data as { slug: string }).slug}/installations/new`;
+  } catch {
+    installUrlCache = "https://github.com/settings/installations";
+  }
+  return installUrlCache;
+}
+
+/** Plain message when the app can't reach a repo. */
+export async function notInstalledMessage(owner: string, repo: string): Promise<{ error: string; install_url: string }> {
+  const url = await appInstallUrl();
+  return { error: `QAShift's GitHub App doesn't have access to ${owner}/${repo} yet. Install it on that repository, then try again.`, install_url: url };
 }

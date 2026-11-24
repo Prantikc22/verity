@@ -39,7 +39,7 @@ export function HealingReview({ projectId, events }: { projectId: string; events
         <div key={h.id} className="border border-neutral-200 p-4 dark:border-neutral-800">
           <div className="flex items-center justify-between">
             <span className="text-xs text-neutral-500">
-              {typeof h.confidence === "number" ? `${Math.round(h.confidence * 100)}% confidence` : "—"} · {new Date(h.created_at).toLocaleDateString()}
+              {typeof h.confidence === "number" ? `${Math.round(h.confidence * 100)}% confidence` : "—"} · {new Date(h.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })}
             </span>
             <span className={`border px-2 py-0.5 text-[11px] font-medium ${h.status === "suggested" ? "border-amber-300 text-amber-700 dark:border-amber-800 dark:text-amber-300" : h.status === "applied" ? "border-emerald-300 text-emerald-700 dark:border-emerald-800 dark:text-emerald-300" : "border-neutral-300 text-neutral-500 dark:border-neutral-700"}`}>
               {h.status}

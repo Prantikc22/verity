@@ -22,7 +22,7 @@ function veritySteps(c: CiConfig) {
   const doc = yaml.load(githubWorkflow(c)) as { jobs: { verity: { steps: Step[] } } };
   const steps = doc.jobs.verity.steps.filter((s) => s.uses?.startsWith("qashift/verity-action"));
   const by = (n: string) => steps.find((s) => s.name === n)!.with!;
-  return { fast: by("Verity (fast)"), full: by("Verity (full)") };
+  return { fast: by("QAShift (fast)"), full: by("QAShift (full)") };
 }
 
 test("GitHub workflow is valid YAML with inputs nested under the action step", () => {
@@ -30,7 +30,7 @@ test("GitHub workflow is valid YAML with inputs nested under the action step", (
     const { fast, full } = veritySteps(c);
     assert.equal(fast.tier, "fast");
     assert.equal(full.tier, "full");
-    assert.match(fast.token, /secrets\.VERITY_INGEST_TOKEN/);
+    assert.match(fast.token, /secrets\.QASHIFT_TOKEN/);
   }
 });
 

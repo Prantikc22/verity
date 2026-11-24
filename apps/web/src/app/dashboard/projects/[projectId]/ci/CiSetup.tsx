@@ -21,12 +21,13 @@ const PROVIDERS: { key: Provider; label: string; logo: string }[] = [
   { key: "jenkins", label: "Jenkins", logo: "M12 2a10 10 0 100 20 10 10 0 000-20zm-1 5h2v6h-2V7zm0 8h2v2h-2v-2z" },
 ];
 
-function Toggle({ on, onClick }: { on: boolean; onClick: () => void }) {
+/** Visual switch only: the whole engine card is the button (a button can't contain a button). */
+function Toggle({ on }: { on: boolean; onClick?: () => void }) {
   return (
-    <button type="button" onClick={onClick} aria-pressed={on}
-      className={`relative h-5 w-9 shrink-0 rounded-full transition ${on ? "bg-indigo-600" : "bg-neutral-300 dark:bg-neutral-700"}`}>
+    <span aria-hidden="true"
+      className={`relative mt-0.5 h-5 w-9 shrink-0 rounded-full transition ${on ? "bg-indigo-600" : "bg-neutral-300 dark:bg-neutral-700"}`}>
       <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all ${on ? "left-4" : "left-0.5"}`} />
-    </button>
+    </span>
   );
 }
 
@@ -64,6 +65,7 @@ export function CiSetup({ defaultApiUrl, defaultBranch }: { defaultApiUrl: strin
     setTimeout(() => setCopied(false), 1500);
   }
 
+  const hasOptions = c.engines.perf || c.engines.security || c.engines.visual || c.engines.agent || c.engines.contract;
   return (
     <div className="space-y-8">
       {/* ── 1. Pick your tests ─────────────────────────────────────── */}
@@ -74,9 +76,9 @@ export function CiSetup({ defaultApiUrl, defaultBranch }: { defaultApiUrl: strin
           {ENGINES.map((e) => {
             const on = c.engines[e.key];
             return (
-              <button key={e.key} type="button" onClick={() => toggleEngine(e.key)}
+              <button key={e.key} type="button" aria-pressed={on} onClick={() => toggleEngine(e.key)}
                 className={`flex items-start gap-3 border p-3 text-left transition ${on ? "border-indigo-400 bg-indigo-50/50 dark:border-indigo-600 dark:bg-indigo-950/30" : "border-neutral-200 hover:border-neutral-300 dark:border-neutral-800"}`}>
-                <Toggle on={on} onClick={() => toggleEngine(e.key)} />
+                <Toggle on={on} />
                 <span className="min-w-0">
                   <span className="flex items-center gap-1.5">
                     <span className="text-sm font-medium">{e.label}</span>
@@ -93,7 +95,7 @@ export function CiSetup({ defaultApiUrl, defaultBranch }: { defaultApiUrl: strin
       </section>
 
       {/* ── 2. Options for the engines you picked ──────────────────── */}
-      {(c.engines.perf || c.engines.security || c.engines.visual || c.engines.agent || c.engines.contract) && (
+      {hasOptions && (
         <section>
           <h3 className="text-sm font-semibold">2 · Configure them</h3>
           <div className="mt-3 grid gap-4 lg:grid-cols-2">
@@ -189,7 +191,7 @@ export function CiSetup({ defaultApiUrl, defaultBranch }: { defaultApiUrl: strin
       {/* ── 3. Your CI config ──────────────────────────────────────── */}
       <section>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold">3 · Copy &amp; commit your CI config</h3>
+          <h3 className="text-sm font-semibold">{hasOptions ? 3 : 2} · Copy &amp; commit your CI config</h3>
           <div className="flex gap-1">
             {PROVIDERS.map((p) => (
               <button key={p.key} onClick={() => setProvider(p.key)}
@@ -222,8 +224,8 @@ export function CiSetup({ defaultApiUrl, defaultBranch }: { defaultApiUrl: strin
           </p>
           <ol className="mt-2 list-decimal space-y-1 pl-5 text-neutral-600 dark:text-neutral-400">
             <li>Copy the config above.</li>
-            <li>Save it to {provider === "github" ? <code>.github/workflows/verity.yml</code> : provider === "gitlab" ? <code>.gitlab-ci.yml</code> : <code>Jenkinsfile</code>} in your repo, <strong>replacing</strong> any existing QAShift workflow.</li>
-            <li>Make sure your secrets are set ({provider === "github" ? <><code>VERITY_INGEST_TOKEN</code> in repo Settings → Secrets</> : <code>VERITY_INGEST_TOKEN</code>}).</li>
+            <li>Save it to {provider === "github" ? <code>.github/workflows/qashift.yml</code> : provider === "gitlab" ? <code>.gitlab-ci.yml</code> : <code>Jenkinsfile</code>} in your repo, <strong>replacing</strong> any existing QAShift workflow.</li>
+            <li>Make sure your secrets are set ({provider === "github" ? <><code>QASHIFT_TOKEN</code> in repo Settings → Secrets</> : <code>QASHIFT_TOKEN</code>}).</li>
             <li>Commit &amp; push — the engines run on the next PR/merge and results appear in QAShift.</li>
           </ol>
           <p className="mt-2 text-[11px] text-neutral-500">Already wired the QAShift workflow once? You only need to update it again when you change which engines are on.</p>
@@ -231,8 +233,8 @@ export function CiSetup({ defaultApiUrl, defaultBranch }: { defaultApiUrl: strin
       </section>
 
       {/* ── 4. What you get on each provider ───────────────────────── */}
-      <section>
-        <h3 className="text-sm font-semibold">4 · What you get on each provider</h3>
+      <details className="group rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
+        <summary className="cursor-pointer text-sm font-semibold">What works on GitHub, GitLab and Jenkins</summary>
         <div className="mt-3 overflow-x-auto border border-neutral-200 dark:border-neutral-800">
           <table className="w-full text-left text-xs">
             <thead className="bg-neutral-50 dark:bg-neutral-900">
@@ -260,7 +262,7 @@ export function CiSetup({ defaultApiUrl, defaultBranch }: { defaultApiUrl: strin
           </table>
         </div>
         <p className="mt-2 text-[11px] text-neutral-500"><span className="text-emerald-600">✓</span> full · <span className="text-amber-500">◑</span> partial / needs setup · — not available. The <strong>QAShift dashboard always has complete results</strong> regardless of provider.</p>
-      </section>
+      </details>
     </div>
   );
 }

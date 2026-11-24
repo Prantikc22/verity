@@ -1,8 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { canUseProject } from "@/lib/project-access";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { installationOctokit } from "@/lib/github/app";
+import { installationOctokit, repoInstallationId, notInstalledMessage } from "@/lib/github/app";
 
 export const runtime = "nodejs";
 
@@ -13,17 +12,6 @@ function parseRepo(repo: string | null): { owner: string; repo: string } | null 
   return owner && name ? { owner, repo: name } : null;
 }
 
-async function resolveInstallationId(repoOwner: string, explicit: number | null): Promise<number | null> {
-  if (explicit) return explicit;
-  const admin = createAdminClient();
-  const { data } = await admin
-    .from("github_installations")
-    .select("installation_id")
-    .eq("account_login", repoOwner)
-    .eq("suspended", false)
-    .maybeSingle();
-  return data?.installation_id ?? null;
-}
 
 /**
  * Push a generated test into the project's GitHub repo as a branch + PR. This is
@@ -56,10 +44,8 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ pr
     .maybeSingle();
   if (!test) return NextResponse.json({ error: "Test not found" }, { status: 404 });
 
-  const installationId = await resolveInstallationId(repo.owner, project.github_installation_id);
-  if (!installationId) {
-    return NextResponse.json({ error: "Install the QAShift GitHub App on this repo first." }, { status: 400 });
-  }
+  const installationId = await repoInstallationId(repo.owner, repo.repo, { projectId: project.id, saved: project.github_installation_id });
+  if (!installationId) return NextResponse.json(await notInstalledMessage(repo.owner, repo.repo), { status: 400 });
   const octokit = await installationOctokit(installationId);
   if (!octokit) return NextResponse.json({ error: "GitHub App is not configured." }, { status: 503 });
 

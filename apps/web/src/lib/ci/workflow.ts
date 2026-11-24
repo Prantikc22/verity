@@ -126,7 +126,7 @@ export interface Capability {
 export const CAPABILITIES: Capability[] = [
   { feature: "Run any engine in your own CI", github: true, gitlab: true, jenkins: true },
   { feature: "One-line install (first-party Action)", github: true, gitlab: false, jenkins: false, note: "GitLab/Jenkins fetch the same vendored runner via curl." },
-  { feature: "PR comment + Check Run (pass/fail, findings, perf)", github: true, gitlab: "partial", jenkins: "partial", note: "GitLab posts MR notes; Jenkins surfaces in build logs/links. The Verity dashboard always has full results." },
+  { feature: "PR comment + Check Run (pass/fail, findings, perf)", github: true, gitlab: "partial", jenkins: "partial", note: "GitLab posts MR notes; Jenkins surfaces in build logs/links. The QAShift dashboard always has full results." },
   { feature: "Merge-blocking on Full regression (Growth+)", github: true, gitlab: "partial", jenkins: "partial", note: "GitLab via pipeline rules; Jenkins via build status." },
   { feature: "Self-healing delivered as a PR/MR diff", github: true, gitlab: true, jenkins: "partial", note: "Jenkins needs a SCM token to open the PR." },
   { feature: "Diff-aware Quick check (changed files)", github: true, gitlab: true, jenkins: true },
@@ -146,7 +146,7 @@ function githubWith(c: CiConfig, tier: "fast" | "full"): string {
   const lines = [
     `        with:`,
     `          tier: ${tier}`,
-    `          token: \${{ secrets.VERITY_INGEST_TOKEN }}`,
+    `          token: \${{ secrets.QASHIFT_TOKEN }}`,
     `          engines: ${enginesCsv(c, tier)}`,
   ];
   if (c.apiUrl !== DEFAULT_CONFIG.apiUrl) lines.push(`          api-url: ${c.apiUrl}`);
@@ -200,8 +200,8 @@ export function githubWorkflow(c: CiConfig): string {
   if (needsPlaywright) {
     setup.push(`      - run: npx playwright install --with-deps chromium`);
   }
-  return `# .github/workflows/verity.yml
-name: Verity
+  return `# .github/workflows/qashift.yml
+name: QAShift
 on:
   pull_request:
   push:
@@ -213,13 +213,13 @@ jobs:
 ${setup.join("\n")}
 
       # ── Quick check / Perf smoke / baseline scans on every PR ──
-      - name: Verity (fast)
+      - name: QAShift (fast)
         if: github.event_name == 'pull_request'
         uses: qashift/verity-action@v1
 ${githubWith(c, "fast")}
 
       # ── Full regression / load test / full scans on merge ──
-      - name: Verity (full)
+      - name: QAShift (full)
         if: github.ref == 'refs/heads/${c.branch}'
         uses: qashift/verity-action@v1
 ${githubWith(c, "full")}
@@ -254,7 +254,7 @@ function runnerCmds(c: CiConfig, tier: "fast" | "full", indent: string, provider
     out.push(`${indent}command -v k6 >/dev/null || curl -fsSL https://github.com/grafana/k6/releases/download/v0.54.0/k6-v0.54.0-linux-amd64.tar.gz | tar xz -C .verity-bin --strip-components=1 k6-v0.54.0-linux-amd64/k6`);
   }
   if (c.engines.ui || c.engines.apiFlow) {
-    out.push(`${indent}node verity.mjs run --tier ${tier} --token "$VERITY_INGEST_TOKEN" --base origin/${c.branch}`);
+    out.push(`${indent}node verity.mjs run --tier ${tier} --token "$QASHIFT_TOKEN" --base origin/${c.branch}`);
   }
   // Each engine runs through the Verity runner, which drives the underlying
   // tooling internally — so your CI config never names a specific tool.
@@ -298,7 +298,7 @@ export function gitlabWorkflow(c: CiConfig): string {
   const img = "mcr.microsoft.com/playwright:v1.49.1-noble";
   const fast = runnerCmds(c, "fast", "    - ", "gitlab");
   const full = runnerCmds(c, "full", "    - ", "gitlab");
-  return `# .gitlab-ci.yml  — store VERITY_INGEST_TOKEN as a masked CI/CD variable
+  return `# .gitlab-ci.yml  — store QASHIFT_TOKEN as a masked CI/CD variable
 stages: [verity]
 
 variables:
@@ -328,20 +328,20 @@ ${full.join("\n")}
 export function jenkinsWorkflow(c: CiConfig): string {
   const fast = runnerCmds(c, "fast", "          ", "jenkins").map((l) => l.trimStart());
   const full = runnerCmds(c, "full", "          ", "jenkins").map((l) => l.trimStart());
-  const env = [`VERITY_INGEST_TOKEN = credentials('verity-ingest-token')`];
+  const env = [`QASHIFT_TOKEN = credentials('qashift-token')`];
   if (c.engines.agent && c.agent.endpoint) {
     env.push(`AI_API_TOKEN = credentials('${c.agent.authTokenSecret}')`);
     if (c.agent.aiGrading) env.push(`${GRADER_SECRET} = credentials('${GRADER_SECRET}')`);
   }
   const block = (cmds: string[]) => cmds.map((l) => `          ${l}`).join("\n");
-  return `// Jenkinsfile — add VERITY_INGEST_TOKEN as a Jenkins credential (secret text)
+  return `// Jenkinsfile — add QASHIFT_TOKEN as a Jenkins credential (id: qashift-token) (secret text)
 pipeline {
   agent { docker { image 'mcr.microsoft.com/playwright:v1.49.1-noble'; args '-v /var/run/docker.sock:/var/run/docker.sock' } }
   environment {
 ${env.map((e) => `    ${e}`).join("\n")}
   }
   stages {
-    stage('Verity — PR (fast)') {
+    stage('QAShift — PR (fast)') {
       when { changeRequest() }
       steps {
         sh '''
@@ -349,7 +349,7 @@ ${block(fast)}
         '''
       }
     }
-    stage('Verity — ${c.branch} (full)') {
+    stage('QAShift — ${c.branch} (full)') {
       when { branch '${c.branch}' }
       steps {
         sh '''
@@ -368,7 +368,7 @@ export function workflowFor(provider: Provider, c: CiConfig): string {
 
 /** A short list of secrets the user must add, given their selection. */
 export function requiredSecrets(c: CiConfig): { name: string; why: string }[] {
-  const s = [{ name: "VERITY_INGEST_TOKEN", why: "Links runs to this project (from Settings)." }];
+  const s = [{ name: "QASHIFT_TOKEN", why: "Your project token (shown at the top of this page)." }];
   if (c.engines.agent && c.agent.endpoint) s.push({ name: c.agent.authTokenSecret, why: "Auth token used to call your AI endpoint during evals." });
   if (c.engines.agent && c.agent.endpoint && c.agent.aiGrading) s.push({ name: GRADER_SECRET, why: "API key for AI-graded eval checks (any OpenAI-compatible provider)." });
   return s;

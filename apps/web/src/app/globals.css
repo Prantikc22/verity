@@ -13,6 +13,23 @@
   --foreground: #ededf2;
 }
 
+/* Brand violet (matches qashifthq.com --violet #6A4BFF). Remaps every
+   indigo-* utility in the app, so the dashboard reads as QAShift, not a
+   default component kit. */
+@theme {
+  --color-indigo-50: #F5F2FF;
+  --color-indigo-100: #EFEBFF;
+  --color-indigo-200: #E0D8FF;
+  --color-indigo-300: #C4B5FF;
+  --color-indigo-400: #9C86FF;
+  --color-indigo-500: #6A4BFF;
+  --color-indigo-600: #5534F2;
+  --color-indigo-700: #3D22C4;
+  --color-indigo-800: #2F1A9A;
+  --color-indigo-900: #231476;
+  --color-indigo-950: #160C4A;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -42,9 +59,9 @@ body {
 html { font-size: 16.5px; }
 
 /* Lift the indigo accent to a light tint that clears AA on the dark bg. */
-.dark .text-indigo-600 { color: #818cf8; } /* indigo-400 — ~7:1 on #07070b */
-.dark .text-indigo-700 { color: #818cf8; }
-.dark .text-indigo-500 { color: #a5b4fc; } /* indigo-300 for smaller labels */
+.dark .text-indigo-600 { color: #A99BFF; } /* light violet, ~7:1 on #07070b */
+.dark .text-indigo-700 { color: #A99BFF; }
+.dark .text-indigo-500 { color: #C4B5FF; }
 
 /* Lift the faintest secondary copy so long explainer text isn't a strain. */
 .dark .text-neutral-500 { color: #9ca3af; }
@@ -55,7 +72,7 @@ html { font-size: 16.5px; }
 
 /* Indigo selection to match the brand accent. */
 ::selection {
-  background: color-mix(in srgb, #6366f1 28%, transparent);
+  background: color-mix(in srgb, #6A4BFF 28%, transparent);
 }
 
 /* Calmer, consistent scrollbars (nav rail + code blocks). */
@@ -84,4 +101,21 @@ html { font-size: 16.5px; }
 @media (prefers-reduced-motion: reduce) {
   .v-card { transition: none; }
   .v-card:hover { transform: none; }
+}
+
+/* ------------------------------------------------------------------ *
+ * Soft corners everywhere. Set in the base layer, so any component that
+ * asks for a specific shape with a rounded-* utility still wins.
+ * ------------------------------------------------------------------ */
+@layer base {
+  button, input, select, textarea, pre, details { border-radius: 8px; }
+  /* Bordered boxes: cards, panels, tables, callouts. */
+  div[class~="border"], section[class~="border"], label[class~="border"], li[class~="border"], form[class~="border"] { border-radius: 12px; }
+  /* Small bordered or filled chips and badges. */
+  span[class~="border"], code[class~="border"] { border-radius: 6px; }
+  /* Links styled as buttons. */
+  a[class*="bg-"][class*="px-"], a[class~="border"][class*="px-"] { border-radius: 8px; }
+  /* Keep table corners inside their rounded frame. */
+  div[class~="border"]:has(> table) { overflow: hidden; }
+  input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid color-mix(in srgb, #6A4BFF 55%, transparent); outline-offset: 1px; }
 }

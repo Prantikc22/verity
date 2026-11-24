@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { IngestToken } from "../IngestToken";
 import { CiSetup } from "./CiSetup";
+import { CiPaths } from "./CiPaths";
 import { ReporterSetup } from "@/components/shell/ReporterSetup";
 
 export const metadata: Metadata = { title: "CI Setup", robots: { index: false } };
@@ -22,21 +23,29 @@ export default async function CiSetupPage({ params }: { params: Promise<{ projec
   const { ingest: ingestToken } = await projectTokens(supabase, projectId);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold tracking-tight">CI Setup</h2>
-        <p className="mt-0.5 text-sm text-neutral-500">
-          Choose which tests to run, configure them, and copy a ready-to-paste config for GitHub, GitLab, or Jenkins.
-          Everything runs in <strong>your</strong> CI; results post to QAShift.
-        </p>
+        <h2 className="text-lg font-semibold tracking-tight">Run in CI</h2>
+        <p className="mt-0.5 max-w-2xl text-sm text-neutral-500">Tests run in <strong>your</strong> CI, so they&apos;re unlimited and use no credits. Results show up in this project a few seconds after each run.</p>
       </div>
 
-      {/* Reporting only: the fastest path, no agents needed. */}
-      <ReporterSetup apiUrl={APP} projects={ingestToken ? [{ id: project.id, name: project.name, token: ingestToken }] : []} />
+      <section className="rounded-xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 className="text-sm font-semibold">Your project token</h3>
+            <p className="mt-0.5 text-[12.5px] text-neutral-500">Save it in your CI as a secret named <code className="font-mono">QASHIFT_TOKEN</code>. In GitHub: Settings → Secrets and variables → Actions → New repository secret. Both options below use it.</p>
+          </div>
+        </div>
+        <div className="mt-3">{ingestToken ? <IngestToken token={ingestToken} /> : <p className="text-sm text-neutral-500">Only members of this project can see its token.</p>}</div>
+      </section>
 
-      {/* The two-tier mental model, visualized. */}
-      <section className="border border-neutral-200 p-5 dark:border-neutral-800">
-        <h3 className="text-sm font-semibold">How runs are tiered</h3>
+      <CiPaths
+        report={<ReporterSetup apiUrl={APP} />}
+        agents={<CiSetup defaultApiUrl={APP} defaultBranch={project.default_branch ?? "main"} />}
+      />
+
+      <details className="rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
+        <summary className="cursor-pointer text-sm font-semibold">How runs work: quick checks on pull requests, full runs on merge</summary>
         <svg viewBox="0 0 760 150" className="mt-3 w-full" role="img" aria-label="Pull request runs the fast tier; merge runs the full tier.">
           <defs>
             <marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0l6 3-6 3z" className="fill-neutral-400" /></marker>
@@ -64,16 +73,7 @@ export default async function CiSetupPage({ params }: { params: Promise<{ projec
             </g>
           ))}
         </svg>
-      </section>
-
-      {/* Token */}
-      <section className="border border-neutral-200 p-5 dark:border-neutral-800">
-        <h3 className="text-sm font-semibold">Your ingest token</h3>
-        <p className="mt-0.5 text-xs text-neutral-500">Add as <code>VERITY_INGEST_TOKEN</code> in your CI secrets. Ingest endpoint: <code>{APP}/api/ingest</code></p>
-        <div className="mt-3">{ingestToken ? <IngestToken token={ingestToken} /> : <p className="text-sm text-neutral-500">Only members of this project can see its token.</p>}</div>
-      </section>
-
-      <CiSetup defaultApiUrl={APP} defaultBranch={project.default_branch ?? "main"} />
+      </details>
     </div>
   );
 }

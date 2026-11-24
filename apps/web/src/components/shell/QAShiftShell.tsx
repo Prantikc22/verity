@@ -23,6 +23,7 @@ const P = {
   reports: "M4 4h16v16H4zM8 16v-4M12 16V8M16 16v-6",
   integrations: "M9 2v6M15 2v6M6 8h12v4a6 6 0 01-12 0zM12 18v4",
   billing: "M2 6h20v12H2zM2 10h20M6 15h4",
+  services: "M16 11a4 4 0 10-8 0M4 21v-1a6 6 0 0112 0v1M17 8a3 3 0 110 6M20 21v-1a5 5 0 00-3-4.6",
   settings: "M12 15a3 3 0 100-6 3 3 0 000 6zM19 12a7 7 0 00-.1-1l2-1.6-2-3.4-2.4 1a7 7 0 00-1.7-1L14 2h-4l-.8 2.6a7 7 0 00-1.7 1l-2.4-1-2 3.4 2 1.6a7 7 0 000 2l-2 1.6 2 3.4 2.4-1a7 7 0 001.7 1L10 22h4l.8-2.6a7 7 0 001.7-1l2.4 1 2-3.4-2-1.6c.1-.3.1-.7.1-1z",
 };
 
@@ -33,6 +34,7 @@ export const WORKSPACE_NAV = [
   { href: "/dashboard/agents", label: "Agents", icon: P.agents, also: [] },
   { href: "/dashboard/coverage", label: "Coverage", icon: P.coverage, also: [] },
   { href: "/dashboard/reports", label: "Reports", icon: P.reports, also: ["/dashboard/trends"] },
+  { href: "/dashboard/services", label: "Services", icon: P.services, also: [] },
   { href: "/dashboard/integrations", label: "Integrations", icon: P.integrations, also: ["/dashboard/github"] },
   { href: "/dashboard/usage", label: "Usage & Billing", icon: P.billing, also: [] },
   { href: "/dashboard/settings", label: "Settings", icon: P.settings, also: ["/dashboard/team"] },
@@ -43,6 +45,7 @@ export const REPORTS_NAV = [
   { href: "/dashboard/reports", label: "Reports", icon: P.reports, also: ["/dashboard/trends"] },
   { href: "/dashboard/runs", label: "Test Runs", icon: P.runs, also: [] as string[] },
   { href: "/dashboard/projects", label: "Projects", icon: P.projects, also: [] },
+  { href: "/dashboard/services", label: "Services", icon: P.services, also: [] },
   { href: "/dashboard/usage", label: "Usage & Billing", icon: P.billing, also: [] },
   { href: "/dashboard/settings", label: "Settings", icon: P.settings, also: ["/dashboard/team"] },
 ];
@@ -166,12 +169,12 @@ export function QAShiftShell({ org, plan, email, credits, mode = "full", childre
           {credits && !reportsOnly && (credits.unlimited ? (
             <div className="mt-1 text-[11.5px] text-neutral-500">Unlimited agent credits</div>
           ) : credits.used === undefined ? (
-            <div className="mt-1 text-[11.5px] text-neutral-500">{credits.limit.toLocaleString()} agent credits / month</div>
+            <div className="mt-1 text-[11.5px] text-neutral-500">{credits.limit.toLocaleString("en-US")} agent credits / month</div>
           ) : (
             <>
               <div className="mt-1 flex items-baseline justify-between text-[11.5px] text-neutral-500">
-                <span><b className="tnum font-medium text-neutral-800 dark:text-neutral-200">{Math.max(0, credits.limit - credits.used).toLocaleString()}</b> credits left</span>
-                <span className="tnum">of {credits.limit.toLocaleString()}</span>
+                <span><b className="tnum font-medium text-neutral-800 dark:text-neutral-200">{Math.max(0, credits.limit - credits.used).toLocaleString("en-US")}</b> credits left</span>
+                <span className="tnum">of {credits.limit.toLocaleString("en-US")}</span>
               </div>
               <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800">
                 <div className={`h-full rounded-full ${credits.used / Math.max(1, credits.limit) >= 0.9 ? "bg-red-500" : credits.used / Math.max(1, credits.limit) >= 0.7 ? "bg-amber-500" : "bg-indigo-500"}`} style={{ width: `${Math.min(100, Math.round((credits.used / Math.max(1, credits.limit)) * 100))}%` }} />

@@ -1,4 +1,5 @@
 import { installationOctokit } from "./app";
+import { repoInstallationId } from "@/lib/github/app";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Tables } from "@/lib/supabase/database.types";
 import type { IngestResult } from "@/lib/ingest";
@@ -20,9 +21,14 @@ export function parseRepo(repo: string | null): { owner: string; repo: string } 
   return owner && name ? { owner, repo: name } : null;
 }
 
-export async function resolveInstallationId(project: Tables<"projects">): Promise<number | null> {
+export async function resolveInstallationId(project: Pick<Tables<"projects">, "id" | "repo" | "github_installation_id">): Promise<number | null> {
+  const parsed = parseRepo(project.repo);
+  if (parsed) {
+    const live = await repoInstallationId(parsed.owner, parsed.repo, { projectId: project.id, saved: project.github_installation_id });
+    if (live) return live;
+  }
   if (project.github_installation_id) return project.github_installation_id;
-  const owner = parseRepo(project.repo)?.owner;
+  const owner = parsed?.owner;
   if (!owner) return null;
   const admin = createAdminClient();
   const { data } = await admin
