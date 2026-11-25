@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 
-type Status = "pending" | "running" | "passed" | "failed" | "flaky" | "healed" | "healing";
+type Status = "pending" | "running" | "passed" | "failed" | "flaky" | "healed" | "healing" | "notrun";
 interface Row {
   name: string; spec_path: string; status: Status; durationMs: number;
   error: string | null; explanation: string | null; healed: boolean; healExplanation: string | null;
@@ -62,9 +62,16 @@ export function RunTests({ projectId, tests, kind }: { projectId: string; tests:
         }
       }
     } catch (err) {
+      stopUnfinished();
       setPhase("error");
       setError(err instanceof Error ? err.message : "Something went wrong.");
     }
+  }
+
+  /** After a failed run, rows still marked running/self-healing never finished. */
+  function stopUnfinished() {
+    for (const [k, r] of rowsRef.current) if (r.status === "running" || r.status === "healing") rowsRef.current.set(k, { ...r, status: "notrun" });
+    commit();
   }
 
   function handle(ev: Record<string, unknown>) {
@@ -110,6 +117,7 @@ export function RunTests({ projectId, tests, kind }: { projectId: string; tests:
         setPhase("done");
         break;
       case "error":
+        stopUnfinished();
         setPhase("error");
         setError(ev.error as string);
         break;
@@ -143,7 +151,7 @@ export function RunTests({ projectId, tests, kind }: { projectId: string; tests:
       </body></html>`;
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = "verity-report.html"; a.click(); URL.revokeObjectURL(url);
+    const a = document.createElement("a"); a.href = url; a.download = "qashift-run-report.html"; a.click(); URL.revokeObjectURL(url);
   }
 
   function toggle(id: string) { setPicked((p) => { const n = new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n; }); }
@@ -154,9 +162,10 @@ export function RunTests({ projectId, tests, kind }: { projectId: string; tests:
     : s === "failed" ? "bg-red-500"
     : s === "flaky" ? "bg-amber-500"
     : s === "healing" ? "bg-violet-500 animate-pulse"
+    : s === "notrun" ? "bg-neutral-400"
     : "bg-indigo-500 animate-pulse";
   const label = (s: Status) =>
-    s === "healed" ? "passed · self-healed ✓" : s === "passed" ? "passed ✓" : s === "failed" ? "failed" : s === "flaky" ? "flaky" : s === "healing" ? "self-healing…" : "running…";
+    s === "healed" ? "passed · self-healed" : s === "passed" ? "passed" : s === "failed" ? "failed" : s === "flaky" ? "flaky" : s === "healing" ? "self-healing…" : s === "notrun" ? "not run" : "running…";
 
   return (
     <div className="border border-neutral-200 p-5 dark:border-neutral-800">
@@ -193,7 +202,7 @@ export function RunTests({ projectId, tests, kind }: { projectId: string; tests:
       })()}
 
       <button onClick={run} disabled={busy} className="mt-3 bg-indigo-600 px-5 py-2 text-sm font-medium text-white disabled:opacity-50">
-        {busy ? "Running…" : `▶ Run ${picked.size ? picked.size : "all"} test${(picked.size || tests.length) === 1 ? "" : "s"}`}
+        {busy ? "Running…" : `Run ${picked.size ? picked.size : "all"} test${(picked.size || tests.length) === 1 ? "" : "s"}`}
       </button>
       {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
 
@@ -219,7 +228,7 @@ export function RunTests({ projectId, tests, kind }: { projectId: string; tests:
             <span className="text-red-600">{summary.failed} failed</span>
             <span className="text-amber-600">{summary.flaky} flaky</span>
           </div>
-          <button onClick={downloadReport} className="border border-neutral-300 px-3 py-1.5 text-xs font-medium dark:border-neutral-700">⤓ Download report</button>
+          <button onClick={downloadReport} className="border border-neutral-300 px-3 py-1.5 text-xs font-medium dark:border-neutral-700">Download report</button>
         </div>
       )}
 

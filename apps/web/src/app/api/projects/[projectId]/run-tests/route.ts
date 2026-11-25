@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { canUseProject } from "@/lib/project-access";
+import { uniqueRunnerPaths } from "@/lib/runner/spec-paths";
 import { runnerFetch, RUNNER_BUSY } from "@/lib/runner-fetch";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
@@ -74,8 +75,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
   let q = supabase.from("tests").select("id, name, spec_path, spec_content, source_url, plan").eq("project_id", projectId).neq("status", "archived");
   q = q.eq("kind", parsed.data.kind ?? "ui");
   if (parsed.data.testIds?.length) q = q.in("id", parsed.data.testIds);
-  const { data: tests } = await q;
-  if (!tests || tests.length === 0) return NextResponse.json({ error: "No tests to run." }, { status: 400 });
+  const { data: loaded } = await q;
+  if (!loaded || loaded.length === 0) return NextResponse.json({ error: "No tests to run." }, { status: 400 });
+  // Same journey generated twice shares a file path; the runner needs unique ones.
+  const tests = uniqueRunnerPaths(loaded);
 
   // Deterministic hardening pre-pass: repair only grounded locator semantics
   // (for example placeholder-vs-label, role, and split-span heading locators)

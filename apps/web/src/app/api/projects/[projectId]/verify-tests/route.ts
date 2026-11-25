@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { canUseProject } from "@/lib/project-access";
+import { uniqueRunnerPaths } from "@/lib/runner/spec-paths";
 import { runnerFetch, RUNNER_BUSY } from "@/lib/runner-fetch";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
@@ -47,7 +48,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
   let q = supabase.from("tests").select("id, name, spec_path, spec_content, source_url")
     .eq("project_id", projectId).eq("kind", parsed.data.kind).neq("status", "archived");
   q = parsed.data.testIds?.length ? q.in("id", parsed.data.testIds) : q.eq("status", "draft");
-  const { data: tests } = await q.limit(20);
+  const { data: loaded } = await q.limit(20);
+  const tests = loaded ? uniqueRunnerPaths(loaded) : loaded;
   if (!tests || tests.length === 0) return NextResponse.json({ ok: true, verified: [], message: "No tests to verify." });
 
   const base = (p: string) => p;
