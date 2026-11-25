@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import posthog from "posthog-js";
 import { SignOutButton } from "@/app/dashboard/SignOutButton";
 import { PROJECT_GROUPS, isActiveItem } from "@/components/DashboardShell";
 import { createClient } from "@/lib/supabase/client";
 import { LinkPending } from "./NavProgress";
+import { LogoMark } from "@/components/Logo";
 
 /*
  * QAShift 2.0 workspace shell. One brand, one navigation:
@@ -79,12 +80,8 @@ function Icon({ d }: { d: string }) {
 }
 
 function Mark() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 64 64" aria-hidden="true">
-      <path d="M 45.2 20.4 A 21 21 0 1 0 44.1 45.9" fill="none" stroke="currentColor" strokeWidth="8" strokeLinecap="round" />
-      <path d="M 19.5 32.5 L 28.5 41.5 L 57 13" fill="none" stroke="#22C55E" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
+  const id = useId().replace(/:/g, "");
+  return <LogoMark size={22} id={`qs${id}`} />;
 }
 
 export function QAShiftShell({ org, plan, email, credits, mode = "full", children }: { org: string; plan: string; email: string; credits?: { limit: number; used?: number; unlimited: boolean }; mode?: "full" | "reports"; children: React.ReactNode }) {
