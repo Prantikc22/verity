@@ -21,7 +21,9 @@ next-env.d.ts
 *.pem
 .vercel
 .tmp
-coverage
+/coverage/
+**/coverage/lcov-report/
+*.lcov
 playwright-report
 test-results
 

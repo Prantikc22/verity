@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --import tsx --test src/lib/ci/workflow.test.ts src/lib/entitlements.test.ts src/lib/a11y/a11y.test.ts src/lib/a11y/limits.test.ts src/lib/verify/strict-mode.test.ts src/lib/runner/spec-paths.test.ts"
+    "test": "node --import tsx --test src/lib/ci/workflow.test.ts src/lib/entitlements.test.ts src/lib/a11y/a11y.test.ts src/lib/a11y/limits.test.ts src/lib/verify/strict-mode.test.ts src/lib/runner/spec-paths.test.ts src/components/report/categorize.test.ts"
   },
   "dependencies": {
     "@octokit/app": "^16.1.2",

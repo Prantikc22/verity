@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { ReportRow, RunReportData, Status } from "@/lib/reports/run-report";
+import { RunInsights } from "./RunInsights";
 
 /* ------------------------------------------------------------------ *
  * The run report. Built to answer, in this order:
@@ -270,8 +271,11 @@ export function RunReport({ data }: { data: RunReportData }) {
         </section>
       )}
 
+      {/* 3b · Insights: failure types, spec files, branch trend, export */}
+      {rows.length > 0 && <RunInsights rows={rows} onFocus={(ids, label) => { focus(ids, label); document.getElementById("run-tests")?.scrollIntoView({ behavior: "smooth", block: "start" }); }} />}
+
       {/* 4 · Tests */}
-      <section className="rounded-2xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
+      <section id="run-tests" className="scroll-mt-16 rounded-2xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
         <div className="flex flex-wrap items-center gap-2 border-b border-neutral-100 p-3 dark:border-neutral-800">
           {only ? (
             <span className="inline-flex items-center gap-2 rounded-full bg-neutral-900 px-3 py-1.5 text-[12.5px] text-white dark:bg-white dark:text-neutral-900">

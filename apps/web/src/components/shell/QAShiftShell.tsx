@@ -7,6 +7,8 @@ import posthog from "posthog-js";
 import { SignOutButton } from "@/app/dashboard/SignOutButton";
 import { PROJECT_GROUPS, isActiveItem } from "@/components/DashboardShell";
 import { createClient } from "@/lib/supabase/client";
+import { NavProgress, LinkPending } from "./NavProgress";
+import { Suspense } from "react";
 
 /*
  * QAShift 2.0 workspace shell. One brand, one navigation:
@@ -114,7 +116,7 @@ export function QAShiftShell({ org, plan, email, credits, mode = "full", childre
       : pathname === n.href || pathname.startsWith(`${n.href}/`) || n.also.some((a) => pathname.startsWith(a));
 
   const item = (active: boolean) =>
-    `group flex h-8 items-center gap-2.5 rounded-md px-2.5 text-[13px] transition-colors ${active
+    `group flex h-8 items-center gap-2.5 rounded-md px-2.5 text-[13px] transition-[color,background-color,transform] duration-150 active:scale-[0.98] active:bg-neutral-900/[0.08] dark:active:bg-white/10 ${active
       ? "bg-neutral-900/[0.06] font-medium text-neutral-950 dark:bg-white/10 dark:text-white"
       : "text-neutral-600 hover:bg-neutral-900/[0.04] hover:text-neutral-950 dark:text-neutral-400 dark:hover:bg-white/5 dark:hover:text-white"}`;
 
@@ -133,7 +135,7 @@ export function QAShiftShell({ org, plan, email, credits, mode = "full", childre
             const active = isActive(n);
             return (
               <Link key={n.href} href={n.href} aria-current={active ? "page" : undefined} className={item(active)}>
-                <span className={active ? "text-neutral-950 dark:text-white" : "text-neutral-400 group-hover:text-neutral-700"}><Icon d={n.icon} /></span>{n.label}
+                <span className={active ? "text-neutral-950 dark:text-white" : "text-neutral-400 group-hover:text-neutral-700"}><Icon d={n.icon} /></span>{n.label}<LinkPending />
               </Link>
             );
           })}
@@ -152,7 +154,7 @@ export function QAShiftShell({ org, plan, email, credits, mode = "full", childre
                   const active = isActiveItem(pathname, projectId, n);
                   return (
                     <Link key={n.seg || "overview"} href={href} aria-current={active ? "page" : undefined} className={item(active)}>
-                      <span className={active ? "text-violet-600" : "text-neutral-400 group-hover:text-neutral-700"}><Icon d={n.icon} /></span>{n.label}
+                      <span className={active ? "text-violet-600" : "text-neutral-400 group-hover:text-neutral-700"}><Icon d={n.icon} /></span>{n.label}<LinkPending />
                     </Link>
                   );
                 })}
@@ -194,6 +196,7 @@ export function QAShiftShell({ org, plan, email, credits, mode = "full", childre
 
   return (
     <div className="flex min-h-screen bg-[#F7F7F5] text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100">
+      <Suspense fallback={null}><NavProgress /></Suspense>
       <aside className="sticky top-0 hidden h-screen w-[232px] shrink-0 border-r border-neutral-200 lg:block dark:border-neutral-800">{sidebar}</aside>
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-20 flex h-[52px] items-center justify-between gap-3 border-b border-neutral-200 bg-[#F7F7F5]/90 px-4 backdrop-blur lg:px-8 dark:border-neutral-800 dark:bg-neutral-950/90">
