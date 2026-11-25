@@ -17,6 +17,7 @@ export function RunTests({ projectId, tests, kind }: { projectId: string; tests:
   const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState("");
   const [summary, setSummary] = useState<Summary | null>(null);
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [rows, setRows] = useState<Row[]>([]);
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [healCount, setHealCount] = useState(0);
@@ -32,7 +33,7 @@ export function RunTests({ projectId, tests, kind }: { projectId: string; tests:
   function toggleExpand(key: string) { setExpanded((p) => { const n = new Set(p); if (n.has(key)) n.delete(key); else n.add(key); return n; }); }
 
   async function run() {
-    setPhase("executing"); setError(""); setSummary(null); setHealCount(0);
+    setPhase("executing"); setError(""); setSummary(null); setHealCount(0); setProgress(null);
     rowsRef.current = new Map(); commit();
     try {
       const res = await fetch(`/api/projects/${projectId}/run-tests`, {
@@ -93,6 +94,9 @@ export function RunTests({ projectId, tests, kind }: { projectId: string; tests:
         commit();
         break;
       }
+      case "progress":
+        setProgress({ done: ev.done as number, total: ev.total as number });
+        break;
       case "phase":
         if (ev.phase === "healing") { setPhase("healing"); setHealCount((ev.count as number) ?? 0); }
         break;
@@ -211,7 +215,7 @@ export function RunTests({ projectId, tests, kind }: { projectId: string; tests:
         <div className="mt-4 flex items-center gap-2 text-sm">
           <span className={`h-2.5 w-2.5 rounded-full ${phase === "executing" ? "bg-indigo-500 animate-pulse" : phase === "healing" ? "bg-violet-500 animate-pulse" : phase === "done" ? "bg-emerald-500" : "bg-red-500"}`} />
           <span className="font-medium">
-            {phase === "executing" && `Executing ${rows.length} test${rows.length === 1 ? "" : "s"} in a real browser…`}
+            {phase === "executing" && `Executing ${rows.length} test${rows.length === 1 ? "" : "s"} in real browsers…${progress ? ` ${progress.done} of ${progress.total} done` : ""}`}
             {phase === "healing" && `Self-healing ${healCount} failure${healCount === 1 ? "" : "s"} — re-reading the page and rewriting locators…`}
             {phase === "done" && "Run complete"}
             {phase === "error" && "Run failed"}

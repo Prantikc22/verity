@@ -154,11 +154,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
         for (let i = 0; i < tests.length; i += CHUNK) chunks.push(tests.slice(i, i + CHUNK) as TestRow[]);
         const first: RunnerResult[] = [];
         let next = 0;
+        // Keep the stream alive while chunks run: a connection that sends nothing
+        // for ~2 minutes gets cut by proxies/browsers ("network error").
+        const heartbeat = setInterval(() => { try { send({ type: "ping" }); } catch { /* closed */ } }, 10_000);
         await Promise.all(Array.from({ length: Math.min(PARALLEL, chunks.length) }, async () => {
           while (next < chunks.length) {
             const chunk = chunks[next++];
             try {
               first.push(...(await callRunner(chunk.map(oneSpec))));
+              send({ type: "progress", done: first.length, total: tests.length });
             } catch (err) {
               // One chunk failing (runner busy past the wait, crash) must not sink the others.
               const msg = err instanceof Error ? err.message : "runner error";
@@ -166,6 +170,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
             }
           }
         }));
+        clearInterval(heartbeat);
         // Keep the user's test order in the report.
         const order = new Map(tests.map((t, i) => [t.spec_path, i]));
         first.sort((a, b) => (order.get(a.spec_path) ?? 0) - (order.get(b.spec_path) ?? 0));
