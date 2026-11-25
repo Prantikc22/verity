@@ -8,7 +8,7 @@ interface Row {
   error: string | null; explanation: string | null; healed: boolean; healExplanation: string | null;
   screenshot_url: string | null; plan: string[];
 }
-interface Summary { total: number; passed: number; healed: number; failed: number; flaky: number }
+interface Summary { total: number; passed: number; healed: number; failed: number; flaky: number; notrun?: number }
 interface TestOpt { id: string; name: string; suite: string | null }
 
 type Phase = "idle" | "executing" | "healing" | "done" | "error";
@@ -227,6 +227,7 @@ export function RunTests({ projectId, tests, kind }: { projectId: string; tests:
             <span className="text-emerald-600">{summary.passed + summary.healed} passed{summary.healed > 0 && <span className="text-violet-600"> (incl. {summary.healed} self-healed)</span>}</span>
             <span className="text-red-600">{summary.failed} failed</span>
             <span className="text-amber-600">{summary.flaky} flaky</span>
+            {!!summary.notrun && <span className="text-neutral-500">{summary.notrun} not run</span>}
           </div>
           <button onClick={downloadReport} className="border border-neutral-300 px-3 py-1.5 text-xs font-medium dark:border-neutral-700">Download report</button>
         </div>

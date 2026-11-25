@@ -122,7 +122,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
 
       interface Row {
         id: string; name: string; spec_path: string; source_url: string | null;
-        status: "passed" | "failed" | "flaky" | "healed";
+        status: "passed" | "failed" | "flaky" | "healed" | "notrun";
         durationMs: number; error: string | null; explanation: string | null;
         screenshot_url: string | null; healed: boolean; healExplanation: string | null;
         finalAttempts: boolean[]; plan: string[];
@@ -146,7 +146,29 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
         // 1) Initial run. If the batch returns fewer results than specs sent, one
         // bad file likely aborted collection — fall back to running the missing
         // ones individually so a single broken spec can't zero out the run.
-        const first = await callRunner(tests.map(oneSpec));
+        // Split big suites into chunks and run up to 3 at once: each chunk lands on
+        // its own runner machine, so a 30-test suite finishes well inside the
+        // request limit instead of one machine working through it serially.
+        const CHUNK = 6, PARALLEL = 3;
+        const chunks: TestRow[][] = [];
+        for (let i = 0; i < tests.length; i += CHUNK) chunks.push(tests.slice(i, i + CHUNK) as TestRow[]);
+        const first: RunnerResult[] = [];
+        let next = 0;
+        await Promise.all(Array.from({ length: Math.min(PARALLEL, chunks.length) }, async () => {
+          while (next < chunks.length) {
+            const chunk = chunks[next++];
+            try {
+              first.push(...(await callRunner(chunk.map(oneSpec))));
+            } catch (err) {
+              // One chunk failing (runner busy past the wait, crash) must not sink the others.
+              const msg = err instanceof Error ? err.message : "runner error";
+              first.push(...chunk.map((t) => ({ ...loadFailure(t), status: "notrun", attempts: [], error: `Not run: ${msg}` })));
+            }
+          }
+        }));
+        // Keep the user's test order in the report.
+        const order = new Map(tests.map((t, i) => [t.spec_path, i]));
+        first.sort((a, b) => (order.get(a.spec_path) ?? 0) - (order.get(b.spec_path) ?? 0));
         const got = new Set(first.map((r) => base(r.spec_path)));
         const missing = tests.filter((t) => !got.has(base(t.spec_path)));
         if (missing.length) {
@@ -162,7 +184,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
           const r = first[i];
           const src = bySpec.get(base(r.spec_path));
           const screenshot_url = await uploadShot(r.screenshotBase64, `init-${i}`);
-          const explanation = r.status === "passed" ? null : explainPlaywrightError(r.error);
+          const explanation = r.status === "passed" || r.status === "notrun" ? null : explainPlaywrightError(r.error);
           const row: Row = {
             id: src?.id ?? "", name: src?.name ?? r.name, spec_path: src?.spec_path ?? r.spec_path, source_url: src?.source_url ?? baseURL ?? null,
             status: r.status as Row["status"], durationMs: r.durationMs, error: r.error, explanation,
@@ -241,7 +263,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
         }
 
         // 4) Record the run with final (post-heal) results.
-        const ingestResults: IngestResultInput[] = rows.map((r) => ({
+        const ingestResults: IngestResultInput[] = rows.filter((r) => r.status !== "notrun").map((r) => ({
           spec_path: r.spec_path, name: r.name, attempts: r.finalAttempts,
           duration_ms: r.durationMs, error_message: r.error,
         }));
@@ -253,11 +275,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
         if (healEventIds.length) await admin.from("healing_events").update({ run_id: recorded.runId }).in("id", healEventIds);
 
         const summary = {
-          total: recorded.total,
+          total: rows.length,
           passed: rows.filter((r) => r.status === "passed").length,
           healed: rows.filter((r) => r.status === "healed").length,
           failed: rows.filter((r) => r.status === "failed").length,
           flaky: rows.filter((r) => r.status === "flaky").length,
+          notrun: rows.filter((r) => r.status === "notrun").length,
         };
         send({
           type: "done",

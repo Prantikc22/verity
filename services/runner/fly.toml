@@ -6,7 +6,7 @@ primary_region = "sin"
 [http_service]
   internal_port = 8080
   force_https = true
-  auto_stop_machines = "stop"
+  auto_stop_machines = "off"  # the runner stops itself when idle (RUNNER_IDLE_EXIT_MS)
   auto_start_machines = true
   min_machines_running = 0
 
@@ -25,3 +25,11 @@ primary_region = "sin"
 
 [env]
   RUNNER_MAX_JOBS = "2"
+  RUNNER_WORKERS = "2"
+  RUNNER_SUITE_BUDGET_MS = "200000"
+  RUNNER_IDLE_EXIT_MS = "300000"
+
+# Exit 0 (idle self-stop) leaves the machine stopped; crashes restart it.
+[[restart]]
+  policy = "on-failure"
+  retries = 3

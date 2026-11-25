@@ -33,7 +33,25 @@ const CHILD_ENV = Object.fromEntries(
 
 /** One job per machine (Fly's hard_limit routes the next request to another machine). */
 const MAX_JOBS = Math.max(1, Number(process.env.RUNNER_MAX_JOBS ?? 1));
+/** Browsers per job, and the whole-run budget (must fit the app's 300s request). */
+const WORKERS = Math.max(1, Number(process.env.RUNNER_WORKERS ?? 2));
+const SUITE_BUDGET_MS = Math.max(30000, Number(process.env.RUNNER_SUITE_BUDGET_MS ?? 200000));
 let activeJobs = 0;
+
+/**
+ * Self-stop when idle. Fly's proxy-based auto-stop can't see background work
+ * (/explore answers 202 and keeps going), so it could stop a machine mid-job.
+ * Instead auto-stop is off and the process exits after RUNNER_IDLE_EXIT_MS with
+ * no jobs; exit code 0 stops the machine and the proxy restarts it on demand.
+ */
+const IDLE_EXIT_MS = Number(process.env.RUNNER_IDLE_EXIT_MS ?? 0);
+let idleTimer = null;
+function armIdleExit() {
+  if (!IDLE_EXIT_MS) return;
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => { if (activeJobs === 0) { console.log("idle, stopping machine"); process.exit(0); } else armIdleExit(); }, IDLE_EXIT_MS);
+  idleTimer.unref?.();
+}
 
 /**
  * Refuse private, loopback, link-local and metadata targets so a tenant cannot
@@ -86,7 +104,7 @@ export async function runTests({ tests, baseURL, reruns = 2, updateSnapshots = f
   }
   writeFileSync(join(dir, "playwright.config.ts"),
     `import { defineConfig } from '@playwright/test';\nexport default defineConfig({\n` +
-    `  testDir: ${JSON.stringify(testsDir)}, retries: ${Math.max(0, Math.min(2, Number(reruns) - 1 || 0))}, workers: 1, reporter: 'json', globalTimeout: 180000,\n` +
+    `  testDir: ${JSON.stringify(testsDir)}, retries: ${Math.max(0, Math.min(2, Number(reruns) - 1 || 0))}, workers: ${WORKERS}, reporter: 'json', globalTimeout: ${SUITE_BUDGET_MS},\n` +
     `  outputDir: '${join(dir, "out")}',\n` +
     `  use: { screenshot: 'only-on-failure'${baseURL ? `, baseURL: ${JSON.stringify(baseURL)}` : ""} },\n});\n`, "utf8");
 
@@ -97,7 +115,7 @@ export async function runTests({ tests, baseURL, reruns = 2, updateSnapshots = f
       ...(updateSnapshots ? ["--update-snapshots"] : []),
       ...(grep ? ["--grep", grep] : []),
     ];
-    const res = await promisify(execFile)("npx", args, { cwd: APP_DIR, env: CHILD_ENV, encoding: "utf8", timeout: 200000, maxBuffer: 64 * 1024 * 1024 }).catch(e => e);
+    const res = await promisify(execFile)("npx", args, { cwd: APP_DIR, env: CHILD_ENV, encoding: "utf8", timeout: SUITE_BUDGET_MS + 30000, maxBuffer: 64 * 1024 * 1024 }).catch(e => e);
     lastStderr = res.stderr ?? "";
     // The json reporter writes the report to stdout; isolate the JSON object.
     const out = res.stdout ?? "";
@@ -142,8 +160,15 @@ export async function runTests({ tests, baseURL, reruns = 2, updateSnapshots = f
   }
   // Return ONE result per submitted file. A passing sibling must never hide a
   // failing/skipped case, a collection error, or an empty test file.
+  const timedOut = (first.errors ?? []).some((e) => /Timed out waiting .* for the (entire )?test (run|suite)/i.test(e?.message ?? ""));
   const grouped = tests.map(t => {
     const rows = results.filter(r => r.spec_path === t.spec_path);
+    // Never reached before the run's time budget ran out: say so plainly.
+    if (timedOut && (rows.length === 0 || rows.every(r => r.durationMs === 0 && !r.screenshotBase64 && /failed|skipped/.test(r.error ?? "failed")))) {
+      return { name: t.name, spec_path: t.spec_path, status: "notrun", attempts: [], durationMs: 0,
+        error: "Not run: this cloud run reached its time limit before getting to this test. Run fewer tests at once, or run the suite in your CI (no limit).",
+        screenshotBase64: null, cases: rows };
+    }
     const allPassed = rows.length > 0 && rows.every(r => r.status === "passed") && !(first.errors?.length);
     const status = allPassed ? "passed" : rows.length && rows.every(r => r.status !== "failed") && !first.errors?.length ? "flaky" : "failed";
     const failure = rows.find(r => r.status !== "passed");
@@ -332,8 +357,9 @@ const server = createServer(async (req, res) => {
     res.writeHead(503, { "content-type": "application/json", "retry-after": "5" }); res.end('{"error":"busy"}'); return;
   }
   activeJobs++;
+  clearTimeout(idleTimer);
   let released = false;
-  const release = () => { if (!released) { released = true; activeJobs--; } };
+  const release = () => { if (!released) { released = true; activeJobs--; if (activeJobs === 0) armIdleExit(); } };
   res.on("close", () => { if (req.url !== "/explore") release(); });
 
   if (req.url === "/explore") {
@@ -380,5 +406,5 @@ const server = createServer(async (req, res) => {
 });
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  server.listen(PORT, () => console.log(`verity runner on :${PORT}`));
+  server.listen(PORT, () => { console.log(`QAShift runner on :${PORT}`); armIdleExit(); });
 }
