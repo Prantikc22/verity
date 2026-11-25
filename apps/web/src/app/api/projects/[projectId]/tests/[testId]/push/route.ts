@@ -85,7 +85,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ pr
 
     const pr = await octokit.request("POST /repos/{owner}/{repo}/pulls", {
       owner: repo.owner, repo: repo.repo, title: `QAShift: ${test.name}`, head: branch, base,
-      body: `This Playwright test was generated in [QAShift](https://verity-kappa-ebon.vercel.app) and pushed here so your CI can run it.\n\n\`${test.spec_path}\`\n\nMerge to start running it on every PR (Quick check) and on merge (Full regression).`,
+      body: `This Playwright test was generated in [QAShift](https://qashifthq.com) and pushed here so your CI can run it.\n\n\`${test.spec_path}\`\n\nMerge to start running it on every PR (Quick check) and on merge (Full regression).`,
     });
 
     return NextResponse.json({ ok: true, pr_url: (pr.data as { html_url: string }).html_url, branch });

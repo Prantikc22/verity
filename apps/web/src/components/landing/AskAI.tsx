@@ -31,7 +31,7 @@ export function AskAI() {
   }, [open]);
 
   function href(p: (typeof PROVIDERS)[number]) {
-    const url = typeof window !== "undefined" ? window.location.href : "https://verity.qashifthq.com";
+    const url = typeof window !== "undefined" ? window.location.href : "https://app.qashifthq.com";
     const prompt = `Summarize this page and tell me what QAShift does — the AI-augmented testing platform where AI generates tests, an engineer verifies, and everything runs in your own CI: ${url}`;
     return p.url(encodeURIComponent(prompt));
   }

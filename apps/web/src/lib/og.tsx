@@ -16,7 +16,7 @@ export function ogCard(eyebrow: string, title: string, accent?: string) {
           <div style={{ marginTop: 22, fontSize: 68, lineHeight: 1.04, fontWeight: 760, letterSpacing: -2, maxWidth: 1000 }}>{title}</div>
           {accent && <div style={{ marginTop: 10, fontSize: 68, lineHeight: 1.04, fontWeight: 760, letterSpacing: -2, color: "#a99bff", maxWidth: 1000 }}>{accent}</div>}
         </div>
-        <div style={{ fontSize: 24, color: "#9b9da5" }}>verity.qashifthq.com · Free plan · Unlimited runs in your CI</div>
+        <div style={{ fontSize: 24, color: "#9b9da5" }}>app.qashifthq.com · Free plan · Unlimited runs in your CI</div>
       </div>
     ),
     OG_SIZE,

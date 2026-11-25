@@ -8,7 +8,7 @@ import { IngestToken } from "../IngestToken";
 
 export const metadata: Metadata = { title: "Settings", robots: { index: false } };
 
-const APP = process.env.NEXT_PUBLIC_APP_URL ?? "https://verity-kappa-ebon.vercel.app";
+const APP = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.qashifthq.com";
 const RETAINED_RUNS = 30;
 
 export default async function SettingsPage({ params }: { params: Promise<{ projectId: string }> }) {

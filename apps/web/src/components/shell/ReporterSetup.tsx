@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-const DEFAULT_API = "https://verity.qashifthq.com";
+const DEFAULT_API = "https://app.qashifthq.com";
 
 /**
  * Reports setup: the reporter-first path (like other Playwright reporting

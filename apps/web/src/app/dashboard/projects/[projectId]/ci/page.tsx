@@ -9,7 +9,7 @@ import { ReporterSetup } from "@/components/shell/ReporterSetup";
 
 export const metadata: Metadata = { title: "CI Setup", robots: { index: false } };
 
-const APP = process.env.NEXT_PUBLIC_APP_URL ?? "https://verity-kappa-ebon.vercel.app";
+const APP = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.qashifthq.com";
 
 export default async function CiSetupPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = await params;

@@ -5,7 +5,7 @@
  * what each provider supports. No I/O; fully unit-testable; rendered live as the
  * user toggles options.
  *
- * Design: GitHub uses the first-party `qashift/verity-action`. GitLab/Jenkins
+ * Design: GitHub uses the first-party `qashift/qashift-action`. GitLab/Jenkins
  * have no GitHub Action, so they fetch the SAME self-contained vendored runners
  * (verity.mjs / verity-engines.mjs) via curl — identical to the existing demo
  * pattern — so behavior matches without any extra package to publish.
@@ -53,7 +53,7 @@ export interface CiConfig {
 
 export const DEFAULT_CONFIG: CiConfig = {
   engines: { ui: true, apiFlow: false, contract: false, visual: false, agent: false, perf: false, security: false },
-  apiUrl: "https://verity-kappa-ebon.vercel.app",
+  apiUrl: "https://app.qashifthq.com",
   branch: "main",
   perf: { smoke: true, fullLoad: true, profile: "load", arrivalRate: 10, durationSec: 120, lighthouse: false, lighthouseUrl: "" },
   security: { sast: true, dast: false, dastTarget: "", dastDepth: "baseline", },
@@ -136,7 +136,7 @@ export const CAPABILITIES: Capability[] = [
   { feature: "Dashboard: trends, predictions, API coverage, Security & Performance", github: true, gitlab: true, jenkins: true, note: "Every provider posts to the same ingestion API." },
 ];
 
-const RAW = "https://raw.githubusercontent.com/qashift/verity-action/v1";
+const RAW = "https://raw.githubusercontent.com/qashift/qashift-action/v1";
 /** CI secret holding the key for AI-graded agent evals (any OpenAI-compatible API). */
 export const GRADER_SECRET = "VERITY_GRADER_API_KEY";
 
@@ -215,13 +215,13 @@ ${setup.join("\n")}
       # ── Quick check / Perf smoke / baseline scans on every PR ──
       - name: QAShift (fast)
         if: github.event_name == 'pull_request'
-        uses: qashift/verity-action@v1
+        uses: qashift/qashift-action@v1
 ${githubWith(c, "fast")}
 
       # ── Full regression / load test / full scans on merge ──
       - name: QAShift (full)
         if: github.ref == 'refs/heads/${c.branch}'
-        uses: qashift/verity-action@v1
+        uses: qashift/qashift-action@v1
 ${githubWith(c, "full")}
 `;
 }

@@ -10,7 +10,7 @@ export function emailFrom(): string {
 }
 
 export function appUrl(): string {
-  return process.env.NEXT_PUBLIC_APP_URL ?? "https://verity.qashifthq.com";
+  return process.env.NEXT_PUBLIC_APP_URL ?? "https://app.qashifthq.com";
 }
 
 export function emailEnabled(): boolean {

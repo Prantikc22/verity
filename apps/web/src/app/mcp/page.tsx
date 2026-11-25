@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     title: "QAShift MCP Server",
     description: "Generate, propose, and run tests from your IDE — Cursor, VS Code, Claude Code, Windsurf.",
     type: "website",
-    url: "https://verity.qashifthq.com/mcp",
+    url: "https://app.qashifthq.com/mcp",
   },
 };
 

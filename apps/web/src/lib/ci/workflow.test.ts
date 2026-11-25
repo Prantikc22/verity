@@ -20,7 +20,7 @@ function everything(): CiConfig {
 type Step = { name?: string; uses?: string; with?: Record<string, string> };
 function veritySteps(c: CiConfig) {
   const doc = yaml.load(githubWorkflow(c)) as { jobs: { verity: { steps: Step[] } } };
-  const steps = doc.jobs.verity.steps.filter((s) => s.uses?.startsWith("qashift/verity-action"));
+  const steps = doc.jobs.verity.steps.filter((s) => s.uses?.startsWith("qashift/qashift-action"));
   const by = (n: string) => steps.find((s) => s.name === n)!.with!;
   return { fast: by("QAShift (fast)"), full: by("QAShift (full)") };
 }

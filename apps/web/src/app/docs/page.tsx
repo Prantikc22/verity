@@ -79,7 +79,7 @@ export default function DocsPage() {
             <H id="github" n="3">GitHub Actions</H>
             <P>The first-party Action wraps everything. CI Setup generates this for your selection:</P>
             <Code>{`# .github/workflows/verity.yml
-- uses: qashift/verity-action@v1
+- uses: qashift/qashift-action@v1
   with:
     tier: fast            # 'fast' on PRs, 'full' on merge
     token: \${{ secrets.VERITY_INGEST_TOKEN }}
@@ -93,8 +93,8 @@ export default function DocsPage() {
   image: mcr.microsoft.com/playwright:v1.49.1-noble
   services: ["docker:dind"]
   script:
-    - curl -Ls https://raw.githubusercontent.com/qashift/verity-action/v1/verity.mjs -o verity.mjs
-    - curl -Ls https://raw.githubusercontent.com/qashift/verity-action/v1/verity-engines.mjs -o verity-engines.mjs
+    - curl -Ls https://raw.githubusercontent.com/qashift/qashift-action/v1/verity.mjs -o verity.mjs
+    - curl -Ls https://raw.githubusercontent.com/qashift/qashift-action/v1/verity-engines.mjs -o verity-engines.mjs
     - node verity.mjs run --tier fast --token "$VERITY_INGEST_TOKEN"`}</Code>
           </section>
 

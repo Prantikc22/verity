@@ -32,7 +32,7 @@ function canManage(role: string) { return role === "owner" || role === "admin"; 
 async function sendInviteEmail(email: string, orgId: string) {
   const key = process.env.RESEND_API_KEY;
   const from = process.env.INVITE_FROM_EMAIL ?? "QAShift <onboarding@qashift.com>";
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://verity-kappa-ebon.vercel.app";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.qashifthq.com";
   if (!key) return;
   const admin = createAdminClient();
   const { data: org } = await admin.from("orgs").select("name").eq("id", orgId).maybeSingle();

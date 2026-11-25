@@ -31,7 +31,7 @@ apps/web              Next.js (App Router) — marketing, dashboard, API, predic
 packages/core         @qashift/verity-core — MIT OSS engine: selection, flake, regression,
                       confidence, correlation, prompt builders (pure TS, no I/O)
 packages/cli          @qashift/verity — CI runner: Playwright + reruns → ingestion API
-packages/action       qashift/verity-action — GitHub Action wrapping the CLI
+packages/action       qashift/qashift-action — GitHub Action wrapping the CLI
 services/runner       Optional hosted execution worker (Fly.io) — opt-in only
 ```
 

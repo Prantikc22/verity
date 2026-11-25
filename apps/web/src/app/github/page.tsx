@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   description: "Install QAShift on your repositories to automatically generate, run, and gate Playwright tests on every pull request.",
 };
 
-const INSTALL_URL = "https://github.com/apps/verity-by-qashift";
+const INSTALL_URL = "https://github.com/apps/qashift";
 
 const STEPS = [
   { n: "1", t: "Install the app", d: "Add QAShift to the repositories you want covered. You control exactly which repos it can see." },

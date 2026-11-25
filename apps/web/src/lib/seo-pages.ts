@@ -284,7 +284,7 @@ export function scenario() {
     ],
     code: {
       file: ".github/workflows/verity.yml",
-      body: `- uses: qashift/verity-action@v1
+      body: `- uses: qashift/qashift-action@v1
   with:
     token: \${{ secrets.VERITY_INGEST_TOKEN }}
     tier: full

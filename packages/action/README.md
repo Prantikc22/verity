@@ -1,4 +1,4 @@
-# qashift/verity-action
+# qashift/qashift-action
 
 GitHub Action that runs your Playwright suite and reports results to [Verity](https://verity-kappa-ebon.vercel.app) — AI-augmented testing by QAShift.
 
@@ -13,13 +13,13 @@ The runner is **self-contained** (vendored in this action), so there's nothing t
 - run: npx playwright install --with-deps chromium
 
 # Quick check (diff-aware) on PRs — a fast sanity check, never blocks.
-- uses: qashift/verity-action@v1
+- uses: qashift/qashift-action@v1
   with:
     tier: fast
     token: ${{ secrets.VERITY_INGEST_TOKEN }}
 
 # Full regression on merge to main — the safety net.
-- uses: qashift/verity-action@v1
+- uses: qashift/qashift-action@v1
   if: github.ref == 'refs/heads/main'
   with:
     tier: full
@@ -47,7 +47,7 @@ The default (`engines: ui`) keeps existing behavior exactly. Add engines to enab
 Runs AI-generated **Playwright visual specs** (in `tests/verity/visual/`) whose assertion is `toHaveScreenshot`. Each spec navigates to a stable UI state, masks volatile regions, and diffs a screenshot against the **baseline committed in your repo**. A diff over the threshold is reported as a *changed* snapshot; you approve the new baseline or fix the regression.
 
 ```yaml
-- uses: qashift/verity-action@v1
+- uses: qashift/qashift-action@v1
   with:
     token: ${{ secrets.VERITY_INGEST_TOKEN }}
     engines: ui,visual
@@ -74,7 +74,7 @@ Runs AI-generated evals against the HTTP endpoint behind your **own** AI feature
 If the endpoint never replies (down, 401/403/404) the run fails with the reason instead of reporting a verdict on the model.
 
 ```yaml
-- uses: qashift/verity-action@v1
+- uses: qashift/qashift-action@v1
   with:
     token: ${{ secrets.VERITY_INGEST_TOKEN }}
     engines: agent

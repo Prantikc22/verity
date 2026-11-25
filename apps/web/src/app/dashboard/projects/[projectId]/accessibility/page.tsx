@@ -137,7 +137,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       # Start your app or point at a deployed preview, then:
-      - uses: qashift/clearpath-action@v1
+      - uses: qashift/qashift-a11y-action@v1
         with:
           urls: ${urls.length ? urls.join(",") : "https://staging.example.com,https://staging.example.com/checkout"}
           token: \${{ secrets.QASHIFT_A11Y_TOKEN }}

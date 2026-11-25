@@ -13,7 +13,7 @@ import { PageHeader, Panel } from "@/components/shell/ui";
 export const metadata: Metadata = { title: "Reports", robots: { index: false } };
 
 const RANGES = [7, 14, 30] as const;
-const API_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://verity.qashifthq.com";
+const API_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.qashifthq.com";
 
 export default async function ReportsPage({ searchParams }: { searchParams: Promise<{ project?: string; days?: string }> }) {
   const sp = await searchParams;

@@ -6,8 +6,8 @@ import { GithubInstallVisual } from "@/components/GithubInstallVisual";
 
 export const metadata: Metadata = { title: "GitHub App", robots: { index: false } };
 
-const INSTALL_URL = "https://github.com/apps/verity-by-qashift/installations/new";
-const CONFIGURE_URL = "https://github.com/apps/verity-by-qashift";
+const INSTALL_URL = "https://github.com/apps/qashift/installations/new";
+const CONFIGURE_URL = "https://github.com/apps/qashift";
 
 export default async function GithubAppPage() {
   const orgCtx = await getPrimaryOrg();
