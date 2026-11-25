@@ -5,6 +5,7 @@ import { captureServer } from "@/lib/analytics/posthog-server";
 import { FUNNEL_EVENTS } from "@/lib/analytics/events";
 import type { Enums } from "@/lib/supabase/database.types";
 import { applyQsPlan } from "@/lib/billing/activate";
+import { completePlanSwitch } from "@/lib/billing/plan-switch";
 import type { QsProduct } from "@/lib/billing/qs-plans";
 
 export const runtime = "nodejs";
@@ -27,7 +28,11 @@ export async function POST(req: NextRequest) {
     .select("id, org_id, status, tier, product, plan_key")
     .eq("provider_subscription_id", event.providerSubscriptionId)
     .maybeSingle();
-  if (!sub) return NextResponse.json({ ok: true });
+  if (!sub) {
+    // Possibly a plan switch whose new subscription just got paid.
+    if (event.status === "active") await completePlanSwitch(event.providerSubscriptionId).catch(() => false);
+    return NextResponse.json({ ok: true });
+  }
 
   // Tier: prefer the webhook's notes.tier, but fall back to the tier we stored at
   // checkout — so the customer ALWAYS gets the plan they paid for even if the

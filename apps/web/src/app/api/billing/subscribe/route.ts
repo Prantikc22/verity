@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import Razorpay from "razorpay";
+import { isPaid } from "@/lib/billing/plan-switch";
 import { getUser, getPrimaryOrg, ensureOrgForCurrentUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { qsPlan, qsRazorpayPlanId } from "@/lib/billing/qs-plans";
@@ -28,25 +29,32 @@ export async function POST(req: NextRequest) {
   const rz = new Razorpay({ key_id, key_secret });
   const admin = createAdminClient();
   const { data: existing } = await admin.from("subscriptions").select("provider_subscription_id, status, plan_key, product").eq("org_id", orgCtx.org.id).maybeSingle();
+  // A plan the customer is PAYING for stays untouched until the new one is paid
+  // (lib/billing/plan-switch.ts finishes the switch). Closing the payment window
+  // must never cost them their current plan. Unpaid leftovers are cleared now.
+  const switching = !!existing?.provider_subscription_id && isPaid(existing.status);
   if (existing?.provider_subscription_id) {
-    if (["active", "authenticated"].includes(existing.status ?? "") && existing.plan_key === plan.planKey && existing.product === plan.product) {
+    if (switching && existing.plan_key === plan.planKey && existing.product === plan.product) {
       return NextResponse.json({ error: `You're already on ${plan.name}.` }, { status: 409 });
     }
-    try { await rz.subscriptions.cancel(existing.provider_subscription_id); } catch { /* already gone */ }
+    if (!switching) { try { await rz.subscriptions.cancel(existing.provider_subscription_id); } catch { /* already gone */ } }
   }
 
   let sub;
   try {
     sub = await rz.subscriptions.create({
       plan_id: planId, total_count: 120, customer_notify: 1,
-      notes: { org_id: orgCtx.org.id, product: plan.product, plan_key: plan.planKey, scope_accepted: plan.requiresScope ? new Date().toISOString() : "n/a" },
+      notes: {
+        org_id: orgCtx.org.id, product: plan.product, plan_key: plan.planKey, scope_accepted: plan.requiresScope ? new Date().toISOString() : "n/a",
+        ...(switching ? { replaces: existing!.provider_subscription_id! } : {}),
+      },
     });
   } catch (e) {
     const err = e as { error?: { description?: string }; message?: string };
     return NextResponse.json({ error: err?.error?.description || err?.message || "Razorpay rejected the subscription." }, { status: 502 });
   }
 
-  await admin.from("subscriptions").upsert({
+  if (!switching) await admin.from("subscriptions").upsert({
     org_id: orgCtx.org.id, provider: "razorpay", provider_subscription_id: sub.id, tier: "free", status: "created",
     product: plan.product, plan_key: plan.planKey,
   }, { onConflict: "org_id" });

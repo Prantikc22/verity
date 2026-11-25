@@ -4,6 +4,7 @@ import Razorpay from "razorpay";
 import { getUser, getPrimaryOrg } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { applyQsPlan } from "@/lib/billing/activate";
+import { completePlanSwitch } from "@/lib/billing/plan-switch";
 import type { QsProduct } from "@/lib/billing/qs-plans";
 
 export const runtime = "nodejs";
@@ -29,7 +30,12 @@ export async function POST(req: NextRequest) {
 
   const admin = createAdminClient();
   const { data: row } = await admin.from("subscriptions").select("id, org_id, product, plan_key").eq("provider_subscription_id", b.razorpay_subscription_id).maybeSingle();
-  if (!row || row.org_id !== orgCtx.org.id) return NextResponse.json({ error: "Subscription not found for this workspace." }, { status: 404 });
+  if (!row) {
+    // A switch from a plan they already pay for: no row until the new one is paid.
+    const switched = await completePlanSwitch(b.razorpay_subscription_id, orgCtx.org.id);
+    return switched ? NextResponse.json({ ok: true, active: true }) : NextResponse.json({ error: "Subscription not found for this workspace." }, { status: 404 });
+  }
+  if (row.org_id !== orgCtx.org.id) return NextResponse.json({ error: "Subscription not found for this workspace." }, { status: 404 });
 
   const rz = new Razorpay({ key_id, key_secret: secret });
   const sub = await rz.subscriptions.fetch(b.razorpay_subscription_id);

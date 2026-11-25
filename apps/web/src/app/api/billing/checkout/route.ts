@@ -65,7 +65,12 @@ export async function POST(req: NextRequest) {
     if (isPaid && existing.tier === tier) {
       return NextResponse.json({ error: `You're already on the ${tier} plan.` }, { status: 409 });
     }
-    // Different paid tier, or a stale/failed attempt — cancel it so nothing lingers.
+    // Never cancel a plan they pay for before a new payment exists: switches go
+    // through Usage & Billing, which cancels the old plan only once the new one is paid.
+    if (isPaid) {
+      return NextResponse.json({ error: "You already have a paid plan. Switch plans from Usage & Billing in your workspace." }, { status: 409 });
+    }
+    // A stale or failed attempt: cancel it so nothing lingers.
     try { await provider.cancelSubscription(existing.provider_subscription_id); } catch { /* already gone / never activated */ }
   }
 
