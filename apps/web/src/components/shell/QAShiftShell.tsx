@@ -7,8 +7,7 @@ import posthog from "posthog-js";
 import { SignOutButton } from "@/app/dashboard/SignOutButton";
 import { PROJECT_GROUPS, isActiveItem } from "@/components/DashboardShell";
 import { createClient } from "@/lib/supabase/client";
-import { NavProgress, LinkPending } from "./NavProgress";
-import { Suspense } from "react";
+import { LinkPending } from "./NavProgress";
 
 /*
  * QAShift 2.0 workspace shell. One brand, one navigation:
@@ -196,7 +195,6 @@ export function QAShiftShell({ org, plan, email, credits, mode = "full", childre
 
   return (
     <div className="flex min-h-screen bg-[#F7F7F5] text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100">
-      <Suspense fallback={null}><NavProgress /></Suspense>
       <aside className="sticky top-0 hidden h-screen w-[232px] shrink-0 border-r border-neutral-200 lg:block dark:border-neutral-800">{sidebar}</aside>
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-20 flex h-[52px] items-center justify-between gap-3 border-b border-neutral-200 bg-[#F7F7F5]/90 px-4 backdrop-blur lg:px-8 dark:border-neutral-800 dark:bg-neutral-950/90">
