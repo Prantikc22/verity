@@ -127,3 +127,13 @@ html { font-size: 16.5px; }
 .login-tick { animation: login-pop .4s cubic-bezier(.16,1,.3,1) both; }
 .login-verdict { animation: login-in .6s cubic-bezier(.16,1,.3,1) 2.6s both; }
 @media (prefers-reduced-motion: reduce) { .login-agent, .login-tick, .login-verdict { animation: none; } }
+/* Short laptop screens: keep the sign-in panel airy without overflowing. */
+@media (max-height: 860px) {
+  .login-aside { padding-top: 2rem; padding-bottom: 2rem; }
+  .login-hero h2 { font-size: 2.1rem; }
+  .login-hero h2 span { font-size: 2.35rem; }
+  .login-hero > p { margin-top: .6rem; }
+  .login-hero > div { margin-top: 1.25rem; padding: .75rem; }
+  .login-agent { padding-top: .4rem; padding-bottom: .4rem; }
+  .login-verdict { height: 2.25rem; }
+}

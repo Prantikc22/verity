@@ -36,14 +36,14 @@ export default async function LoginPage({
 
   return (
     <main className="grid min-h-screen lg:grid-cols-2">
-      <aside className="relative hidden overflow-hidden bg-[#0A0D18] p-12 text-white lg:flex lg:flex-col lg:justify-between">
+      <aside className="login-aside relative hidden gap-8 overflow-hidden bg-[#0A0D18] p-12 text-white lg:flex lg:flex-col lg:justify-between">
         {/* soft brand glow + faint grid */}
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(900px_420px_at_85%_35%,rgba(106,75,255,.28),transparent_60%),radial-gradient(600px_300px_at_10%_100%,rgba(34,201,133,.10),transparent_60%)]" />
         <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[.35] [background-image:linear-gradient(rgba(255,255,255,.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.04)_1px,transparent_1px)] [background-size:56px_56px] [mask-image:radial-gradient(ellipse_at_70%_40%,#000_20%,transparent_70%)]" />
 
         <div className="relative"><Link href="https://qashifthq.com" className="text-white"><Logo size={26} /></Link></div>
 
-        <div className="relative max-w-[30rem]">
+        <div className="login-hero relative max-w-[30rem]">
           {reports ? (
             <>
               <h2 className="text-[2.6rem] font-semibold leading-[1.04] tracking-tight">Every test run.<br /><span className="font-serif text-[2.9rem] font-normal italic text-violet-200">One clear answer.</span></h2>
